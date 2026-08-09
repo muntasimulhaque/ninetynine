@@ -29,7 +29,10 @@ class TimeChangeReceiver : BroadcastReceiver() {
         val pending = goAsync()
         CoroutineScope(Dispatchers.Default).launch {
             try {
-                DailyNameWidget().updateAll(context.applicationContext)
+                // A throw here has no exception handler and would otherwise
+                // reach the uncaught-handler and kill the process. A failed
+                // refresh is a skipped refresh, never a crash.
+                runCatching { DailyNameWidget().updateAll(context.applicationContext) }
             } finally {
                 pending.finish()
             }

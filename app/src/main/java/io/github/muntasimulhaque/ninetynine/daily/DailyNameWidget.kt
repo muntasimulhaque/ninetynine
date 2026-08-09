@@ -66,6 +66,14 @@ class DailyNameWidget : GlanceAppWidget() {
     override val sizeMode: SizeMode = SizeMode.Responsive(setOf(COMPACT, MEDIUM, TALL, XTALL))
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
+        // This render executes inside a Glance SessionWorker on the main
+        // thread — outside any runCatching the callers (MainActivity.onResume,
+        // the WorkManager workers, TimeChangeReceiver) can wrap. A cold-start
+        // hiccup here must be a skipped refresh, never a crash.
+        runCatching { render(context) }
+    }
+
+    private suspend fun render(context: Context): Unit {
         val names = NamesRepository.load(context)
         val name = names.firstOrNull { it.number == DailyName.numberFor(System.currentTimeMillis()) }
             ?: return

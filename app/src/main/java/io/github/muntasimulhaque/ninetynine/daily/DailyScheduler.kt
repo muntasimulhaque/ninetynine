@@ -199,7 +199,11 @@ class WidgetUpdateWorker(context: Context, params: WorkerParameters) :
     CoroutineWorker(context, params) {
 
     override suspend fun doWork(): Result {
-        DailyNameWidget().updateAll(applicationContext)
+        // A failed refresh is a skipped refresh, never a crash: the render
+        // runs inside a Glance SessionWorker on the main thread, outside any
+        // runCatching the caller can wrap, so a cold-start hiccup here must
+        // not kill the process.
+        runCatching { DailyNameWidget().updateAll(applicationContext) }
         return Result.success()
     }
 }
@@ -208,8 +212,10 @@ class NotificationWorker(context: Context, params: WorkerParameters) :
     CoroutineWorker(context, params) {
 
     override suspend fun doWork(): Result {
-        val context = applicationContext
-        DailyNameWidget().updateAll(context)
+            val context = applicationContext
+            // Same rule as WidgetUpdateWorker: a cold-start render hiccup is a
+            // skipped refresh, not a crash.
+            runCatching { DailyNameWidget().updateAll(context) }
 
         if (Build.VERSION.SDK_INT >= 33 &&
             ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS)
