@@ -9,15 +9,38 @@ plugins {
 
 // The upload keystore's path and credentials live in keystore.properties in the
 // shared Google Play Signing Key folder (outside any repo), so no credential
-// ever enters the repository. When the file is absent — CI, a fresh clone —
-// the release build degrades to unsigned rather than failing.
-val keystoreFile = file(
-    "D:/GDrive/BSCPLC/DM (Development)/Personal Docs/Pers/Google Play Signing Key/keystore.properties"
-)
+// ever enters the repository. The folder is on a different drive per machine
+// (D: on the LENOVO box, E: here), so both are probed. When the file is
+// absent — CI, a fresh clone — the release build degrades to unsigned rather
+// than failing.
+val keystoreFile = listOf(
+    "D:/GDrive/BSCPLC/DM (Development)/Personal Docs/Pers/Google Play Signing Key/keystore.properties",
+    "E:/GDrive/BSCPLC/DM (Development)/Personal Docs/Pers/Google Play Signing Key/keystore.properties",
+).map { file(it) }.firstOrNull { it.exists() }
+
 val releaseKeystore = Properties()
-if (keystoreFile.exists()) {
+if (keystoreFile != null) {
     releaseKeystore.load(keystoreFile.inputStream())
 }
+
+// The storeFile inside keystore.properties carries a drive letter that may not
+// match this machine (the properties file and the keystore always sit together
+// in the same folder). If the literal path does not exist, resolve the store
+// file against the keystore.properties' own directory instead.
+val keystoreStoreFile: java.io.File? = run {
+    val kf = keystoreFile ?: return@run null
+    val raw = releaseKeystore.getProperty("storeFile") ?: return@run null
+    val literal = file(raw)
+    if (literal.exists()) literal
+    else {
+        val name = raw.substringAfterLast('/').substringAfterLast('\\')
+        file("${kf.parentFile.absolutePath}/$name")
+    }
+}
+val canSignRelease = keystoreStoreFile != null &&
+    releaseKeystore.containsKey("storePassword") &&
+    releaseKeystore.containsKey("keyAlias") &&
+    releaseKeystore.containsKey("keyPassword")
 
 android {
     namespace = "io.github.muntasimulhaque.ninetynine"
@@ -33,9 +56,9 @@ android {
     }
 
     signingConfigs {
-        if (keystoreFile.exists()) {
+        if (canSignRelease) {
             create("release") {
-                storeFile = file(releaseKeystore.getProperty("storeFile"))
+                storeFile = keystoreStoreFile
                 storePassword = releaseKeystore.getProperty("storePassword")
                 keyAlias = releaseKeystore.getProperty("keyAlias")
                 keyPassword = releaseKeystore.getProperty("keyPassword")
@@ -51,8 +74,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            signingConfig =
-                if (keystoreFile.exists()) signingConfigs.getByName("release") else null
+            signingConfig = if (canSignRelease) signingConfigs.getByName("release") else null
         }
     }
     compileOptions {
