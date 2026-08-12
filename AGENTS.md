@@ -95,6 +95,17 @@ content). No DI framework, no database, no analytics, no ads, no network.
   only the FULL 40-char SHA (`git rev-parse HEAD`) — short SHAs return an empty
   list that reads as "still running".
 
+## Docs & Play listing assets
+
+`docs/` holds the Play store assets and listing copy: `play-listing.md` (the
+copy/paste listing doc), `play-icon-512.png`, `play-feature-1024x500.png`,
+`privacy-policy.html` (hosted on GitHub Pages), and the 8 phone screenshots
+under `docs/screenshots/` that the README shows. Regression: the 7-inch and
+10-inch tablet screenshot sets (`docs/screenshots/tablet-7/`, `tablet-10/`)
+were committed as Play assets but referenced by nothing in the repo and were
+removed (commit `ac293db`). Do not re-add them; Play tablet screenshots are
+uploaded from the `screenshots.yml` workflow artifacts, not from the repo.
+
 ## Code layout
 
 ```
