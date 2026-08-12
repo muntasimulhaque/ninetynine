@@ -1,6 +1,7 @@
 package io.github.muntasimulhaque.ninetynine.daily
 
 import android.content.Context
+import android.os.Build
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
@@ -102,22 +103,33 @@ class DailyNameWidget : GlanceAppWidget() {
                 else -> 18.sp
             }
 
-            // A single smooth plate: the emerald alone, rounded in one pass,
-            // no frame ring. The bare emerald is the widget's edge on the home
-            // screen, exactly as it was before the frame was added.
-            Column(
-                modifier = GlanceModifier
-                    .fillMaxSize()
-                    .background(background)
-                    .cornerRadius(20.dp)
-                    .padding(horizontal = 16.dp, vertical = 8.dp)
-                    .clickable(
-                        actionStartActivity<MainActivity>(
-                            actionParametersOf(
-                                ActionParameters.Key<Int>(MainActivity.EXTRA_NAME_NUMBER) to name.number
-                            )
+            // A single smooth plate: the emerald alone, no frame ring. The
+            // bare emerald is the widget's edge on the home screen, exactly as
+            // it was before the frame was added.
+            //
+            // cornerRadius is applied ONLY on API 31+ (Android 12+): on older
+            // Android its no-op path breaks the clickable modifier that follows
+            // it, so the widget rendered but never answered a tap (verified on
+            // an Android 8.1 device/emulator). On API < 31 the corners stay
+            // square; on 31+ they round through the system. The order matters —
+            // cornerRadius must precede clickable, which is how API 31+ shipped.
+            val plate = GlanceModifier
+                .fillMaxSize()
+                .background(background)
+                .let { m ->
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) m.cornerRadius(20.dp) else m
+                }
+                .padding(horizontal = 16.dp, vertical = 8.dp)
+                .clickable(
+                    actionStartActivity<MainActivity>(
+                        actionParametersOf(
+                            ActionParameters.Key<Int>(MainActivity.EXTRA_NAME_NUMBER) to name.number
                         )
-                    ),
+                    )
+                )
+
+            Column(
+                modifier = plate,
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {

@@ -39,11 +39,15 @@ class NamesViewModel(application: Application) : AndroidViewModel(application) {
         emit(loaded)
     }.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
+    // Declared before [learned] on purpose: stateIn(Eagerly) starts collecting
+    // immediately, and its onEach fires the flag — if the flag were declared
+    // after the flow, a cold start that read DataStore during construction
+    // would hit a null _learnedLoaded and crash (init-order NPE).
+    private val _learnedLoaded = MutableStateFlow(false)
+
     val learned: StateFlow<Set<Int>> = prefs.learned
         .onEach { _learnedLoaded.value = true }
         .stateIn(viewModelScope, SharingStarted.Eagerly, emptySet())
-
-    private val _learnedLoaded = MutableStateFlow(false)
 
     /**
      * False only while DataStore is still delivering its first value. An empty
@@ -83,11 +87,14 @@ class NamesViewModel(application: Application) : AndroidViewModel(application) {
     val dailyEnabled: StateFlow<Boolean> = prefs.dailyEnabled
         .stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
+    // Declared before [dailyTime] on purpose — same init-order rule as
+    // [learned]: stateIn(Eagerly) can deliver DataStore's first value during
+    // construction, and the onEach must not touch an uninitialised flag.
+    private val _dailyTimeLoaded = MutableStateFlow(false)
+
     val dailyTime: StateFlow<Pair<Int, Int>> = prefs.dailyTime
         .onEach { _dailyTimeLoaded.value = true }
         .stateIn(viewModelScope, SharingStarted.Eagerly, 8 to 0)
-
-    private val _dailyTimeLoaded = MutableStateFlow(false)
 
     /**
      * False only while DataStore is still delivering the first value. The
