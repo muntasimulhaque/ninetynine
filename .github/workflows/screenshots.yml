@@ -1,11 +1,13 @@
 name: Capture Play screenshots
 
-# Renders the four listing screens (home light, name page, home dark, quiz)
-# directly via an instrumentation screenshot test — no adb navigation of the
-# running app — so it works reliably on the slow CI tablet emulators. Runs on a
-# phone, 7-inch and 10-inch emulator and uploads the PNGs as artifacts.
+# Renders the five listing screens (home light, name page, home dark, quiz,
+# memorize) directly via an instrumentation screenshot test — no adb
+# navigation of the running app — so it works reliably on the slow CI tablet
+# emulators. Runs on a phone, 7-inch and 10-inch emulator and uploads the
+# PNGs as artifacts.
 #
-# Artifacts: screenshots-<device>/<device>-home.png, -name.png, -home-dark.png, -quiz.png
+# Artifacts: screenshots-<device>/<device>-home.png, -name.png, -home-dark.png,
+# -quiz.png, -memorize.png
 
 on:
   workflow_dispatch:
@@ -50,7 +52,7 @@ jobs:
           script: |
             gradle connectedDebugAndroidTest --console=plain
             mkdir -p /tmp/screenshots
-            for f in home home-dark name quiz; do adb exec-out run-as io.github.muntasimulhaque.ninetynine cat /data/data/io.github.muntasimulhaque.ninetynine/files/screenshots/$f.png > /tmp/screenshots/${{ matrix.device }}-$f.png || true; done
+            for f in home home-dark name quiz memorize; do adb exec-out run-as io.github.muntasimulhaque.ninetynine cat /data/data/io.github.muntasimulhaque.ninetynine/files/screenshots/$f.png > /tmp/screenshots/${{ matrix.device }}-$f.png || true; done
             ls -la /tmp/screenshots || true
 
       - name: Upload ${{ matrix.device }} screenshots

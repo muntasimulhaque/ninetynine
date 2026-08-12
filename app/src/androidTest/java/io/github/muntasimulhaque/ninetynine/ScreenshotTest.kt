@@ -14,6 +14,7 @@ import io.github.muntasimulhaque.ninetynine.data.ThemeMode
 import io.github.muntasimulhaque.ninetynine.ui.NamesViewModel
 import io.github.muntasimulhaque.ninetynine.ui.detail.DetailScreen
 import io.github.muntasimulhaque.ninetynine.ui.home.HomeScreen
+import io.github.muntasimulhaque.ninetynine.ui.memorize.MemorizeScreen
 import io.github.muntasimulhaque.ninetynine.ui.memorize.QuizScreen
 import io.github.muntasimulhaque.ninetynine.ui.theme.Names99Theme
 import org.junit.Rule
@@ -67,6 +68,18 @@ class ScreenshotTest {
     @Test
     fun namePage() = render("name", ThemeMode.LIGHT) {
         DetailScreen(it, startNumber = 1, bookmarksOnly = false, onBack = {})
+    }
+
+    @Test
+    fun memorize() = render("memorize", ThemeMode.LIGHT) {
+        MemorizeScreen(
+            it,
+            onFlashcards = {},
+            onQuiz = {},
+            onSettings = {},
+            onAbout = {},
+            onLearned = {},
+        )
     }
 
     @Test
