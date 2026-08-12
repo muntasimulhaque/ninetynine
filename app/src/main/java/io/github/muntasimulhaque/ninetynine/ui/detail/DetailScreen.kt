@@ -38,6 +38,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -113,9 +114,12 @@ fun DetailScreen(
     // Activity recreation, and the effect then rebuilt from the CURRENT
     // bookmarks — which, if the reader had just un-bookmarked the name they
     // were on, no longer contained it. The guard never passed again and the
-    // screen spun for ever, escapable only by Back. An ArrayList is stored
-    // rather than a bare List because only a Serializable survives the bundle.
-    var pageNumbers by rememberSaveable { mutableStateOf(ArrayList<Int>()) }
+    // screen spun for ever, escapable only by Back. Stored through the
+    // List<Int> interface (an ArrayList under the hood, so it survives the
+    // bundle the same way a bare ArrayList did) — the type is immutable so
+    // the state can only ever be replaced whole, never mutated in place,
+    // keeping every write a visible recomposition.
+    var pageNumbers by rememberSaveable { mutableStateOf(listOf<Int>()) }
     LaunchedEffect(names, bookmarked, bookmarksOnly, namesLoaded, bookmarkedLoaded) {
         if (pageNumbers.isNotEmpty() || !namesLoaded || names.isEmpty()) return@LaunchedEffect
         // An empty bookmark set is indistinguishable from one DataStore has not
@@ -129,7 +133,7 @@ fun DetailScreen(
         val withStart =
             if (scoped.any { it.number == startNumber }) scoped
             else (scoped + names.filter { it.number == startNumber }).sortedBy { it.number }
-        pageNumbers = ArrayList(withStart.map { it.number })
+        pageNumbers = withStart.map { it.number }
     }
     val pages = remember(names, pageNumbers) {
         pageNumbers.mapNotNull { number -> names.firstOrNull { it.number == number } }
@@ -173,7 +177,7 @@ fun DetailScreen(
     }
     // The pager's initial page is saved so rotation restores the reader to
     // the page they were on, not the page they entered from.
-    var savedPage by rememberSaveable { mutableStateOf(startIndex) }
+    var savedPage by rememberSaveable { mutableIntStateOf(startIndex) }
     val pagerState = rememberPagerState(initialPage = savedPage) { pages.size }
     LaunchedEffect(pagerState) {
         snapshotFlow { pagerState.currentPage }.collect { savedPage = it }

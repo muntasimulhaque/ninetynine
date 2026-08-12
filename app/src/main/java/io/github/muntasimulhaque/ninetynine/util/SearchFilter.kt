@@ -35,7 +35,16 @@ object SearchFilter {
     /** Arabic without harakat, so a bare query still finds the vocalized names. */
     private fun arabicKey(s: String): String = ARABIC_MARKS.replace(s, "")
 
-    /** Matches transliteration, title, meaning (case-insensitive), Arabic, or the exact number. */
+    /**
+     * Matches transliteration, title, meaning, note (case-insensitive),
+     * Arabic, or the exact number.
+     *
+     * The note is searched because every name carries one, and a reader who
+     * remembers a detail from a name's note — "the one about the difference
+     * between Ar-Rahman and Ar-Raheem" — has no other way to find that name
+     * again. The note is a bound commentary, so it answers to the same
+     * forgiving Latin key as the named fields below it.
+     */
     fun filter(names: List<Name>, query: String): List<Name> {
         val q = query.trim()
         if (q.isEmpty()) return names
@@ -46,6 +55,7 @@ object SearchFilter {
             it.transliteration.contains(q, ignoreCase = true) ||
                 it.title.contains(q, ignoreCase = true) ||
                 it.meaning.contains(q, ignoreCase = true) ||
+                it.note?.contains(q, ignoreCase = true) == true ||
                 (lq.length >= 3 && lq in latinKey(it.transliteration)) ||
                 it.arabic.contains(q) ||
                 (aq.isNotEmpty() && aq in arabicKey(it.arabic)) ||

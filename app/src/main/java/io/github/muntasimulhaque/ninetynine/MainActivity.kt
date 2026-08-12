@@ -115,15 +115,15 @@ class MainActivity : ComponentActivity() {
      * surfaces from showing different names after midnight.
      */
     override fun onResume() {
-            super.onResume()
-            // Glance's updateAll can race its own initialisation on a cold start;
-            // a throw here would kill the process the reader just opened. The
-            // widget refreshes on its own worker run anyway, so a failed nudge is
-            // a skipped refresh, never a crash.
-            lifecycleScope.launch {
-                runCatching { DailyNameWidget().updateAll(this@MainActivity) }
-            }
+        super.onResume()
+        // Glance's updateAll can race its own initialisation on a cold start;
+        // a throw here would kill the process the reader just opened. The
+        // widget refreshes on its own worker run anyway, so a failed nudge is
+        // a skipped refresh, never a crash.
+        lifecycleScope.launch {
+            runCatching { DailyNameWidget().updateAll(this@MainActivity) }
         }
+    }
 
     /** Reads the extra, then removes it so a configuration change can't replay the navigation. */
     private fun consumeNameNumber(intent: Intent?): Int = runCatching {

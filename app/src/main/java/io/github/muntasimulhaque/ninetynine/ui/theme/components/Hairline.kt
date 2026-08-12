@@ -11,7 +11,9 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
@@ -76,10 +78,18 @@ fun ScrollProgressBar(
     scrollState: ScrollState,
     modifier: Modifier = Modifier,
 ) {
-    val fraction = if (scrollState.maxValue > 0) {
-        scrollState.value.toFloat() / scrollState.maxValue
-    } else {
-        0f
+    // read through derivedStateOf, not directly: scrollState.value changes on
+    // every scroll frame, and reading it here would recompose the bar each
+    // one. The derived state recomputes the fraction but only invalidates the
+    // composition when the value actually changes.
+    val fraction by remember {
+        derivedStateOf {
+            if (scrollState.maxValue > 0) {
+                scrollState.value.toFloat() / scrollState.maxValue
+            } else {
+                0f
+            }
+        }
     }
     val visible by animateFloatAsState(
         targetValue = if (scrollState.canScrollForward) 1f else 0f,

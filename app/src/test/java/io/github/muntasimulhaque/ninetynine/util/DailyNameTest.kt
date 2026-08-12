@@ -47,4 +47,25 @@ class DailyNameTest {
             DailyName.numberFor(justAfterMidnightUtc, stillYesterday),
         )
     }
+
+    /**
+     * Plain division truncates toward zero, so a pre-epoch day previously
+     * landed on the wrong name. floorDiv/floorMod keep the rotation exact for
+     * every instant: the day before epoch day 0 must be the name before #1,
+     * which is #99.
+     */
+    @Test
+    fun preEpochDayCountsBackwardsCorrectly() {
+        val day = 86_400_000L
+        assertEquals(99, DailyName.numberFor(-day, utc))
+        assertEquals(98, DailyName.numberFor(-2 * day, utc))
+        // A timezone east of UTC makes a pre-epoch instant fall on a later
+        // local day than UTC would; the offset must be applied before the
+        // (floor) division, exactly as for positive instants.
+        val east = TimeZone.getTimeZone("Etc/GMT-14")
+        assertEquals(
+            DailyName.numberFor(0L, east),
+            DailyName.numberFor(-1L, east),
+        )
+    }
 }

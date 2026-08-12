@@ -22,6 +22,26 @@ class SearchFilterTest {
     }
 
     @Test
+    fun matchesNote() {
+        val noted = listOf(
+            Name(1, "الله", "Allah", "The God", "The one truly venerated.",
+                note = "The difference between Ar-Rahman and Ar-Raheem is that Ar-Rahman is of Allah's self."),
+            Name(2, "الرَّحْمَٰن", "Ar-Rahmaan", "The Extremely Merciful",
+                "The one possessing tremendous mercy.",
+                note = "The difference between Ar-Rahman and Ar-Raheem is that Ar-Rahman is of Allah's self."),
+            Name(3, "الْحَكِيم", "Al-Hakeem", "The All-Wise", "The one fully wise.",
+                note = "Everything He does is with wisdom."),
+        )
+        // A detail remembered from a note, with none of the named fields
+        // matching — the note is the only way to this name.
+        assertEquals(listOf(noted[2]), SearchFilter.filter(noted, "with wisdom"))
+        // The note must not reach names whose note does not contain it.
+        assertTrue(noted[0] in SearchFilter.filter(noted, "difference between"))
+        assertTrue(noted[1] in SearchFilter.filter(noted, "difference between"))
+        assertEquals(2, SearchFilter.filter(noted, "difference between").size)
+    }
+
+    @Test
     fun matchesTransliterationIgnoringCase() {
         assertEquals(listOf(names[1]), SearchFilter.filter(names, "hakeem"))
         assertEquals(listOf(names[2]), SearchFilter.filter(names, "AL-LAT"))

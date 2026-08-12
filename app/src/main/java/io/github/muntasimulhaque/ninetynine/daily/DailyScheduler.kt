@@ -199,12 +199,16 @@ class WidgetUpdateWorker(context: Context, params: WorkerParameters) :
     CoroutineWorker(context, params) {
 
     override suspend fun doWork(): Result {
-        // A failed refresh is a skipped refresh, never a crash: the render
-        // runs inside a Glance SessionWorker on the main thread, outside any
-        // runCatching the caller can wrap, so a cold-start hiccup here must
-        // not kill the process.
-        runCatching { DailyNameWidget().updateAll(applicationContext) }
-        return Result.success()
+        // The render runs inside a Glance SessionWorker on the main thread,
+        // and a cold-start hiccup can throw outside any runCatching the
+        // caller can wrap — so a throw must never kill the process. But a
+        // skipped refresh is not the end of the story: this worker is the
+        // widget's daily refresh, and its audience is the reader who rarely
+        // opens the app at all. A transient cold-start race is exactly what
+        // WorkManager's backoff retry exists for, so a failure is retried
+        // rather than silently lost until tomorrow.
+        return runCatching { DailyNameWidget().updateAll(applicationContext) }
+            .fold(onSuccess = { Result.success() }, onFailure = { Result.retry() })
     }
 }
 
@@ -213,8 +217,10 @@ class NotificationWorker(context: Context, params: WorkerParameters) :
 
     override suspend fun doWork(): Result {
             val context = applicationContext
-            // Same rule as WidgetUpdateWorker: a cold-start render hiccup is a
-            // skipped refresh, not a crash.
+            // Same rule as WidgetUpdateWorker: a cold-start hiccup is a
+            // skipped refresh, never a crash. The widget has its own worker
+            // at 00:05, so a failed nudge here is not worth a retry of its
+            // own — the notification below is the reason this worker ran.
             runCatching { DailyNameWidget().updateAll(context) }
 
         if (Build.VERSION.SDK_INT >= 33 &&
@@ -254,8 +260,12 @@ class NotificationWorker(context: Context, params: WorkerParameters) :
             .build()
 
         // Permission checked above; the channel is created in NamesApp.onCreate.
-        val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        manager.notify(1, notification)
-        return Result.success()
+        // A transient posting failure is retried with WorkManager's backoff —
+        // the daily notification is the one surface a reader who never opens
+        // the app sees, so a silently skipped morning is the worst outcome.
+        return runCatching {
+            val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            manager.notify(1, notification)
+        }.fold(onSuccess = { Result.success() }, onFailure = { Result.retry() })
     }
 }

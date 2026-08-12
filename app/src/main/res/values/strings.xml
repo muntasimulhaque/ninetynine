@@ -104,7 +104,13 @@
     <string name="quiz">Quiz</string>
     <string name="quiz_subtitle">Ten questions. Match each name to its meaning.</string>
     <string name="progress_of_caption">of 99 learned</string>
-    <string name="remaining_count">%1$d still to learn</string>
+    <!-- "1 name still to learn" reads as data, “1 still to learn” as a typo.
+         The count is a sentence about the reader’s progress, so it agrees in
+         number like any other sentence. -->
+    <plurals name="remaining_count">
+        <item quantity="one">%1$d name still to learn</item>
+        <item quantity="other">%1$d names still to learn</item>
+    </plurals>
     <string name="quiz_best">Best quiz score: %1$d of 10</string>
     <string name="learned_names">Learned names</string>
     <string name="no_learned">No names marked as learned yet. Open any name and tap Mark as learned.</string>

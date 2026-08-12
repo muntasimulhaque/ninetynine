@@ -2,7 +2,6 @@ package io.github.muntasimulhaque.ninetynine.ui.about
 
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
 import android.widget.Toast
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.Column
@@ -39,6 +38,7 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import androidx.core.net.toUri
 import io.github.muntasimulhaque.ninetynine.BuildConfig
 import io.github.muntasimulhaque.ninetynine.R
 import io.github.muntasimulhaque.ninetynine.ui.theme.Motion
@@ -309,7 +309,7 @@ private fun LinkRow(labelRes: Int, onClick: () -> Unit) {
 }
 
 private fun Context.openUrl(url: String) {
-    runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) }
+    runCatching { startActivity(Intent(Intent.ACTION_VIEW, url.toUri())) }
         .onFailure { Toast.makeText(this, R.string.link_failed, Toast.LENGTH_SHORT).show() }
 }
 
@@ -331,7 +331,7 @@ private fun Context.sendFeedback() {
     )
     runCatching {
         startActivity(
-            Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:$to"))
+            Intent(Intent.ACTION_SENDTO, "mailto:$to".toUri())
                 .putExtra(Intent.EXTRA_SUBJECT, subject)
         )
     }.onFailure { Toast.makeText(this, R.string.link_failed, Toast.LENGTH_SHORT).show() }
