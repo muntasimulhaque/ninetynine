@@ -58,5 +58,22 @@
                 <action android:name="android.intent.action.TIMEZONE_CHANGED" />
             </intent-filter>
         </receiver>
+
+        <!-- MY_PACKAGE_REPLACED is a protected broadcast the system sends to
+             the replaced package itself after an in-place update, so this
+             receiver must not be exported (exported=false does not block
+             system delivery). The launcher keeps a widget's RemoteViews
+             across an update, and on Android 8.0-8.1 (observed on a Vivo
+             Funtouch 8.1 device) the tap PendingIntent inside them — created
+             by the previous APK — goes dead: the widget renders but never
+             opens the app until the next app open re-renders it. Re-rendering
+             here installs a fresh PendingIntent from the new APK at once. -->
+        <receiver
+            android:name=".daily.PackageReplacedReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
     </application>
 </manifest>

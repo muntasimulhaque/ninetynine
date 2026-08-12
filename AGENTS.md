@@ -257,6 +257,13 @@ the source's own convention (regularised for #28, #32, #44, #48, #80, #87, #94,
   Resource ID #0x0` on the initial bind — "Problem loading widget" on stricter
   launchers (Vivo Funtouch on Android 8.1), silently recovered on others. Point
   it at `@layout/widget_preview`.
+- **A widget's tap PendingIntent dies on app update on Android 8.0–8.1.** The
+  launcher keeps the pre-update RemoteViews, and the system invalidates the
+  PendingIntent inside them (created by the old APK) on package replace — the
+  widget renders but never opens the app until the next app open re-renders it
+  (MainActivity.onResume → updateAll). `PackageReplacedReceiver` re-renders on
+  `MY_PACKAGE_REPLACED` so the fresh PendingIntent is installed immediately;
+  do not remove it. Not reproducible on Android 12+ (S23).
 
 ## Decisions already settled — do not reopen
 
