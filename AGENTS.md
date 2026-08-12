@@ -54,9 +54,9 @@ content). No DI framework, no database, no analytics, no ads, no network.
   via `BuildConfig.VERSION_NAME` so they can never disagree.
 - The project versioning rule is +0.1 on `versionName` (single decimal segment)
   and +1 on `versionCode` per release. Since the first Play release the repo
-  versioning restarted at store-friendly numbers: **0.1 / 1** then **0.2 / 2**
-  (current). Check `app/build.gradle.kts` for the live values and bump by the
-  same rule for the next release.
+  versioning restarted at store-friendly numbers: **0.1 / 1**, **0.2 / 2**,
+  **0.3 / 3**, then **0.4 / 4** (current). Check `app/build.gradle.kts` for
+  the live values and bump by the same rule for the next release.
 - The release keystore path/credentials live in a `keystore.properties` file
   outside the repo (Google Play Signing Key folder). When absent (CI, fresh
   clone) the release build degrades to unsigned rather than failing.
@@ -87,9 +87,11 @@ content). No DI framework, no database, no analytics, no ads, no network.
   issues), `assembleDebug`, `assembleRelease` (minified, unsigned — R8 exercised
   on every change), and uploads the debug APK (7-day retention). Actions are
   SHA-pinned. Nothing writes to the repo (`permissions: contents: read`).
-- **screenshots.yml** (manual dispatch): renders the Play listing screenshots via
-  an instrumentation screenshot test on phone + 7-inch + 10-inch emulators and
-  uploads the PNGs.
+- **screenshots.yml** (manual dispatch): renders the five listing scenes (home,
+  home-dark, name, quiz, memorize) via the instrumentation screenshot test on
+  phone + 7-inch + 10-inch emulators and uploads the PNGs. The `for f in ...`
+  loop must list every scene in ScreenshotTest, or that scene's PNG is never
+  pulled off the device.
 - Verify a green run via the GitHub Actions API using a token from
   `git credential fill` (no `gh` CLI on the dev machines). `?head_sha=` matches
   only the FULL 40-char SHA (`git rev-parse HEAD`) — short SHAs return an empty
@@ -103,8 +105,10 @@ copy/paste listing doc), `play-icon-512.png`, `play-feature-1024x500.png`,
 under `docs/screenshots/` that the README shows. Regression: the 7-inch and
 10-inch tablet screenshot sets (`docs/screenshots/tablet-7/`, `tablet-10/`)
 were committed as Play assets but referenced by nothing in the repo and were
-removed (commit `ac293db`). Do not re-add them; Play tablet screenshots are
-uploaded from the `screenshots.yml` workflow artifacts, not from the repo.
+removed (commit `ac293db`). Do not re-add them. Tablet screenshots are captured
+by running ScreenshotTest from Android Studio on tablet AVDs and uploaded to
+Play by hand, not from the repo, and the screenshots.yml run-as pull is
+unreliable (see Known quirks).
 
 ## Code layout
 
@@ -192,8 +196,10 @@ the source's own convention (regularised for #28, #32, #44, #48, #80, #87, #94,
   asset. Count grows as guards are added — sum the result XMLs in
   `app/build/test-results/testDebugUnitTest/` rather than trusting any
   hardcoded number.
-- **Instrumentation** (`app/src/androidTest`): ScreenshotTest, used by the
-  screenshots workflow.
+- **Instrumentation** (`app/src/androidTest`): ScreenshotTest renders five
+  scenes (home, home-dark, name, quiz, memorize), saving PNGs to the app's
+  `files/screenshots/` dir; used by the screenshots workflow and by the local
+  Android Studio capture flow.
 - Pure logic (DeckBuilder, QuizBuilder, SearchFilter, DailyName) lives in
   `util/` precisely so it is unit-testable without Android.
 
@@ -230,6 +236,16 @@ the source's own convention (regularised for #28, #32, #44, #48, #80, #87, #94,
   (`NamesViewModel.kt:87`). This shipped as an intermittent cold-start crash on
   widget/notification deep links. The `_??Loaded` flags must precede their flows
   (as `_namesLoaded`/`_bookmarkedLoaded` do).
+- **`DailyName.numberFor` uses `Math.floorDiv`/`floorMod`, never `/` and `%`.**
+  Plain division truncates toward zero, wrong for pre-epoch instants, and the
+  remainder of a negative day maps to the wrong name. The pre-epoch test in
+  `DailyNameTest` guards it, so do not "simplify" it back.
+- **Widget/notification workers fold failures to `Result.retry()`, not
+  `Result.success()`.** The render stays wrapped in runCatching, since a throw
+  must never kill the worker, but a swallowed throw used to mean the daily
+  widget refresh was silently skipped until the next day. Retry lets
+  WorkManager's backoff handle the transient cold-start Glance race; a
+  persistent failure merely burns a few retries.
 - **The widget's `cornerRadius` breaks its `clickable` on API < 31.** Glance's
   `cornerRadius` is a no-op before Android 12 (it logs "Cannot set the rounded
   corner before Api 31"), and that no-op path swallows the following
@@ -277,6 +293,13 @@ were sometimes implemented and then reversed. Re-proposing them wastes a cycle.
   digits whose bidi order reverses visually on ar/ur devices. Not fixed.
 - **WorkManager notification timing can drift a few minutes** (system batching).
   Accepted.
+- **The screenshots.yml `adb exec-out run-as` pull has been failing.** Every
+  scene comes back as a 62-byte error file even when the instrumentation tests
+  pass (observed on a 5-scene run). Listing screenshots are therefore captured
+  by running ScreenshotTest from Android Studio on phone, 7-inch and 10-inch
+  AVDs and pulling the PNGs from
+  `/data/data/io.github.muntasimulhaque.ninetynine/files/screenshots/` via the
+  Device File Explorer or `adb exec-out run-as ... cat`.
 - **Local debug APKs sign with the machine's debug keystore; CI artifacts sign
   with CI's.** Installing one over the other fails with
   INSTALL_FAILED_UPDATE_INCOMPATIBLE and uninstalling wipes DataStore progress.
