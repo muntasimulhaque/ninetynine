@@ -61,6 +61,28 @@ content). No DI framework, no database, no analytics, no ads, no network.
   outside the repo (Google Play Signing Key folder). When absent (CI, fresh
   clone) the release build degrades to unsigned rather than failing.
 
+## Release hand-off (every push to main is a Play release candidate)
+
+The app is published, so every change is built to ship. A release prep is not
+done until the agent has done ALL of the following itself — never hand the
+build step back to the user:
+
+1. **Build the signed AAB and verify the signature.**
+   `./gradlew :app:bundleRelease` signs automatically when
+   `keystore.properties` exists on the machine (paths probed in
+   `build.gradle.kts`: D: on the LENOVO box, E: on Dev Pro). Confirm with
+   `jarsigner -verify app/build/outputs/bundle/release/app-release.aab`
+   ("jar verified"). Only if no keystore is available, fall back to the CI
+   artifact and say so explicitly.
+2. **Hand over the AAB and the release notes.** Copy the bundle somewhere
+   obvious, named with the version (e.g. `ninetynine-0.7-vc7.aab` on the
+   Desktop), and paste the draft "What's new" text (≤500 chars) in the
+   reply. Keep `docs/play-listing.md`'s What's-new section in step — it is
+   the copy/paste source for the Console.
+3. **Screenshots: decide explicitly, every time.** If the release changes no
+   visible UI, say "no new screenshots needed" and why. If it does and
+   capture is cumbersome, say so — the user takes them by hand.
+
 ## Build, test, verify
 
 ```bash

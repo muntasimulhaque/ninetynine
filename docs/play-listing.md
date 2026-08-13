@@ -55,13 +55,14 @@ Free and open source. May Allah make us among those who learn, memorise,
 understand and act upon His beautiful Names.
 ```
 
-## What's new (version 0.1)
+## What's new (version 0.7)
 
 ```
-First release. All 99 Names with Arabic, transliteration and meaning; a Name of
-the Day with a home-screen widget and an optional daily notification;
-flashcards and a quiz; bookmarks; light, dark and AMOLED themes; adjustable
-text size.
+Position counters and quiz scores now always show Western digits, fixing
+reversed numbers on Arabic and Urdu devices. The home screen no longer wakes
+the app while it is in the background, saving a little battery. Progress
+writes are hardened against a rare cold-start crash, and the share sheet now
+survives screen rotation.
 ```
 
 ## Category, content & data
