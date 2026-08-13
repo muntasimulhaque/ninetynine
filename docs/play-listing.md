@@ -1,7 +1,7 @@
 # Play Store listing — copy these in
 
-Prepared for the first release of ninetynine. Everything below is ready to paste
-into the Play Console. The **app name is exactly 30 characters** (Play's limit),
+Updated each release (version field and What's-new notes included). Everything
+below is ready to paste into the Play Console. The **app name is exactly 30 characters** (Play's limit),
 so do not add a word or a stray space.
 
 ---

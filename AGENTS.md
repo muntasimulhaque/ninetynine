@@ -64,22 +64,30 @@ content). No DI framework, no database, no analytics, no ads, no network.
 ## Release hand-off (every push to main is a Play release candidate)
 
 The app is published, so every change is built to ship. A release prep is not
-done until the agent has done ALL of the following itself — never hand the
-build step back to the user:
+done until the agent has done ALL of the following itself, in order — never
+hand any step back to the user:
 
-1. **Build the signed AAB and verify the signature.**
+1. **Bump the version** by the rule above: `app/build.gradle.kts`, the list
+   above, and the version field in `docs/play-listing.md`.
+2. **Write the "What's new" notes** (≤500 chars) into `docs/play-listing.md`
+   — it is the copy/paste source for the Console.
+3. **Verify locally**: the full CI suite (`:app:testDebugUnitTest
+   :app:lintDebug :app:assembleDebug :app:assembleRelease`).
+4. **Commit and push**, then verify the CI run is green via the Actions API
+   (full 40-char SHA — see CI below).
+5. **Build the signed AAB and verify the signature.**
    `./gradlew :app:bundleRelease` signs automatically when
    `keystore.properties` exists on the machine (paths probed in
    `build.gradle.kts`: D: on the LENOVO box, E: on Dev Pro). Confirm with
    `jarsigner -verify app/build/outputs/bundle/release/app-release.aab`
    ("jar verified"). Only if no keystore is available, fall back to the CI
    artifact and say so explicitly.
-2. **Hand over the AAB and the release notes.** Copy the bundle somewhere
+6. **Hand over the AAB and the release notes.** Copy the bundle somewhere
    obvious, named with the version (e.g. `ninetynine-0.7-vc7.aab` on the
-   Desktop), and paste the draft "What's new" text (≤500 chars) in the
-   reply. Keep `docs/play-listing.md`'s What's-new section in step — it is
-   the copy/paste source for the Console.
-3. **Screenshots: decide explicitly, every time.** If the release changes no
+   Desktop), and paste the notes in the reply. Once the user confirms the
+   bundle was submitted to Play, delete the hand-off copy — the Console's
+   App Bundle Explorer retains the uploaded artifact.
+7. **Screenshots: decide explicitly, every time.** If the release changes no
    visible UI, say "no new screenshots needed" and why. If it does and
    capture is cumbersome, say so — the user takes them by hand.
 
@@ -162,8 +170,10 @@ app/src/main/assets/     names.json (99 entries), intro.txt, fonts/ (bundled TTF
 - **Content reads must be crash-proof.** `NamesRepository.load` wraps the asset
   read in `runCatching` and distinguishes "still loading" from "could not be
   loaded" on Home. `Prefs` uses `retryWhen` (a bare `catch` emits and COMPLETES
-  the flow, killing every derived flow for the process lifetime). `intro.txt`
-  parse normalizes `\r\n` → `\n`.
+  the flow, killing every derived flow for the process lifetime). Writes are
+  hardened the same way: `Prefs.write` swallows any exception (cancellation
+  rethrown), because a failed save escaping a `viewModelScope.launch` kills
+  the process over a toggle. `intro.txt` parse normalizes `\r\n` → `\n`.
 
 ## Design system (read before touching any size/color/spacing)
 
