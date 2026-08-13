@@ -3,10 +3,9 @@ package io.github.muntasimulhaque.ninetynine.daily
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import androidx.glance.appwidget.updateAll
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import androidx.work.ExistingWorkPolicy
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
 
 /**
  * The daily name rolls over at local midnight (DailyName.numberFor), so a
@@ -14,6 +13,11 @@ import kotlinx.coroutines.launch
  * app's audience is exactly the traveller: the reader who takes the name
  * off the home screen and rarely opens the app. Without this receiver the
  * widget would show yesterday's name until the next worker run or app open.
+ *
+ * Uses WorkManager instead of goAsync() with a raw coroutine for the same
+ * reliability reasons as PackageReplacedReceiver: WorkManager persists the
+ * work request and survives process death, so the widget update is guaranteed
+ * to run even if the system kills the broadcast receiver's process early.
  */
 class TimeChangeReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent?) {
@@ -23,19 +27,18 @@ class TimeChangeReceiver : BroadcastReceiver() {
         if (action != Intent.ACTION_TIME_CHANGED &&
             action != Intent.ACTION_TIMEZONE_CHANGED
         ) return
-        // goAsync keeps this process alive for the update: updateAll is a
-        // suspend fun, and the system would otherwise consider the broadcast
-        // handled the moment onReceive returns.
-        val pending = goAsync()
-        CoroutineScope(Dispatchers.Default).launch {
-            try {
-                // A throw here has no exception handler and would otherwise
-                // reach the uncaught-handler and kill the process. A failed
-                // refresh is a skipped refresh, never a crash.
-                runCatching { DailyNameWidget().updateAll(context.applicationContext) }
-            } finally {
-                pending.finish()
-            }
-        }
+
+        // Enqueue an immediate one-time widget update via WorkManager.
+        // WorkManager persists the request to its database, so even if the
+        // process is killed after this receiver returns, the update will
+        // execute when the process restarts — unlike goAsync() which has a
+        // 10-second lease and no persistence across process death.
+        val request = OneTimeWorkRequestBuilder<WidgetUpdateWorker>()
+            .build()
+        WorkManager.getInstance(context.applicationContext).enqueueUniqueWork(
+            "time_change_widget_refresh",
+            ExistingWorkPolicy.REPLACE,
+            request,
+        )
     }
 }

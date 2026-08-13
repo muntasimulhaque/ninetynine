@@ -1,6 +1,8 @@
 package io.github.muntasimulhaque.ninetynine
 
 import android.app.Application
+import androidx.glance.appwidget.updateAll
+import io.github.muntasimulhaque.ninetynine.daily.DailyNameWidget
 import io.github.muntasimulhaque.ninetynine.daily.DailyScheduler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -31,6 +33,22 @@ class NamesApp : Application() {
         DailyScheduler.ensureScheduled(this, reanchor = false)
         applicationScope.launch {
             DailyScheduler.ensureNotificationScheduled(this@NamesApp, reanchor = false)
+        }
+
+        // Re-render the widget on every process start. This ensures that
+        // after an in-place update, the widget's tap PendingIntent
+        // (invalidated by the system on Android 8.0–8.1 when the package is
+        // replaced) gets a fresh instance from the new APK. The
+        // PackageReplacedReceiver also handles this, but OEMs like Vivo
+        // Funtouch OS may not deliver MY_PACKAGE_REPLACED reliably, so this
+        // serves as a fallback.
+        //
+        // Unlike re-anchoring, updateAll is side-effect-free: it does not
+        // cancel any existing WorkManager job, so it is safe to call even
+        // when the process was started by WorkManager to run a worker. A
+        // failed refresh is a skipped refresh, never a crash.
+        applicationScope.launch {
+            runCatching { DailyNameWidget().updateAll(this@NamesApp) }
         }
     }
 }

@@ -3,10 +3,9 @@ package io.github.muntasimulhaque.ninetynine.daily
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import androidx.glance.appwidget.updateAll
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import androidx.work.ExistingWorkPolicy
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
 
 /**
  * After an in-place update the launcher still holds the widget's OLD
@@ -15,8 +14,14 @@ import kotlinx.coroutines.launch
  * invalidates that PendingIntent when the package is replaced, so the
  * widget renders but never answers a tap — until the next app open
  * re-renders it (MainActivity.onResume → updateAll) and installs a fresh
- * PendingIntent from the new version. Re-rendering here, right after the
- * update lands, installs that fresh PendingIntent immediately.
+ * PendingIntent from the new version.
+ *
+ * This receiver enqueues a one-time WidgetUpdateWorker via WorkManager
+ * instead of using goAsync() with a raw coroutine. WorkManager is more
+ * reliable because it persists the work request to its database — even if
+ * the process is killed after this receiver returns, the update will still
+ * execute when the system restarts the process. The worker re-renders all
+ * widget instances, installing fresh PendingIntents from the new APK.
  */
 class PackageReplacedReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent?) {
@@ -24,19 +29,18 @@ class PackageReplacedReceiver : BroadcastReceiver() {
         // itself; anything else (same-app or system) is ignored, so a
         // spoofed action cannot trigger a render.
         if (intent?.action != Intent.ACTION_MY_PACKAGE_REPLACED) return
-        // goAsync keeps this process alive for the update: updateAll is a
-        // suspend fun, and the system would otherwise consider the broadcast
-        // handled the moment onReceive returns.
-        val pending = goAsync()
-        CoroutineScope(Dispatchers.Default).launch {
-            try {
-                // A throw here has no exception handler and would otherwise
-                // reach the uncaught-handler and kill the process. A failed
-                // refresh is a skipped refresh, never a crash.
-                runCatching { DailyNameWidget().updateAll(context.applicationContext) }
-            } finally {
-                pending.finish()
-            }
-        }
+
+        // Enqueue an immediate one-time widget update via WorkManager.
+        // WorkManager persists the request to its database, so even if the
+        // process is killed after this receiver returns, the update will
+        // execute when the process restarts — unlike goAsync() which has a
+        // 10-second lease and no persistence across process death.
+        val request = OneTimeWorkRequestBuilder<WidgetUpdateWorker>()
+            .build()
+        WorkManager.getInstance(context.applicationContext).enqueueUniqueWork(
+            "post_update_widget_refresh",
+            ExistingWorkPolicy.REPLACE,
+            request,
+        )
     }
 }

@@ -77,7 +77,17 @@ class DailyNameWidget : GlanceAppWidget() {
     private suspend fun render(context: Context): Unit {
         val names = NamesRepository.load(context)
         val name = names.firstOrNull { it.number == DailyName.numberFor(System.currentTimeMillis()) }
-            ?: return
+        // Always call provideContent, even when name is null. Without this, a
+        // transient load failure (empty list from NamesRepository) would skip
+        // the render entirely, and the Glance SessionWorker would consider the
+        // update successful — but the widget would keep its OLD RemoteViews
+        // and the OLD PendingIntent inside them. On Android 8.0–8.1 after an
+        // update, that old PendingIntent is invalidated, so the widget would
+        // render but never answer a tap. Rendering an empty-but-tappable plate
+        // ensures the RemoteViews are always fresh and carry a valid
+        // PendingIntent from the current APK. The text content reappears on
+        // the next successful render (the same process start or the next
+        // worker run).
         provideContent {
             val height = LocalSize.current.height
             val showTransliteration = height >= MEDIUM.height
@@ -123,7 +133,8 @@ class DailyNameWidget : GlanceAppWidget() {
                 .clickable(
                     actionStartActivity<MainActivity>(
                         actionParametersOf(
-                            ActionParameters.Key<Int>(MainActivity.EXTRA_NAME_NUMBER) to name.number
+                            ActionParameters.Key<Int>(MainActivity.EXTRA_NAME_NUMBER) to
+                                (name?.number ?: 1)
                         )
                     )
                 )
@@ -133,48 +144,55 @@ class DailyNameWidget : GlanceAppWidget() {
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text(
-                    text = systemFontSafeArabic(name.arabic),
-                    maxLines = 1,
-                    style = TextStyle(
-                        color = gold,
-                        fontSize = arabicSize,
-                        fontWeight = FontWeight.Normal,
-                        fontFamily = serif,
-                        textAlign = TextAlign.Center
-                    )
-                )
-                if (showTransliteration) {
+                if (name != null) {
                     Text(
-                        text = name.transliteration,
+                        text = systemFontSafeArabic(name.arabic),
                         maxLines = 1,
                         style = TextStyle(
-                            color = textColor,
-                            fontSize = if (roomy) 18.sp else 16.sp,
+                            color = gold,
+                            fontSize = arabicSize,
+                            fontWeight = FontWeight.Normal,
                             fontFamily = serif,
                             textAlign = TextAlign.Center
-                        ),
-                        // The hero card pairs Arabic and transliteration
-                        // at 6dp when there is room; 4dp when not.
-                        modifier = GlanceModifier.padding(top = if (roomy) 6.dp else 4.dp)
+                        )
                     )
+                    if (showTransliteration) {
+                        Text(
+                            text = name.transliteration,
+                            maxLines = 1,
+                            style = TextStyle(
+                                color = textColor,
+                                fontSize = if (roomy) 18.sp else 16.sp,
+                                fontFamily = serif,
+                                textAlign = TextAlign.Center
+                            ),
+                            // The hero card pairs Arabic and transliteration
+                            // at 6dp when there is room; 4dp when not.
+                            modifier = GlanceModifier.padding(top = if (roomy) 6.dp else 4.dp)
+                        )
+                    }
+                    if (showTitle) {
+                        Text(
+                            text = name.title,
+                            // Two lines fit the TALL bucket with a 30sp Arabic;
+                            // only the tallest bucket may wrap to three.
+                            maxLines = if (roomy) 3 else 2,
+                            style = TextStyle(
+                                color = subtextColor,
+                                fontSize = if (roomy) 14.sp else 12.sp,
+                                fontStyle = FontStyle.Italic,
+                                fontFamily = serif,
+                                textAlign = TextAlign.Center
+                            ),
+                            modifier = GlanceModifier.padding(top = 4.dp)
+                        )
+                    }
                 }
-                if (showTitle) {
-                    Text(
-                        text = name.title,
-                        // Two lines fit the TALL bucket with a 30sp Arabic;
-                        // only the tallest bucket may wrap to three.
-                        maxLines = if (roomy) 3 else 2,
-                        style = TextStyle(
-                            color = subtextColor,
-                            fontSize = if (roomy) 14.sp else 12.sp,
-                            fontStyle = FontStyle.Italic,
-                            fontFamily = serif,
-                            textAlign = TextAlign.Center
-                        ),
-                        modifier = GlanceModifier.padding(top = 4.dp)
-                    )
-                }
+                // When name is null the widget shows an empty emerald plate
+                // that is still tappable — this guarantees the RemoteViews
+                // and PendingIntent are always refreshed, even after a
+                // transient NamesRepository load failure. The text content
+                // will appear on the next successful render.
             }
         }
     }

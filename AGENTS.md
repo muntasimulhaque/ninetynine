@@ -55,7 +55,7 @@ content). No DI framework, no database, no analytics, no ads, no network.
 - The project versioning rule is +0.1 on `versionName` (single decimal segment)
   and +1 on `versionCode` per release. Since the first Play release the repo
   versioning restarted at store-friendly numbers: **0.1 / 1**, **0.2 / 2**,
-  **0.3 / 3**, **0.4 / 4**, then **0.5 / 5** (current). Check `app/build.gradle.kts` for
+  **0.3 / 3**, **0.4 / 4**, **0.5 / 5**, then **0.6 / 6** (current). Check `app/build.gradle.kts` for
   the live values and bump by the same rule for the next release.
 - The release keystore path/credentials live in a `keystore.properties` file
   outside the repo (Google Play Signing Key folder). When absent (CI, fresh
@@ -261,9 +261,17 @@ the source's own convention (regularised for #28, #32, #44, #48, #80, #87, #94,
   launcher keeps the pre-update RemoteViews, and the system invalidates the
   PendingIntent inside them (created by the old APK) on package replace — the
   widget renders but never opens the app until the next app open re-renders it
-  (MainActivity.onResume → updateAll). `PackageReplacedReceiver` re-renders on
-  `MY_PACKAGE_REPLACED` so the fresh PendingIntent is installed immediately;
-  do not remove it. Not reproducible on Android 12+ (S23).
+  (MainActivity.onResume → updateAll). Three layers of defense now ensure the
+  widget is re-rendered immediately after an update:
+  1. `PackageReplacedReceiver` enqueues a `WidgetUpdateWorker` via WorkManager
+     (persisted, survives process death, retries on failure).
+  2. `NamesApp.onCreate` calls `updateAll` on every process start as a fallback
+     for OEMs that block `MY_PACKAGE_REPLACED` (e.g., Vivo Funtouch OS).
+  3. `DailyNameWidget.render` always calls `provideContent`, even when the name
+     lookup fails, so the widget never keeps stale RemoteViews with an
+     invalidated PendingIntent — an empty-but-tappable emerald plate is rendered
+     instead, guaranteeing a fresh PendingIntent in every widget update.
+  Not reproducible on Android 12+ (S23).
 
 ## Decisions already settled — do not reopen
 
