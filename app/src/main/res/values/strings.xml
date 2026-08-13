@@ -56,8 +56,16 @@
       Position in the list being paged through, not the name's own number —
       the two are the same when reading all 99, and differ when the reader
       arrived from Bookmarks and is paging through those.
+
+      %s, not %d, in every counter and score string (card_x_of_y,
+      question_x_of_y and quiz_score_format below included): %d follows the
+      device locale, so an ar/ur phone rendered the pair in Arabic-Indic
+      digits whose bidi order reversed it visually, and it never matched the
+      list's folio numbers, which are Int.toString() and always Western.
+      The call sites still pass Ints; %s renders them Western everywhere.
+      Guarded by CounterFormatTest.
     -->
-    <string name="detail_counter">%1$d of %2$d</string>
+    <string name="detail_counter">%1$s of %2$s</string>
     <!-- Screen-reader direction for the name-page chevrons: the arrows carry
          it visually, the spoken name alone cannot. -->
     <string name="previous_name">Previous: %1$s</string>
@@ -127,7 +135,7 @@
     <string name="deck_done">You finished this set of ten. Take the next?</string>
     <string name="start_again">Next set</string>
     <string name="include_learned">Include learned names</string>
-    <string name="card_x_of_y">%1$d of %2$d</string>
+    <string name="card_x_of_y">%1$s of %2$s</string>
     <string name="swipe_hint">Swipe right if you know it — left to keep practicing</string>
 
     <!-- Quiz -->
@@ -135,10 +143,10 @@
     <string name="quiz_good">Well done. Keep going.</string>
     <string name="quiz_keep_trying">Keep at it — the flashcards will help.</string>
     <string name="try_another_round">Try another round</string>
-    <string name="question_x_of_y">%1$d of %2$d</string>
+    <string name="question_x_of_y">%1$s of %2$s</string>
     <string name="next">Next</string>
     <string name="see_result">See result</string>
-    <string name="quiz_score_format">%1$d / %2$d</string>
+    <string name="quiz_score_format">%1$s / %2$s</string>
     <string name="cd_correct">Correct answer</string>
     <string name="cd_wrong">Wrong answer</string>
 

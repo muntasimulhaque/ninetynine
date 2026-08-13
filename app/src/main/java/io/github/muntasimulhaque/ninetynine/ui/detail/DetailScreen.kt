@@ -103,7 +103,7 @@ fun DetailScreen(
     val learned by viewModel.learned.collectAsStateWithLifecycle()
     val bookmarked by viewModel.bookmarked.collectAsStateWithLifecycle()
     val bookmarkedLoaded by viewModel.bookmarkedLoaded.collectAsStateWithLifecycle()
-    var showShare by remember { mutableStateOf(false) }
+    var showShare by rememberSaveable { mutableStateOf(false) }
 
     // The reader pages through the list they arrived from — all 99 from the
     // names list, or just the kept ones from Bookmarks. Taken once and then

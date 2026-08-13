@@ -12,11 +12,11 @@ import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.retryWhen
-import java.io.IOException
 
 val Context.dataStore by preferencesDataStore(
     name = "settings",
@@ -108,11 +108,20 @@ class Prefs(private val context: Context) {
      * Writes fail the same way reads do, and from a `viewModelScope.launch`
      * they crash just as hard. A setting that failed to save is not worth the
      * process; the value simply stays as it was.
+     *
+     * Any exception is swallowed, not just IOException — the read side
+     * retries on any cause for the same reason: a cold start can surface a
+     * transient race while the store initialises, and a non-IO failure
+     * escaping a `viewModelScope.launch` kills the process over a toggle the
+     * reader just tapped. Cancellation is rethrown, of course: swallowing it
+     * would break the scope's shutdown.
      */
     private suspend fun write(block: (MutablePreferences) -> Unit) {
         try {
             context.dataStore.edit(block)
-        } catch (_: IOException) {
+        } catch (e: CancellationException) {
+            throw e
+        } catch (_: Exception) {
         }
     }
 

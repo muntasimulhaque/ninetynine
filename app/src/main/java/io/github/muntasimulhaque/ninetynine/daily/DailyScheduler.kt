@@ -216,12 +216,12 @@ class NotificationWorker(context: Context, params: WorkerParameters) :
     CoroutineWorker(context, params) {
 
     override suspend fun doWork(): Result {
-            val context = applicationContext
-            // Same rule as WidgetUpdateWorker: a cold-start hiccup is a
-            // skipped refresh, never a crash. The widget has its own worker
-            // at 00:05, so a failed nudge here is not worth a retry of its
-            // own — the notification below is the reason this worker ran.
-            runCatching { DailyNameWidget().updateAll(context) }
+        val context = applicationContext
+        // Same rule as WidgetUpdateWorker: a cold-start hiccup is a
+        // skipped refresh, never a crash. The widget has its own worker
+        // at 00:05, so a failed nudge here is not worth a retry of its
+        // own — the notification below is the reason this worker ran.
+        runCatching { DailyNameWidget().updateAll(context) }
 
         if (Build.VERSION.SDK_INT >= 33 &&
             ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS)
@@ -229,8 +229,8 @@ class NotificationWorker(context: Context, params: WorkerParameters) :
         ) return Result.success()
 
         val names = NamesRepository.load(context)
-                val name = names.firstOrNull { it.number == DailyName.numberFor(System.currentTimeMillis()) }
-                    ?: return Result.success()
+        val name = names.firstOrNull { it.number == DailyName.numberFor(System.currentTimeMillis()) }
+            ?: return Result.success()
 
         // NEW_TASK only: the activity is singleTop and consumes the extra, so
         // this lands on the name without tearing down whatever was open.

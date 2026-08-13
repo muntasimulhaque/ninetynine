@@ -55,7 +55,7 @@ content). No DI framework, no database, no analytics, no ads, no network.
 - The project versioning rule is +0.1 on `versionName` (single decimal segment)
   and +1 on `versionCode` per release. Since the first Play release the repo
   versioning restarted at store-friendly numbers: **0.1 / 1**, **0.2 / 2**,
-  **0.3 / 3**, **0.4 / 4**, **0.5 / 5**, then **0.6 / 6** (current). Check `app/build.gradle.kts` for
+  **0.3 / 3**, **0.4 / 4**, **0.5 / 5**, **0.6 / 6**, then **0.7 / 7** (current). Check `app/build.gradle.kts` for
   the live values and bump by the same rule for the next release.
 - The release keystore path/credentials live in a `keystore.properties` file
   outside the repo (Google Play Signing Key folder). When absent (CI, fresh
@@ -303,9 +303,13 @@ were sometimes implemented and then reversed. Re-proposing them wastes a cycle.
   widget's numerals/marks are also sanitized via `systemFontSafeArabic()`.
 - **KFGQPC HAFS has no U+0622 آ and no en/em dash** (MixedText keeps dashes in
   Spectral). New Arabic content must avoid آ or rely on `forArabicFont()`.
-- **RTL counters are a known open defect.** `"%1$d of %2$d"` counters
-  (`detail_counter`, `card_x_of_y`, `question_x_of_y`) render Arabic-Indic
-  digits whose bidi order reverses visually on ar/ur devices. Not fixed.
+- **Counters always render Western digits, via `%s` on purpose.** The
+  `detail_counter`, `card_x_of_y`, `question_x_of_y` and `quiz_score_format`
+  strings use `%1$s` with Int arguments: `%d` follows the device locale, so
+  ar/ur devices rendered Arabic-Indic digits whose bidi order reversed the
+  pair visually, and the counters never matched the folio numbers
+  (`Int.toString()`, always Western). Guarded by CounterFormatTest — do not
+  "fix" them back to `%d`.
 - **WorkManager notification timing can drift a few minutes** (system batching).
   Accepted.
 - **The screenshots.yml `adb exec-out run-as` pull has been failing.** Every

@@ -59,8 +59,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.lifecycle.compose.LifecycleResumeEffect
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.repeatOnLifecycle
 import io.github.muntasimulhaque.ninetynine.R
 import io.github.muntasimulhaque.ninetynine.data.Name
 import io.github.muntasimulhaque.ninetynine.ui.NamesViewModel
@@ -103,18 +105,19 @@ fun HomeScreen(
     var searchFocusRequested by rememberSaveable { mutableStateOf(false) }
     var dailyNumber by remember { mutableIntStateOf(viewModel.dailyNameNumber()) }
 
-    // The daily name rolls over at midnight; recompute whenever the app resumes.
-    LifecycleResumeEffect(Unit) {
-        dailyNumber = viewModel.dailyNameNumber()
-        onPauseOrDispose {}
-    }
-    // ... and while the screen stays visible (a phone left unlocked on Home),
-    // every minute, so the hero card does not show yesterday's name after the
-    // widget has already turned.
-    LaunchedEffect(Unit) {
-        while (true) {
-            dailyNumber = viewModel.dailyNameNumber()
-            delay(60_000)
+    // The daily name rolls over at local midnight. The recompute runs once a
+    // minute while the screen is resumed, and repeatOnLifecycle re-enters the
+    // block on the way back to the foreground — so the hero card never shows
+    // yesterday's name after the widget has already turned, while a phone
+    // left sitting on Home in the background is not woken every minute to
+    // update a card nobody is looking at.
+    val lifecycleOwner = LocalLifecycleOwner.current
+    LaunchedEffect(lifecycleOwner) {
+        lifecycleOwner.repeatOnLifecycle(Lifecycle.State.RESUMED) {
+            while (true) {
+                dailyNumber = viewModel.dailyNameNumber()
+                delay(60_000)
+            }
         }
     }
 
