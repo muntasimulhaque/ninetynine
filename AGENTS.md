@@ -67,7 +67,7 @@ reflects the new decision.
 - The project versioning rule is +0.1 on `versionName` (single decimal segment)
   and +1 on `versionCode` per release. Since the first Play release the repo
   versioning restarted at store-friendly numbers: **0.1 / 1**, **0.2 / 2**,
-  **0.3 / 3**, **0.4 / 4**, **0.5 / 5**, **0.6 / 6**, **0.7 / 7**, then **0.8 / 8** (current). Check `app/build.gradle.kts` for
+  **0.3 / 3**, **0.4 / 4**, **0.5 / 5**, **0.6 / 6**, **0.7 / 7**, **0.8 / 8**, then **0.9 / 9** (current). Check `app/build.gradle.kts` for
   the live values and bump by the same rule for the next release.
 - The release keystore path/credentials live in a `keystore.properties` file
   outside the repo (Google Play Signing Key folder). When absent (CI, fresh

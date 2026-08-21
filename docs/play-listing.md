@@ -10,7 +10,7 @@ so do not add a word or a stray space.
 
 - **Application ID (package name):** `io.github.muntasimulhaque.ninetynine`
 - **Privacy policy URL:** `https://muntasimulhaque.github.io/ninetynine/privacy-policy.html`
-- **Version (this release):** versionName `0.8`, versionCode `8`
+- **Version (this release):** versionName `0.9`, versionCode `9`
 
 ---
 
@@ -55,14 +55,13 @@ Free and open source. May Allah make us among those who learn, memorise,
 understand and act upon His beautiful Names.
 ```
 
-## What's new (version 0.8)
+## What's new (version 0.9)
 
 ```
-Name pages now show a familiar scrollbar thumb, so you can see where you are
-and how much remains at a glance. Turning animations off now takes effect
-immediately, without restarting. Screen readers announce what each row opens,
-and search reads your query back. Pages also no longer replay their entrance
-fade when you rotate the phone.
+Polish to the new scrollbar: on pages whose meaning nearly fits one screen,
+the thumb no longer stretches almost the full length of the edge. It is now
+capped at a thumb-like size and slides as you read, so it always reads as a
+scrollbar while still showing exactly where you are. Nothing else has changed.
 ```
 
 ## Category, content & data

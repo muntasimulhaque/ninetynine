@@ -26,6 +26,18 @@ import androidx.compose.ui.unit.dp
 import io.github.muntasimulhaque.ninetynine.ui.theme.Motion
 
 /**
+ * The thumb never spans more than this fraction of its track.
+ *
+ * Exactly-proportional thumbs betray the metaphor on a book of short pages:
+ * a meaning only 1.2 screens long yields a thumb covering ~90% of the edge,
+ * which reads as the long line the fill bar was, not as a scrollbar. Capping
+ * the length keeps it always reading as a thumb while position — the part
+ * readers actually steer by — stays exact. The floor in [ScrollbarThumb] is
+ * applied after this cap, so very short tracks still get the 24dp minimum.
+ */
+private const val THUMB_MAX_FRACTION = 0.40f
+
+/**
  * A whisper of a progress bar: a hairline gold fill on a paper track.
  * Used for memorization progress, flashcard decks, and the quiz.
  */
@@ -74,8 +86,8 @@ fun HairlineProgress(
  * was chosen over it because it is the one scroll signal every Android reader
  * has already learned — Settings lists, WebViews and RecyclerViews all show
  * one while flinging — and because it says more at a glance: its position is
- * where you are, and its size is how much of the page one screen holds, so a
- * short thumb says "several screens to go" without a word.
+ * where you are, and its size says how much of the page one screen holds, so
+ * a short thumb says "several screens to go" without a word.
  *
  * Persistent by decision, not the hide-until-scroll kind: a reader sitting at
  * the top of a long meaning is exactly the person who needs telling. It fades
@@ -87,8 +99,9 @@ fun HairlineProgress(
  *
  * Geometry is computed in the draw phase straight off the [ScrollState], so
  * scrolling redraws the thumb without recomposing anything. The thumb travels
- * the track minus its own height, the way every OS scrollbar behaves, and its
- * minimum height keeps it present on pages whose content runs many screens.
+ * the track minus its own height, the way every OS scrollbar behaves. Its
+ * length is the honest viewport-to-content fraction, clamped both ways — see
+ * [THUMB_MAX_FRACTION] for why the top clamp exists.
  *
  * Decorative: carries no semantics, so TalkBack reads the text and not the
  * chrome.
@@ -115,7 +128,9 @@ fun ScrollbarThumb(
                 val minThumbPx = 24.dp.toPx()
                 val thumbHeight = (
                     size.height * (size.height / (size.height + maxScroll))
-                    ).coerceAtLeast(minThumbPx).coerceAtMost(size.height)
+                    ).coerceAtMost(size.height * THUMB_MAX_FRACTION)
+                    .coerceAtLeast(minThumbPx)
+                    .coerceAtMost(size.height)
                 val travelled = scrollState.value.toFloat() / maxScroll
                 val top = (size.height - thumbHeight) * travelled
                 drawRoundRect(
