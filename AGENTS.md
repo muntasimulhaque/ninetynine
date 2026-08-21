@@ -95,13 +95,19 @@ hand any step back to the user:
    ("jar verified"). Only if no keystore is available, fall back to the CI
    artifact and say so explicitly.
 6. **Hand over the AAB and the release notes.** Copy the bundle somewhere
-   obvious, named with the version (e.g. `ninetynine-0.7-vc7.aab` on the
-   Desktop), and paste the notes in the reply. Once the user confirms the
+   obvious, named with the version (e.g. `ninetynine-0.9-vc9.aab` on the
+   Desktop), and paste the release notes VERBATIM in the reply as a standalone
+   copy-paste block — never just point at `play-listing.md`. The user has made
+   this a standing rule alongside the AAB itself. Once the user confirms the
    bundle was submitted to Play, delete the hand-off copy — the Console's
    App Bundle Explorer retains the uploaded artifact.
-7. **Screenshots: decide explicitly, every time.** If the release changes no
-   visible UI, say "no new screenshots needed" and why. If it does and
-   capture is cumbersome, say so — the user takes them by hand.
+7. **Screenshots: decide explicitly, every time.** If a release changes any
+   visible UI, hand over COMPLETE Play-ready sets — phone, 7-inch and
+   10-inch — for every affected scene, in a Desktop folder laid out per device
+   (`phone/`, `tablet-7/`, `tablet-10/`). Local instrumentation cannot run on
+   the current emulator images (see Known quirks), so these are captured by
+   driving the real app over adb. If nothing visible changed, say "no new
+   screenshots needed" and why.
 
 ## Build, test, verify
 
@@ -342,6 +348,12 @@ revised.
 - **`displayMedium` (30sp) is a standard M3 slot deliberately left in `Type.kt`
   with no render site.** Don't delete it as dead code without asking.
 - **No INTERNET / no network / no analytics / no ads / no billing — ever.**
+- **The scrollbar thumb's length is capped at 40% of its track
+  (`THUMB_MAX_FRACTION`), floor 24dp.** An exactly-proportional thumb betrays
+  the metaphor on a book of short pages: a meaning only ~1.2 screens long
+  yields a thumb covering ~90% of the edge, which reads as the long line the
+  old fill bar was, not as a scrollbar. Position stays exact; only the length
+  cue is clamped. Do not "fix" it back to raw proportions without asking.
 
 ## Known quirks & accepted limitations
 
@@ -373,6 +385,29 @@ revised.
 - **The app deliberately has no SnackbarHost** (reset has no Undo; some failures
   surface as a Toast). A shared snackbar infra is a recurring candidate — don't
   assume one exists.
+- **ScreenshotTest instrumentation cannot run on the current local emulator
+  images (API 37.1).** Espresso's input injection dies on an
+  `InputManager.getInstance` reflection error, and the `hidden_api_policy`
+  override does not save it. Capturing listing screenshots therefore means
+  driving the real app over adb: `uiautomator dump` → match text OR
+  content-desc → `input tap` → `exec-out screencap`, with the debug APK
+  installed. Gotchas learned the hard way, all of which will bite again:
+  - Returning from a name page restores **search mode with the query intact** —
+    tap "Close search" before doing anything else on Home.
+  - Match **exactly**, not by substring: the tab label "NAMES" also occurs
+    inside "99 names still to learn" on Memorize, and a substring matcher taps
+    the wrong thing.
+  - **uiautomator dumps go stale** while animations or the IME are running —
+    the same file comes back twice and taps land on moved targets. Retry the
+    dump until the expected node is there, and dismiss the keyboard (BACK)
+    before tapping list rows. Gboard can also open its own toolbar panel,
+    which swallows taps aimed "through" it.
+  - The swiftshader **SystemUI ANR can appear seconds after launch**, after
+    any one-shot Wait-check has already passed — loop the check.
+  - The names list starts **1 Allah, 2 Al-Ahad, 3 Al-A'laa …** (the source's
+    own order): Ar-Rahmaan is NOT near the top. For the detail/share scenes
+    use search ("Aleem" → Al-Aleem, the longest meaning, so the scrollbar
+    thumb is visible) or the exact row "Allah".
 
 ## Machines & build environments
 
