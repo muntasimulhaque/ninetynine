@@ -151,7 +151,13 @@ fun HomeScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .focusRequester(focusRequester)
-                                .semantics { contentDescription = searchLabel },
+                                // The label rides on the field only while it is
+                                // empty. Set unconditionally, contentDescription
+                                // would replace the field's text and a screen
+                                // reader would never read the query back.
+                                .semantics {
+                                    if (query.isEmpty()) contentDescription = searchLabel
+                                },
                             textStyle = MaterialTheme.typography.titleMedium.copy(
                                 color = MaterialTheme.colorScheme.onSurface,
                             ),

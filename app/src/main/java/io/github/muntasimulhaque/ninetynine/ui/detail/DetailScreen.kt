@@ -80,7 +80,7 @@ import io.github.muntasimulhaque.ninetynine.ui.theme.components.ReadingInset
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.readingMeasure
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.scaledGap
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.ScreenLabel
-import io.github.muntasimulhaque.ninetynine.ui.theme.components.ScrollProgressBar
+import io.github.muntasimulhaque.ninetynine.ui.theme.components.ScrollbarThumb
 import io.github.muntasimulhaque.ninetynine.ui.theme.rememberHaptics
 import kotlin.math.absoluteValue
 import kotlinx.coroutines.CoroutineScope
@@ -197,8 +197,9 @@ fun DetailScreen(
         ShareSheet(name = current, onDismiss = { showShare = false })
     }
 
-    // A single calm fade as the screen settles in.
-    var entered by remember { mutableStateOf(false) }
+    // A single calm fade as the screen settles in — once. rememberSaveable,
+    // or the fade replayed on every rotation.
+    var entered by rememberSaveable { mutableStateOf(false) }
     LaunchedEffect(Unit) { entered = true }
     val enterAlpha by animateFloatAsState(
         targetValue = if (entered) 1f else 0f,
@@ -527,11 +528,11 @@ private fun NamePage(
             }
         }
 
-        // A thin bar on the page's right edge that fills as the reader scrolls,
-        // and is only there while more of the meaning lies below — a clearer
-        // nudge than the old fold-fade, which hid the last line and was easy
-        // to miss.
-        ScrollProgressBar(
+        // A quiet scrollbar thumb on the page's right edge — the platform's
+        // own signal for "more of the meaning lies below", with its size
+        // telling a reader at a glance how many screens the page runs to.
+        // Only present while it does lie below.
+        ScrollbarThumb(
             scrollState = scrollState,
             modifier = Modifier
                 .align(Alignment.TopEnd)

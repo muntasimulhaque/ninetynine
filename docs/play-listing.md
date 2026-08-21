@@ -10,7 +10,7 @@ so do not add a word or a stray space.
 
 - **Application ID (package name):** `io.github.muntasimulhaque.ninetynine`
 - **Privacy policy URL:** `https://muntasimulhaque.github.io/ninetynine/privacy-policy.html`
-- **Version (this release):** versionName `0.7`, versionCode `7`
+- **Version (this release):** versionName `0.8`, versionCode `8`
 
 ---
 
@@ -55,14 +55,14 @@ Free and open source. May Allah make us among those who learn, memorise,
 understand and act upon His beautiful Names.
 ```
 
-## What's new (version 0.7)
+## What's new (version 0.8)
 
 ```
-Position counters and quiz scores now always show Western digits, fixing
-reversed numbers on Arabic and Urdu devices. The home screen no longer wakes
-the app while it is in the background, saving a little battery. Progress
-writes are hardened against a rare cold-start crash, and the share sheet now
-survives screen rotation.
+Name pages now show a familiar scrollbar thumb, so you can see where you are
+and how much remains at a glance. Turning animations off now takes effect
+immediately, without restarting. Screen readers announce what each row opens,
+and search reads your query back. Pages also no longer replay their entrance
+fade when you rotate the phone.
 ```
 
 ## Category, content & data

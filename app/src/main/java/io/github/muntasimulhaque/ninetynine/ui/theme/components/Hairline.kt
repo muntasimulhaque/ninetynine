@@ -16,6 +16,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -63,55 +67,63 @@ fun HairlineProgress(
 }
 
 /**
- * A thin vertical bar on the right edge that fills downward as the reader
- * scrolls, and is only there while more content lies below.
+ * A quiet scrollbar thumb on the page's right edge — the platform's own shape
+ * for "there is more below".
  *
- * Vertical scrolling is signalled by a vertical indicator on the right — the
- * affordance everybody already knows. The unfilled part of the track is "there
- * is still more to read below", the gold fill is how far you have come, and
- * when the end is reached the bar fades away. It carries no presence when the
- * content fits — `canScrollForward` is false, so it stays at alpha 0 inside its
- * 2dp slot and never covers a word.
+ * Replaces an earlier fill bar (a 2dp sliver that filled downward). The thumb
+ * was chosen over it because it is the one scroll signal every Android reader
+ * has already learned — Settings lists, WebViews and RecyclerViews all show
+ * one while flinging — and because it says more at a glance: its position is
+ * where you are, and its size is how much of the page one screen holds, so a
+ * short thumb says "several screens to go" without a word.
+ *
+ * Persistent by decision, not the hide-until-scroll kind: a reader sitting at
+ * the top of a long meaning is exactly the person who needs telling. It fades
+ * away only when there is nothing to tell — `canScrollForward` is false once
+ * the content fits, so it never covers a word.
+ *
+ * Display-only. Dragging it would make it a fast-scroller, rejected earlier
+ * as wrong for a book of short pages.
+ *
+ * Geometry is computed in the draw phase straight off the [ScrollState], so
+ * scrolling redraws the thumb without recomposing anything. The thumb travels
+ * the track minus its own height, the way every OS scrollbar behaves, and its
+ * minimum height keeps it present on pages whose content runs many screens.
+ *
+ * Decorative: carries no semantics, so TalkBack reads the text and not the
+ * chrome.
  */
 @Composable
-fun ScrollProgressBar(
+fun ScrollbarThumb(
     scrollState: ScrollState,
     modifier: Modifier = Modifier,
 ) {
-    // read through derivedStateOf, not directly: scrollState.value changes on
-    // every scroll frame, and reading it here would recompose the bar each
-    // one. The derived state recomputes the fraction but only invalidates the
-    // composition when the value actually changes.
-    val fraction by remember {
-        derivedStateOf {
-            if (scrollState.maxValue > 0) {
-                scrollState.value.toFloat() / scrollState.maxValue
-            } else {
-                0f
-            }
-        }
-    }
     val visible by animateFloatAsState(
         targetValue = if (scrollState.canScrollForward) 1f else 0f,
         animationSpec = Motion.tween(Motion.QUICK),
-        label = "scrollBar",
+        label = "scrollThumb",
     )
+    val color = MaterialTheme.colorScheme.outline
     Box(
         modifier = modifier
             .fillMaxHeight()
-            .width(2.dp)
+            .width(3.dp)
             .graphicsLayer { alpha = visible }
-            .clip(CircleShape)
-            // The same track/fill pair as HairlineProgress, so the cue reads
-            // as one more of the app's own hairlines.
-            .background(MaterialTheme.colorScheme.outline),
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxHeight(fraction)
-                .fillMaxWidth()
-                .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.onSecondaryContainer),
-        )
-    }
+            .drawBehind {
+                val maxScroll = scrollState.maxValue
+                if (maxScroll <= 0) return@drawBehind
+                val minThumbPx = 24.dp.toPx()
+                val thumbHeight = (
+                    size.height * (size.height / (size.height + maxScroll))
+                    ).coerceAtLeast(minThumbPx).coerceAtMost(size.height)
+                val travelled = scrollState.value.toFloat() / maxScroll
+                val top = (size.height - thumbHeight) * travelled
+                drawRoundRect(
+                    color = color,
+                    topLeft = Offset(0f, top),
+                    size = Size(size.width, thumbHeight),
+                    cornerRadius = CornerRadius(size.width / 2f),
+                )
+            },
+    )
 }

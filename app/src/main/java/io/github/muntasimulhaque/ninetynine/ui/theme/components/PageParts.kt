@@ -277,11 +277,14 @@ fun NavRow(
     subtitle: String? = null,
     titleStyle: TextStyle = MaterialTheme.typography.titleLarge,
     titleColor: Color = MaterialTheme.colorScheme.onSurface,
+    onClickLabel: String = stringResource(R.string.cd_open),
 ) {
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick)
+            // TalkBack speaks this instead of its bare "double-tap to
+            // activate", so a contents row says what tapping it opens.
+            .clickable(onClickLabel = onClickLabel, onClick = onClick)
             .semantics { role = Role.Button }
             .padding(vertical = if (subtitle == null) 17.dp else 20.dp),
         verticalAlignment = Alignment.CenterVertically,

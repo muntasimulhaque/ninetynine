@@ -24,6 +24,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -85,7 +86,9 @@ fun AboutScreen(onBack: () -> Unit) {
             .filter { it.isNotEmpty() }
     }
 
-    var entered by remember { mutableStateOf(false) }
+    // Once per process, not once per rotation: rememberSaveable keeps the
+    // fade from replaying on every configuration change.
+    var entered by rememberSaveable { mutableStateOf(false) }
     LaunchedEffect(Unit) { entered = true }
     val enterAlpha by animateFloatAsState(
         targetValue = if (entered) 1f else 0f,

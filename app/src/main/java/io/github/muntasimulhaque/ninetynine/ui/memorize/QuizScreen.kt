@@ -523,6 +523,7 @@ private fun QuizResultContent(
                     title = name.transliteration,
                     subtitle = name.title,
                     titleStyle = MaterialTheme.typography.titleMedium,
+                    onClickLabel = stringResource(R.string.cd_open_name),
                     onClick = { onNameClick(name.number) },
                 )
                 PageRule()

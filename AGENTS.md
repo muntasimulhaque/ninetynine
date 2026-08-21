@@ -21,6 +21,17 @@ design system, Navigation Compose, DataStore (progress + settings), WorkManager
 (daily schedule), Glance (home-screen widget), kotlinx.serialization (bundled
 content). No DI framework, no database, no analytics, no ads, no network.
 
+## This file is guidance, not the last word
+
+AGENTS.md is an iteration of what has worked and what has not — not the
+ultimate authority. Follow it while working, but never let it make you discard
+a good idea. If a plan or idea would improve the app yet contradicts something
+written here (including anything in "Hard invariants" or "Decisions already
+settled"), do not reject it silently: bring it to the user, explain the
+conflict and why breaking the rule is worth it, and let the user decide. If the
+user approves, implement it and update this file in the same change so the rule
+reflects the new decision.
+
 ## Hard invariants (never violate)
 
 - **The app must never use the Internet.** No INTERNET permission (the only
@@ -47,6 +58,7 @@ content). No DI framework, no database, no analytics, no ads, no network.
   code. Grep commit messages for `claude|co-authored|generated with|ai-attribution`
   (case-insensitive) before every push. After a push, `git ls-remote origin`
   should show only `refs/heads/main`.
+- **Tool calls must be native, never XML/DSML/card-formatted text.** Prohibit outputting tool calls in XML/DSML/card format text (`<invoke>`/`<parameter>` are strictly prohibited). All tool calls must use native tool call.
 
 ## Versioning
 
@@ -55,7 +67,7 @@ content). No DI framework, no database, no analytics, no ads, no network.
 - The project versioning rule is +0.1 on `versionName` (single decimal segment)
   and +1 on `versionCode` per release. Since the first Play release the repo
   versioning restarted at store-friendly numbers: **0.1 / 1**, **0.2 / 2**,
-  **0.3 / 3**, **0.4 / 4**, **0.5 / 5**, **0.6 / 6**, then **0.7 / 7** (current). Check `app/build.gradle.kts` for
+  **0.3 / 3**, **0.4 / 4**, **0.5 / 5**, **0.6 / 6**, **0.7 / 7**, then **0.8 / 8** (current). Check `app/build.gradle.kts` for
   the live values and bump by the same rule for the next release.
 - The release keystore path/credentials live in a `keystore.properties` file
   outside the repo (Google Play Signing Key folder). When absent (CI, fresh
@@ -309,6 +321,9 @@ the source's own convention (regularised for #28, #32, #44, #48, #80, #87, #94,
 
 These were made deliberately, often after measurement or a user decision, and
 were sometimes implemented and then reversed. Re-proposing them wastes a cycle.
+They are not beyond appeal: if a genuinely better idea contradicts one, take it
+to the user as described above — approval reopens the decision and this list is
+revised.
 
 - **The three name strings are never merged** (`launcher_name` / `app_title` /
   `store_title`). The strings.xml comment explains each; two hold the same words
@@ -324,7 +339,7 @@ were sometimes implemented and then reversed. Re-proposing them wastes a cycle.
 - **The transliteration of the source is faithfully reproduced**, regularised in
   exactly eight places to the source's own convention (#28, #32, #44, #48, #80,
   #87, #94, #95). Do not "standardise" the rest.
-- **`displayMedium` (28sp) is a standard M3 slot deliberately left in `Type.kt`
+- **`displayMedium` (30sp) is a standard M3 slot deliberately left in `Type.kt`
   with no render site.** Don't delete it as dead code without asking.
 - **No INTERNET / no network / no analytics / no ads / no billing — ever.**
 

@@ -3,6 +3,7 @@ package io.github.muntasimulhaque.ninetynine.ui.theme.components
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -85,9 +86,14 @@ fun NameListItem(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    // clickable on the modifier rather than Surface's onClick overload: M3's
+    // Surface takes no onClickLabel, and this way TalkBack announces what the
+    // row opens instead of its bare "double-tap to activate". The surface is
+    // transparent and unshaped, so the ripple bounds are unchanged.
     Surface(
-        onClick = onClick,
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable(onClickLabel = stringResource(R.string.cd_open_name), onClick = onClick),
         color = Color.Transparent,
     ) {
         Row(

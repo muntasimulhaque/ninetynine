@@ -43,6 +43,10 @@
     <string name="about">About</string>
     <string name="cd_back">Back</string>
     <string name="cd_more">More options</string>
+    <!-- Spoken instead of TalkBack's bare "double-tap to activate": a row or
+         card says what tapping it opens. -->
+    <string name="cd_open">Open</string>
+    <string name="cd_open_name">Open name page</string>
     <string name="back_to_memorize">Back to Memorize</string>
 
     <!-- Home -->
