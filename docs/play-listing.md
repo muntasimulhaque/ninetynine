@@ -10,7 +10,7 @@ so do not add a word or a stray space.
 
 - **Application ID (package name):** `io.github.muntasimulhaque.ninetynine`
 - **Privacy policy URL:** `https://muntasimulhaque.github.io/ninetynine/privacy-policy.html`
-- **Version (this release):** versionName `0.9`, versionCode `9`
+- **Version (this release):** versionName `1.0`, versionCode `10`
 
 ---
 
@@ -30,7 +30,7 @@ Learn and memorize the 99 Names of Allah — Arabic, transliteration and meaning
 
 ```
 The Ninety Nine Names of Allah is a calm, book-like companion for learning and
-memorising the beautiful Names of Allah (Asma'ul Husna).
+memorizing the beautiful Names of Allah (Asma'ul Husna).
 
 Each of the 99 Names is presented carefully:
 
@@ -51,17 +51,22 @@ Made to be read:
 • Adjustable text size
 • Offline, private and free — no ads, no tracking, no account
 
-Free and open source. May Allah make us among those who learn, memorise,
+Free and open source. May Allah make us among those who learn, memorize,
 understand and act upon His beautiful Names.
 ```
 
-## What's new (version 0.9)
+## What's new (version 1.0)
 
 ```
-Polish to the new scrollbar: on pages whose meaning nearly fits one screen,
-the thumb no longer stretches almost the full length of the edge. It is now
-capped at a thumb-like size and slides as you read, so it always reads as a
-scrollbar while still showing exactly where you are. Nothing else has changed.
+Fixes for readers on older phones, and finer speech for TalkBack:
+
+• Android 7: the launcher icon now appears correctly.
+• Android 8 to 11: the widget picker now shows a preview of the Name of the
+Day widget instead of the app icon.
+• TalkBack now announces what tapping the day's name card, the learned count
+and the notification time does.
+
+All 99 Names are unchanged.
 ```
 
 ## Category, content & data

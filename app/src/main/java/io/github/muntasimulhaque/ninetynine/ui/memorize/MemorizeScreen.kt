@@ -105,7 +105,13 @@ fun MemorizeScreen(
                 Row(
                     verticalAlignment = Alignment.Bottom,
                     modifier = Modifier
-                        .clickable(onClick = onLearned)
+                        // onClickLabel, not just Role.Button: the big number
+                        // and caption say what they count, not what tapping
+                        // them opens.
+                        .clickable(
+                            onClickLabel = stringResource(R.string.cd_see_learned),
+                            onClick = onLearned,
+                        )
                         .semantics { role = Role.Button },
                 ) {
                     Text(

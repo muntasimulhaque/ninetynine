@@ -1,4 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- previewImage is what pickers below Android 12 show (previewLayout needs
+     API 31+); without it they fell back to the app icon, which told the
+     reader nothing about the widget they were about to place. -->
 <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
     android:minWidth="180dp"
     android:minHeight="110dp"
@@ -9,6 +12,7 @@
     android:resizeMode="horizontal|vertical"
     android:updatePeriodMillis="0"
     android:initialLayout="@layout/widget_preview"
+    android:previewImage="@drawable/widget_preview_image"
     android:previewLayout="@layout/widget_preview"
     android:widgetCategory="home_screen"
     android:description="@string/widget_description" />

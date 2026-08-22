@@ -232,7 +232,10 @@ fun SettingsScreen(
                         // the picker's remembered state seeds from the 8:00
                         // default and never re-seeds, so opening it early
                         // would silently overwrite the user's chosen time.
-                        .clickable(enabled = dailyTimeLoaded) { showTimePicker = true }
+                        .clickable(
+                            enabled = dailyTimeLoaded,
+                            onClickLabel = stringResource(R.string.cd_change_time),
+                        ) { showTimePicker = true }
                         // The row is inert while DataStore has not delivered
                         // the saved time; say so, or a screen reader hears a
                         // plain row that later becomes a button.

@@ -1,6 +1,8 @@
 package io.github.muntasimulhaque.ninetynine.ui.home
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.LocalIndication
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Box
@@ -325,16 +327,26 @@ private fun DailyHeroCard(name: Name, onClick: () -> Unit) {
         animationSpec = Motion.soft(),
         label = "heroPress",
     )
+    // clickable on the modifier rather than Card(onClick): M3's clickable card
+    // takes no onClickLabel, and its content — a Name, an epithet, some Arabic
+    // — never says what tapping it does. This way TalkBack offers "Open
+    // today's name" instead of its bare "double-tap to activate", exactly as
+    // the list rows already do. The card's own press ripple is preserved by
+    // feeding clickable the same interaction source the scale animation reads.
     Card(
-        onClick = onClick,
-        interactionSource = interaction,
         modifier = Modifier
             .padding(horizontal = 16.dp, vertical = 8.dp)
             .fillMaxWidth()
             .graphicsLayer {
                 scaleX = scale
                 scaleY = scale
-            },
+            }
+            .clickable(
+                interactionSource = interaction,
+                indication = LocalIndication.current,
+                onClickLabel = stringResource(R.string.cd_open_daily),
+                onClick = { onClick() },
+            ),
         shape = MaterialTheme.shapes.large,
         colors = CardDefaults.cardColors(containerColor = HeroContainer),
     ) {

@@ -47,6 +47,12 @@
          card says what tapping it opens. -->
     <string name="cd_open">Open</string>
     <string name="cd_open_name">Open name page</string>
+    <!-- Spoken by TalkBack as the custom action on the daily hero card, whose
+         content (Arabic, a transliteration, an epithet) does not itself say
+         what tapping it does. -->
+    <string name="cd_open_daily">Open today\'s name</string>
+    <string name="cd_see_learned">See learned names</string>
+    <string name="cd_change_time">Change notification time</string>
     <string name="back_to_memorize">Back to Memorize</string>
 
     <!-- Home -->
