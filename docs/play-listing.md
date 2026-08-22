@@ -10,7 +10,7 @@ so do not add a word or a stray space.
 
 - **Application ID (package name):** `io.github.muntasimulhaque.ninetynine`
 - **Privacy policy URL:** `https://muntasimulhaque.github.io/ninetynine/privacy-policy.html`
-- **Version (this release):** versionName `1.0`, versionCode `10`
+- **Version (this release):** versionName `1.1`, versionCode `11`
 
 ---
 
@@ -53,6 +53,22 @@ Made to be read:
 
 Free and open source. May Allah make us among those who learn, memorize,
 understand and act upon His beautiful Names.
+```
+
+## What's new (version 1.1)
+
+```
+A round of motion and moments, everywhere you felt a cut:
+
+• Quiz questions turn like pages now, and your score
+counts itself up — a perfect round earns the app's gold seal.
+• The learned count rolls to meet you when you return having learned more.
+• A fruitless search offers "Clear search" right there.
+• Long lists carry the reading pages' quiet position thumb.
+• The day's name card turns over gently at midnight.
+• The daily notification wears the app's emerald.
+
+All 99 Names are unchanged.
 ```
 
 ## What's new (version 1.0)

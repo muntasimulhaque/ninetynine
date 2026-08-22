@@ -78,6 +78,7 @@ import io.github.muntasimulhaque.ninetynine.R
 import io.github.muntasimulhaque.ninetynine.data.ThemeMode
 import io.github.muntasimulhaque.ninetynine.ui.NamesViewModel
 import io.github.muntasimulhaque.ninetynine.ui.theme.Motion
+import io.github.muntasimulhaque.ninetynine.ui.theme.rememberHaptics
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.BackButton
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.ListInset
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.MixedText
@@ -100,6 +101,7 @@ fun SettingsScreen(
     onBack: () -> Unit,
 ) {
     val context = LocalContext.current
+    val haptics = rememberHaptics()
     val themeMode by viewModel.themeMode.collectAsStateWithLifecycle()
     val textScale by viewModel.textScale.collectAsStateWithLifecycle()
     val dailyEnabled by viewModel.dailyEnabled.collectAsStateWithLifecycle()
@@ -163,10 +165,25 @@ fun SettingsScreen(
             SectionLabel(stringResource(R.string.theme_section))
             Spacer(Modifier.height(10.dp))
             Column(Modifier.selectableGroup()) {
-                ThemeOption(ThemeMode.SYSTEM, R.string.theme_system, themeMode, viewModel::setThemeMode)
-                ThemeOption(ThemeMode.LIGHT, R.string.theme_light, themeMode, viewModel::setThemeMode)
-                ThemeOption(ThemeMode.DARK, R.string.theme_dark, themeMode, viewModel::setThemeMode)
-                ThemeOption(ThemeMode.BLACK, R.string.theme_black, themeMode, viewModel::setThemeMode)
+                // A featherweight tick on choice, matching every other
+                // meaningful toggle in the app — the switch, the bookmark,
+                // the quiz answer all speak to the finger.
+                ThemeOption(ThemeMode.SYSTEM, R.string.theme_system, themeMode) {
+                    haptics.tick()
+                    viewModel.setThemeMode(it)
+                }
+                ThemeOption(ThemeMode.LIGHT, R.string.theme_light, themeMode) {
+                    haptics.tick()
+                    viewModel.setThemeMode(it)
+                }
+                ThemeOption(ThemeMode.DARK, R.string.theme_dark, themeMode) {
+                    haptics.tick()
+                    viewModel.setThemeMode(it)
+                }
+                ThemeOption(ThemeMode.BLACK, R.string.theme_black, themeMode) {
+                    haptics.tick()
+                    viewModel.setThemeMode(it)
+                }
             }
 
             SectionBreak()

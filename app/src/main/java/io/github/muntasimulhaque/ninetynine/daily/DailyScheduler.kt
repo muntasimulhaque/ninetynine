@@ -245,6 +245,11 @@ class NotificationWorker(context: Context, params: WorkerParameters) :
 
         val notification = NotificationCompat.Builder(context, DailyScheduler.CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_notification)
+            // Many skins tint the small icon's backdrop circle with this —
+            // the app's own emerald, so even the shade carries the identity.
+            .setColor(0xFF1F4E42.toInt())
+            // A daily invitation to read, not an alarm or a calendar event.
+            .setCategory(NotificationCompat.CATEGORY_REMINDER)
             // System-font surface: use the Noto-safe form of الله (see DailyNameWidget).
             .setContentTitle("${DailyNameWidget.systemFontSafeArabic(name.arabic)}  ${name.transliteration}")
             .setContentText(name.title)

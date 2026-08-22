@@ -1,10 +1,12 @@
 package io.github.muntasimulhaque.ninetynine.ui.memorize
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
@@ -13,6 +15,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -22,6 +25,8 @@ import io.github.muntasimulhaque.ninetynine.ui.NamesViewModel
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.BackButton
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.NameListItem
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.NameRowInset
+import io.github.muntasimulhaque.ninetynine.ui.theme.components.EmptyState
+import io.github.muntasimulhaque.ninetynine.ui.theme.components.LazyScrollbarThumb
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.PageMessage
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.ScreenLabel
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.nameRowTextInset
@@ -47,6 +52,9 @@ fun LearnedScreen(
     val namesLoaded by viewModel.namesLoaded.collectAsStateWithLifecycle()
     val learned by viewModel.learned.collectAsStateWithLifecycle()
     val learnedLoaded by viewModel.learnedLoaded.collectAsStateWithLifecycle()
+    // A pushed screen keeps its own list state: Back from a name restores the
+    // scroll position the reader left.
+    val listState = rememberLazyListState()
 
     // Book order, like every other list in the app.
     val known = remember(names, learned) { names.filter { it.number in learned } }
@@ -61,35 +69,51 @@ fun LearnedScreen(
         },
     ) { padding ->
         val dividerInset = nameRowTextInset()
-        LazyColumn(
-            contentPadding = PaddingValues(
-                top = padding.calculateTopPadding(),
-                bottom = padding.calculateBottomPadding() + 16.dp,
-            ),
-            modifier = Modifier.fillMaxSize(),
-        ) {
-            if (known.isEmpty() && learnedLoaded && namesLoaded) {
-                item {
-                    PageMessage(
-                        stringResource(
-                            if (namesLoaded && names.isEmpty()) R.string.names_unavailable
-                            else R.string.no_learned
-                        )
+        Box(Modifier.fillMaxSize()) {
+            LazyColumn(
+                state = listState,
+                contentPadding = PaddingValues(
+                    top = padding.calculateTopPadding(),
+                    bottom = padding.calculateBottomPadding() + 16.dp,
+                ),
+                modifier = Modifier.fillMaxSize(),
+            ) {
+                if (known.isEmpty() && learnedLoaded && namesLoaded) {
+                    if (namesLoaded && names.isEmpty()) {
+                        item { PageMessage(stringResource(R.string.names_unavailable)) }
+                    } else {
+                        item(key = "empty") {
+                            Box(
+                                modifier = Modifier.fillParentMaxSize(),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                EmptyState(
+                                    title = stringResource(R.string.empty_learned_title),
+                                    body = stringResource(R.string.empty_learned_body),
+                                )
+                            }
+                        }
+                    }
+                }
+                items(known, key = { it.number }) { name ->
+                    NameListItem(
+                        name = name,
+                        learned = true,
+                        onClick = { onNameClick(name.number) },
+                    )
+                    HorizontalDivider(
+                        modifier = Modifier.padding(start = dividerInset, end = NameRowInset),
+                        thickness = 0.5.dp,
+                        color = MaterialTheme.colorScheme.outlineVariant,
                     )
                 }
             }
-            items(known, key = { it.number }) { name ->
-                NameListItem(
-                    name = name,
-                    learned = true,
-                    onClick = { onNameClick(name.number) },
-                )
-                HorizontalDivider(
-                    modifier = Modifier.padding(start = dividerInset, end = NameRowInset),
-                    thickness = 0.5.dp,
-                    color = MaterialTheme.colorScheme.outlineVariant,
-                )
-            }
+            LazyScrollbarThumb(
+                listState = listState,
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(top = padding.calculateTopPadding() + 8.dp, bottom = 32.dp, end = 4.dp),
+            )
         }
     }
 }

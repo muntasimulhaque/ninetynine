@@ -107,7 +107,12 @@
     <string name="quiz_answer_wrong">Wrong. The correct answer is %1$s</string>
     <string name="bookmarked">Bookmarked</string>
     <string name="not_bookmarked">Not bookmarked</string>
-    <string name="no_bookmarks">Nothing kept yet. Open any name and tap the bookmark to keep it here.</string>
+    <!-- Empty states that explain themselves: an upright title, then guidance.
+         The failure case (the asset itself unreadable) keeps names_unavailable. -->
+    <string name="empty_bookmarks_title">Nothing kept yet</string>
+    <string name="empty_bookmarks_body">Open any name and tap the bookmark to keep it here.</string>
+    <string name="empty_learned_title">None marked yet</string>
+    <string name="empty_learned_body">Open any name and tap Mark as learned.</string>
 
     <!-- Share -->
     <string name="cd_share">Share this name</string>
@@ -131,7 +136,6 @@
     </plurals>
     <string name="quiz_best">Best quiz score: %1$d of 10</string>
     <string name="learned_names">Learned names</string>
-    <string name="no_learned">No names marked as learned yet. Open any name and tap Mark as learned.</string>
     <string name="undo_card">Undo last card</string>
     <string name="all_learned_title">All 99 names learned</string>
     <string name="all_learned_text">Masha\'Allah — you have marked every name as learned. Keep reviewing to keep them fresh.</string>
@@ -161,7 +165,11 @@
     <string name="cd_wrong">Wrong answer</string>
 
     <!-- Search -->
-    <string name="no_results">No names match your search.</string>
+    <string name="no_results_title">No names match your search.</string>
+    <!-- The hint teaches what search covers — meanings, notes and numbers
+         too — so an empty result becomes a lesson instead of a dead end. -->
+    <string name="no_results_body">Try a meaning, like \u201Cmercy\u201D — or a number.</string>
+    <string name="action_clear_search">Clear search</string>
     <string name="names_unavailable">The names could not be loaded. Reinstalling the app should put this right.</string>
 
     <!-- Daily name -->

@@ -81,15 +81,35 @@ class QuizViewModelTest {
     }
 
     @Test
-    fun nextAdvancesAndResetsSelection() {
+    fun nextAdvancesAndNewQuestionReadsUnanswered() {
+        val vm = vm()
+        vm.ensureQuiz(names, learned = emptySet())
+        val firstCorrect = vm.questions[0].answerIndex
+        vm.select(firstCorrect)
+        assertEquals(firstCorrect, vm.chosenFor(0))
+        vm.next()
+        assertEquals(1, vm.index)
+        // The outgoing question keeps its answer so its turn-away animation
+        // still shows the verdict; the incoming one reads as untouched.
+        assertEquals(-1, vm.chosenFor(1))
+        assertFalse(vm.finished)
+    }
+
+    @Test
+    fun staleSelectionNeverCountsTwiceOrLeaksForward() {
         val vm = vm()
         vm.ensureQuiz(names, learned = emptySet())
         vm.select(vm.questions[0].answerIndex)
-        assertEquals(0, vm.index)
         vm.next()
-        assertEquals(1, vm.index)
-        assertEquals(-1, vm.selected)
-        assertFalse(vm.finished)
+        // The carried selection is tagged to question 0; answering question 1
+        // must be possible exactly once and score exactly one step.
+        val wrong = (vm.questions[1].answerIndex + 1) % 4
+        assertFalse(vm.select(wrong))
+        assertFalse(vm.select(wrong))
+        // Score is still only question 0's; the miss is question 1's.
+        assertEquals(1, vm.score)
+        assertEquals(listOf(vm.questions[1].number), vm.missed)
+        assertEquals(-1, vm.chosenFor(2))
     }
 
     @Test
@@ -130,6 +150,7 @@ class QuizViewModelTest {
         assertEquals(0, vm.index)
         assertEquals(0, vm.score)
         assertEquals(-1, vm.selected)
+        assertEquals(-1, vm.selectedAt)
         assertFalse(vm.finished)
         assertTrue(vm.missed.isEmpty())
         assertEquals(10, vm.questions.size)

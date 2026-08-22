@@ -1,5 +1,6 @@
 package io.github.muntasimulhaque.ninetynine.ui.memorize
 
+import androidx.compose.animation.core.Animatable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -20,7 +21,12 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
@@ -30,9 +36,13 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.launch
+import kotlin.math.roundToInt
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.muntasimulhaque.ninetynine.R
 import io.github.muntasimulhaque.ninetynine.ui.NamesViewModel
+import io.github.muntasimulhaque.ninetynine.ui.theme.LocalMotionScale
+import io.github.muntasimulhaque.ninetynine.ui.theme.Motion
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.HairlineProgress
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.ListInset
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.scaledGap
@@ -59,6 +69,28 @@ fun MemorizeScreen(
     val namesLoaded by viewModel.namesLoaded.collectAsStateWithLifecycle()
     val quizBest by viewModel.quizBest.collectAsStateWithLifecycle()
     val learnedCount = learned.size.coerceIn(0, 99)
+
+    // The count rolls to meet the reader instead of teleporting: leave at 41,
+    // learn five on the name pages, come back and watch 41 become 46. Where
+    // the roll starts rides in saved instance state, so even a process death
+    // mid-visit lands on a number that then moves. A first-ever composition
+    // starts exactly on target — no theatrical roll up from zero — and with
+    // animations off it simply is the number.
+    var lastSeen by rememberSaveable { mutableIntStateOf(-1) }
+    val rolled = remember {
+        Animatable(if (lastSeen in 0..99) lastSeen.toFloat() else learnedCount.toFloat())
+    }
+    val motionScale = LocalMotionScale.current
+    LaunchedEffect(learnedCount) {
+        if (rolled.value != learnedCount.toFloat()) {
+            if (motionScale == 0f) rolled.snapTo(learnedCount.toFloat())
+            else rolled.animateTo(
+                learnedCount.toFloat(),
+                Motion.spec(motionScale, Motion.CALM, easing = Motion.Settle),
+            )
+        }
+        lastSeen = learnedCount
+    }
 
     Scaffold(
         topBar = {
@@ -115,7 +147,7 @@ fun MemorizeScreen(
                         .semantics { role = Role.Button },
                 ) {
                     Text(
-                        text = learnedCount.toString(),
+                        text = rolled.value.roundToInt().coerceIn(0, 99).toString(),
                         style = MaterialTheme.typography.displayLarge,
                         color = MaterialTheme.colorScheme.onSurface,
                     )

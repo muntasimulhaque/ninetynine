@@ -2,6 +2,7 @@ package io.github.muntasimulhaque.ninetynine.ui.theme.components
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.ScrollState
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -106,6 +107,72 @@ fun HairlineProgress(
  * Decorative: carries no semantics, so TalkBack reads the text and not the
  * chrome.
  */
+/**
+ * The same thumb as [ScrollbarThumb], drawn off a [LazyListState] — the
+ * lists' rows have no single scroll position to read, so the geometry is
+ * estimated from the visible window: average row height × total count.
+ * Row heights vary by a few points of text, well inside what a position cue
+ * needs to be honest; the cap and floor are shared with the reading-page
+ * thumb, so the two can never disagree about how long a thumb may be.
+ *
+ * Display-only, exactly like [ScrollbarThumb]: dragging it would make it a
+ * fast-scroller, rejected earlier as wrong for a book of short pages. And it
+ * hides entirely when every row fits — a thumb on a screen with nothing
+ * below it lies.
+ */
+@Composable
+fun LazyScrollbarThumb(
+    listState: LazyListState,
+    modifier: Modifier = Modifier,
+) {
+    val visible by animateFloatAsState(
+        targetValue = if (listState.canScrollForward || listState.canScrollBackward) 1f else 0f,
+        animationSpec = Motion.tween(Motion.QUICK),
+        label = "lazyScrollThumb",
+    )
+    val color = MaterialTheme.colorScheme.outline
+    Box(
+        modifier = modifier
+            .fillMaxHeight()
+            .width(3.dp)
+            .graphicsLayer { alpha = visible }
+            .drawBehind {
+                val info = listState.layoutInfo
+                val shown = info.visibleItemsInfo
+                if (shown.isEmpty()) return@drawBehind
+                val last = shown.last()
+                if (shown.size == info.totalItemsCount &&
+                    shown.first().offset >= 0 &&
+                    last.offset + last.size <= info.viewportSize.height
+                ) {
+                    return@drawBehind
+                }
+                val avg = shown.map { it.size }
+                    .average()
+                    .takeIf { !it.isNaN() }
+                    ?.toFloat()
+                    ?.coerceAtLeast(1f)
+                    ?: 1f
+                val contentPx = avg * info.totalItemsCount
+                val viewport = info.viewportSize.height.toFloat()
+                val scrolled = (shown.first().index * avg - shown.first().offset)
+                    .coerceIn(0f, (contentPx - viewport).coerceAtLeast(0f))
+                val fraction = scrolled / (contentPx - viewport).coerceAtLeast(1f)
+                val thumbHeight = (viewport * (viewport / contentPx))
+                    .coerceAtMost(viewport * THUMB_MAX_FRACTION)
+                    .coerceAtLeast(24.dp.toPx())
+                    .coerceAtMost(viewport)
+                val top = (viewport - thumbHeight) * fraction
+                drawRoundRect(
+                    color = color,
+                    topLeft = Offset(0f, top),
+                    size = Size(size.width, thumbHeight),
+                    cornerRadius = CornerRadius(size.width / 2f),
+                )
+            },
+    )
+}
+
 @Composable
 fun ScrollbarThumb(
     scrollState: ScrollState,

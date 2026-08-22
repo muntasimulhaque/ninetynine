@@ -20,6 +20,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarColors
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -222,6 +223,53 @@ fun PageMessage(text: String) {
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
         )
+    }
+}
+
+/**
+ * An empty screen that explains itself: an upright title, an italic line of
+ * guidance beneath it, and an optional way out.
+ *
+ * Used for the empties a reader can act on — nothing kept, none learned, a
+ * search with no matches — while [PageMessage] stays for the failure cases
+ * that offer no action. Set like the rest of the book: title in the ink,
+ * guidance in the quiet italic, and the house TextButton rather than a new
+ * kind of control arriving on an empty page.
+ */
+@Composable
+fun EmptyState(
+    title: String,
+    modifier: Modifier = Modifier,
+    body: String? = null,
+    actionLabel: String? = null,
+    onAction: (() -> Unit)? = null,
+) {
+    Column(
+        modifier = modifier.padding(48.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onSurface,
+            textAlign = TextAlign.Center,
+        )
+        if (body != null) {
+            Spacer(Modifier.height(8.dp))
+            Text(
+                text = body,
+                style = MaterialTheme.typography.bodyMedium,
+                fontStyle = FontStyle.Italic,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+            )
+        }
+        if (actionLabel != null && onAction != null) {
+            Spacer(Modifier.height(16.dp))
+            TextButton(onClick = onAction) {
+                Text(actionLabel)
+            }
+        }
     }
 }
 

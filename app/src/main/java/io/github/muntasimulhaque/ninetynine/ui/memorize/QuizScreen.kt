@@ -1,10 +1,17 @@
 package io.github.muntasimulhaque.ninetynine.ui.memorize
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -17,7 +24,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Cancel
@@ -25,6 +34,7 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -32,15 +42,18 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.contentDescription
@@ -59,6 +72,7 @@ import io.github.muntasimulhaque.ninetynine.ui.NamesViewModel
 import io.github.muntasimulhaque.ninetynine.ui.theme.HeroContainer
 import io.github.muntasimulhaque.ninetynine.ui.theme.HeroGold
 import io.github.muntasimulhaque.ninetynine.ui.theme.HeroText
+import io.github.muntasimulhaque.ninetynine.ui.theme.LocalMotionScale
 import io.github.muntasimulhaque.ninetynine.ui.theme.Motion
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.ArabicSize
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.ArabicText
@@ -77,6 +91,7 @@ import io.github.muntasimulhaque.ninetynine.util.QuizBuilder
 import io.github.muntasimulhaque.ninetynine.util.QuizQuestion
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import kotlin.math.roundToInt
 
 /** Session state for one quiz round; survives rotation with the ViewModel. */
 class QuizViewModel(private val savedState: SavedStateHandle) : ViewModel() {
@@ -85,6 +100,16 @@ class QuizViewModel(private val savedState: SavedStateHandle) : ViewModel() {
     var index by mutableIntStateOf(savedState.get<Int>(KEY_INDEX) ?: 0); private set
     var score by mutableIntStateOf(savedState.get<Int>(KEY_SCORE) ?: 0); private set
     var selected by mutableIntStateOf(savedState.get<Int>(KEY_SELECTED) ?: -1); private set
+
+    /**
+     * The question index [selected] was made on.
+     *
+     * [next] deliberately does not clear the selection: the outgoing question
+     * keeps its answered state for the length of its turn-away animation, so
+     * the green verdict never blinks off mid-fade. What any question reads as
+     * ITS answer is derived — see [chosenFor].
+     */
+    var selectedAt by mutableIntStateOf(savedState.get<Int>(KEY_SELECTED_AT) ?: -1); private set
     var finished by mutableStateOf(savedState.get<Boolean>(KEY_FINISHED) ?: false); private set
 
     /**
@@ -112,6 +137,7 @@ class QuizViewModel(private val savedState: SavedStateHandle) : ViewModel() {
         savedState[KEY_INDEX] = index
         savedState[KEY_SCORE] = score
         savedState[KEY_SELECTED] = selected
+        savedState[KEY_SELECTED_AT] = selectedAt
         savedState[KEY_FINISHED] = finished
         savedState[KEY_MISSED] = missed.toIntArray()
     }
@@ -123,10 +149,18 @@ class QuizViewModel(private val savedState: SavedStateHandle) : ViewModel() {
         }
     }
 
+    /**
+     * The selection as question [questionIndex] sees it: -1 when unanswered.
+     * A stale selection from an earlier question never leaks into a later
+     * one, because the tag no longer matches.
+     */
+    fun chosenFor(questionIndex: Int): Int = if (selectedAt == questionIndex) selected else -1
+
     /** Returns true when the tapped option is the correct answer. */
     fun select(optionIndex: Int): Boolean {
-        if (selected != -1) return false
+        if (chosenFor(index) != -1) return false
         selected = optionIndex
+        selectedAt = index
         val correct = optionIndex == questions[index].answerIndex
         if (correct) score++ else missed = missed + questions[index].number
         saveSession()
@@ -136,7 +170,8 @@ class QuizViewModel(private val savedState: SavedStateHandle) : ViewModel() {
     fun next() {
         if (index < questions.lastIndex) {
             index++
-            selected = -1
+            // The selection rides along, tagged to the question it answered,
+            // so the outgoing turn fades out still showing its verdict.
         } else {
             finished = true
         }
@@ -148,6 +183,7 @@ class QuizViewModel(private val savedState: SavedStateHandle) : ViewModel() {
         index = 0
         score = 0
         selected = -1
+        selectedAt = -1
         finished = false
         missed = emptyList()
         saveSession()
@@ -158,6 +194,7 @@ class QuizViewModel(private val savedState: SavedStateHandle) : ViewModel() {
         savedState.remove<Int>(KEY_INDEX)
         savedState.remove<Int>(KEY_SCORE)
         savedState.remove<Int>(KEY_SELECTED)
+        savedState.remove<Int>(KEY_SELECTED_AT)
         savedState.remove<Boolean>(KEY_FINISHED)
         savedState.remove<IntArray>(KEY_MISSED)
     }
@@ -167,6 +204,7 @@ class QuizViewModel(private val savedState: SavedStateHandle) : ViewModel() {
         const val KEY_INDEX = "quiz.index"
         const val KEY_SCORE = "quiz.score"
         const val KEY_SELECTED = "quiz.selected"
+        const val KEY_SELECTED_AT = "quiz.selectedAt"
         const val KEY_FINISHED = "quiz.finished"
         const val KEY_MISSED = "quiz.missed"
         val json = Json
@@ -197,7 +235,10 @@ fun QuizScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
+            // A sequence register, centred over the plate like the name page's
+            // "3 of 99" — pushed-screen TITLES sit left (Settings, About);
+            // position counters sit centre. One system, no drift.
+            CenterAlignedTopAppBar(
                 colors = paperTopBarColors(),
                 title = {
                     ScreenLabel(
@@ -256,8 +297,6 @@ private fun QuizQuestionContent(
     quiz: QuizViewModel,
     names: List<Name>,
 ) {
-    val question = quiz.questions[quiz.index]
-    val name = names.firstOrNull { it.number == question.number } ?: return
     val haptics = rememberHaptics()
 
     // Same footer pattern as a name page: the answer button anchors just above
@@ -278,90 +317,118 @@ private fun QuizQuestionContent(
                     progress = (quiz.index + 1) / quiz.questions.size.toFloat(),
                 )
                 Spacer(Modifier.height(20.dp))
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = MaterialTheme.shapes.large,
-                    colors = CardDefaults.cardColors(containerColor = HeroContainer),
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(24.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                    ) {
-                        ArabicText(
-                            text = name.arabic,
-                            fontSize = ArabicSize.Panel,
-                            color = HeroGold,
-                            textAlign = TextAlign.Center,
-                        )
-                        Spacer(Modifier.height(6.dp))
-                        FitText(
-                            text = name.transliteration,
-                            style = MaterialTheme.typography.displaySmall,
-                            color = HeroText,
-                            minScale = 0.45f,
-                        )
-                    }
-                }
-                Spacer(Modifier.height(20.dp))
-                question.options.forEachIndexed { optionIndex, option ->
-                    OptionButton(
-                        text = option,
-                        state = when {
-                            quiz.selected == -1 -> OptionState.IDLE
-                            optionIndex == question.answerIndex -> OptionState.CORRECT
-                            optionIndex == quiz.selected -> OptionState.WRONG
-                            else -> OptionState.DIMMED
-                        },
-                        onClick = {
-                            val wasUnanswered = quiz.selected == -1
-                            val correct = quiz.select(optionIndex)
-                            if (wasUnanswered) {
-                                if (correct) haptics.confirm() else haptics.reject()
-                            } else {
-                                // Already answered: the option deliberately
-                                // stays enabled for accessibility, so a sighted
-                                // tap on another option must not be dead air.
-                                haptics.tick()
+                // Questions TURN like pages instead of cutting: each new one
+                // rises gently into place while the last fades away — exactly
+                // how a pushed screen arrives everywhere else in the app. The
+                // frame around them (progress hairline, Next button) never
+                // moves. The outgoing question keeps its verdict through the
+                // turn: [QuizViewModel.chosenFor] still answers for the index
+                // it left, so the green highlight fades with its card instead
+                // of blinking off a frame before.
+                val motionScale = LocalMotionScale.current
+                AnimatedContent(
+                    targetState = quiz.index,
+                    transitionSpec = {
+                        (fadeIn(Motion.spec(motionScale, Motion.GENTLE, easing = Motion.Settle)) +
+                            slideInVertically(
+                                Motion.spec(motionScale, Motion.GENTLE, easing = Motion.Settle),
+                            ) { it / 12 })
+                            .togetherWith(fadeOut(Motion.spec(motionScale, Motion.QUICK)))
+                    },
+                    label = "quizTurn",
+                ) { index ->
+                    val turnQuestion = quiz.questions[index]
+                    val turnName = names.firstOrNull { it.number == turnQuestion.number }
+                    if (turnName != null) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = MaterialTheme.shapes.large,
+                                colors = CardDefaults.cardColors(containerColor = HeroContainer),
+                            ) {
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(24.dp),
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                ) {
+                                    ArabicText(
+                                        text = turnName.arabic,
+                                        fontSize = ArabicSize.Panel,
+                                        color = HeroGold,
+                                        textAlign = TextAlign.Center,
+                                    )
+                                    Spacer(Modifier.height(6.dp))
+                                    FitText(
+                                        text = turnName.transliteration,
+                                        style = MaterialTheme.typography.displaySmall,
+                                        color = HeroText,
+                                        minScale = 0.45f,
+                                    )
+                                }
                             }
-                        },
-                    )
-                    Spacer(Modifier.height(10.dp))
-                }
+                            Spacer(Modifier.height(20.dp))
+                            val chosen = quiz.chosenFor(index)
+                            turnQuestion.options.forEachIndexed { optionIndex, option ->
+                                OptionButton(
+                                    text = option,
+                                    state = when {
+                                        chosen == -1 -> OptionState.IDLE
+                                        optionIndex == turnQuestion.answerIndex -> OptionState.CORRECT
+                                        optionIndex == chosen -> OptionState.WRONG
+                                        else -> OptionState.DIMMED
+                                    },
+                                    onClick = {
+                                        val wasUnanswered = quiz.chosenFor(index) == -1
+                                        val correct = quiz.select(optionIndex)
+                                        if (wasUnanswered) {
+                                            if (correct) haptics.confirm() else haptics.reject()
+                                        } else {
+                                            // Already answered: the option deliberately
+                                            // stays enabled for accessibility, so a sighted
+                                            // tap on another option must not be dead air.
+                                            haptics.tick()
+                                        }
+                                    },
+                                )
+                                Spacer(Modifier.height(10.dp))
+                            }
 
-                // The green fill tells a sighted reader which answer was right.
-                // A screen reader was told nothing: `stateDescription` sits on
-                // each option, so the one the reader TAPPED re-announces
-                // ("Wrong answer") because it holds focus, while the option
-                // that turns green is a different, unfocused node and stays
-                // silent. Being told you are wrong and never told the answer
-                // defeats the point of a quiz. An empty, zero-height live
-                // region carries it without putting anything on screen.
-                // Composed only once an answer exists: an assertive region
-                // that enters composition empty makes some TalkBack versions
-                // announce (or clear) it before the real verdict arrives.
-                if (quiz.selected != -1) {
-                    val verdict = if (quiz.selected == question.answerIndex) {
-                        stringResource(R.string.quiz_answer_correct)
-                    } else {
-                        stringResource(
-                            R.string.quiz_answer_wrong,
-                            question.options[question.answerIndex],
-                        )
-                    }
-                    Box(
-                        Modifier.semantics {
-                            liveRegion = LiveRegionMode.Assertive
-                            contentDescription = verdict
+                            // The green fill tells a sighted reader which answer was right.
+                            // A screen reader was told nothing: `stateDescription` sits on
+                            // each option, so the one the reader TAPPED re-announces
+                            // ("Wrong answer") because it holds focus, while the option
+                            // that turns green is a different, unfocused node and stays
+                            // silent. Being told you are wrong and never told the answer
+                            // defeats the point of a quiz. An empty, zero-height live
+                            // region carries it without putting anything on screen.
+                            // Composed only once an answer exists: an assertive region
+                            // that enters composition empty makes some TalkBack versions
+                            // announce (or clear) it before the real verdict arrives.
+                            if (chosen != -1) {
+                                val verdict = if (chosen == turnQuestion.answerIndex) {
+                                    stringResource(R.string.quiz_answer_correct)
+                                } else {
+                                    stringResource(
+                                        R.string.quiz_answer_wrong,
+                                        turnQuestion.options[turnQuestion.answerIndex],
+                                    )
+                                }
+                                Box(
+                                    Modifier.semantics {
+                                        liveRegion = LiveRegionMode.Assertive
+                                        contentDescription = verdict
+                                    }
+                                )
+                            }
                         }
-                    )
+                    }
                 }
                 Spacer(Modifier.weight(1f))
                 Spacer(Modifier.height(14.dp))
                 Button(
                     onClick = quiz::next,
-                    enabled = quiz.selected != -1,
+                    enabled = quiz.chosenFor(quiz.index) != -1,
                     modifier = Modifier
                         .fillMaxWidth()
                         .heightIn(min = 52.dp),
@@ -480,11 +547,13 @@ private fun QuizResultContent(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Top,
     ) {
-        Text(
-            text = stringResource(R.string.quiz_score_format, score, total),
-            style = MaterialTheme.typography.displayLarge,
-            color = MaterialTheme.colorScheme.primary,
-        )
+        // A perfect round earns the app's seal: the square-Kufic mark inside
+        // the share card's gold hairline circle, popping in softly — once.
+        if (score == total) {
+            PerfectSeal()
+            Spacer(Modifier.height(20.dp))
+        }
+        ScoreCount(score = score, total = total)
         Spacer(Modifier.height(12.dp))
         Text(
             text = stringResource(
@@ -542,5 +611,78 @@ private fun QuizResultContent(
         TextButton(onClick = onBack) {
             Text(stringResource(R.string.back_to_memorize))
         }
+    }
+}
+
+/**
+ * The score settles like everything else in the app: it counts up once,
+ * calmly, instead of appearing already over. Plays once per result —
+ * rememberSaveable keeps a rotation from replaying it, the way the name
+ * page's entrance fade does not replay.
+ */
+@Composable
+private fun ScoreCount(score: Int, total: Int) {
+    var played by rememberSaveable { mutableStateOf(false) }
+    val shown = remember { Animatable(0f) }
+    val motionScale = LocalMotionScale.current
+    LaunchedEffect(score) {
+        if (played) {
+            shown.snapTo(score.toFloat())
+            return@LaunchedEffect
+        }
+        played = true
+        if (motionScale == 0f) shown.snapTo(score.toFloat())
+        else shown.animateTo(
+            score.toFloat(),
+            Motion.spec(motionScale, Motion.CALM, easing = Motion.Settle),
+        )
+    }
+    Text(
+        text = stringResource(
+            R.string.quiz_score_format,
+            shown.value.roundToInt().toString(),
+            total.toString(),
+        ),
+        style = MaterialTheme.typography.displayLarge,
+        color = MaterialTheme.colorScheme.primary,
+    )
+}
+
+/**
+ * The share card's maker mark in its hairline gold circle — earned here,
+ * not worn. The pop is the same lively spring the bookmark and the learned
+ * pill answer with, so the reward speaks the app's own tactile language.
+ */
+@Composable
+private fun PerfectSeal() {
+    var sealed by rememberSaveable { mutableStateOf(false) }
+    LaunchedEffect(Unit) { sealed = true }
+    val scale by animateFloatAsState(
+        targetValue = if (sealed) 1f else 0.6f,
+        animationSpec = Motion.lively(),
+        label = "sealScale",
+    )
+    val alpha by animateFloatAsState(
+        targetValue = if (sealed) 1f else 0f,
+        animationSpec = Motion.tween(Motion.QUICK),
+        label = "sealAlpha",
+    )
+    Box(
+        modifier = Modifier
+            .size(52.dp)
+            .graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+                this.alpha = alpha
+            }
+            .border(1.dp, MaterialTheme.colorScheme.secondary.copy(alpha = 0.45f), CircleShape),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(
+            painter = painterResource(R.drawable.ic_mark),
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.secondary,
+            modifier = Modifier.size(22.dp),
+        )
     }
 }

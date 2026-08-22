@@ -192,14 +192,33 @@ app/src/main/assets/     names.json (99 entries), intro.txt, fonts/ (+licenses).
   `meaning` does NOT (Detail/Share/flashcard back: meaning only; list rows,
   hero card, widget, notification, quiz keep the title).
 - **Shared components live in `PageParts.kt`** (BackButton, FitText,
-  ScreenLabel, SectionLabel, NavRow, PageRule, SettingsAction,
+  ScreenLabel, SectionLabel, NavRow, PageRule, SettingsAction, EmptyState,
   paperTopBarColors, scaledGap, readingMeasure, named insets). Reuse them.
+- **Empty screens that offer an action use `EmptyState`** (title + optional
+  line + optional TextButton); `PageMessage` stays for failure cases with no
+  action. Empty states sit centred via `Modifier.fillParentMaxSize()` inside
+  their `item {}` (a LazyItemScope member — no import).
+- **Pushed-screen TITLES sit left (`ScreenLabel` in `TopAppBar`); sequence
+  COUNTERS sit centre** (`CenterAlignedTopAppBar`: detail "3 of 99",
+  flashcards "3 of 12", quiz "3 of 10"). Don't mix.
 - **Contrast:** keep WCAG 2.1 AA (4.5:1 text, 3:1 UI). `outline` vs
   `outlineVariant` carry real meaning in places; comments in `Color.kt` are
   mostly right but re-verify claims.
 - **Motion/haptics:** `Motion.kt` (QUICK/GENTLE/CALM), `Haptics.kt`. The
   `@Composable` variants collapse to `snap()` when animator scale is 0; use
-  non-composable `spec()` variants inside coroutines/gesture callbacks.
+  non-composable `spec()` variants inside coroutines/gesture callbacks — AND
+  inside `AnimatedContent.transitionSpec`, which is not composable either:
+  hoist `LocalMotionScale.current` above and build specs from it. Content
+  turns use the house push (fade GENTLE/Settle + rise it/12); nothing user-
+  facing hard-cuts between states.
+- **Counters roll, never teleport:** the Memorize count seeds its start from
+  `rememberSaveable lastSeen` so returning after learning more animates old →
+  new exactly once (first composition starts ON target — never from zero);
+  the quiz score counts up once per result (`rememberSaveable played` guard).
+- **Scroll thumbs:** reading pages use `ScrollbarThumb` (ScrollState); lazy
+  lists use `LazyScrollbarThumb` (estimated from average row height × count —
+  position cue only, shares THUMB_MAX_FRACTION/24dp floor). Both display-only;
+  dragging would make them a fast-scroller (rejected decision).
 
 ## Content invariants (guarded by NamesAssetTest)
 
@@ -213,10 +232,11 @@ eight places (#28, #32, #44, #48, #80, #87, #94, #95).
 
 ## Testing
 
-- **63 unit tests** (JUnit4, `app/src/test`): daily rotation, quiz generation
+- **64 unit tests** (JUnit4, `app/src/test`): daily rotation, quiz generation
   + subsuming-distractor guards, search, deck building (incl. 10-card cap),
-  ViewModels, NamesAssetTest over the real asset, CounterFormatTest. Count
-  grows as guards are added — sum the XMLs in
+  ViewModels (incl. the tagged-selection contract that keeps a turning
+  question's verdict), NamesAssetTest over the real asset, CounterFormatTest.
+  Count grows as guards are added — sum the XMLs in
   `app/build/test-results/testDebugUnitTest/`.
 - Instrumentation (`ScreenshotTest`) renders five scenes (home, home-dark,
   name, quiz, memorize) to the app's `files/screenshots/`; pure render, no

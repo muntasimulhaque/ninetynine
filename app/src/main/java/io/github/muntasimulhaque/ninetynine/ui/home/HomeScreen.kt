@@ -1,6 +1,12 @@
 package io.github.muntasimulhaque.ninetynine.ui.home
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.togetherWith
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -16,6 +22,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
+
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -72,12 +79,15 @@ import io.github.muntasimulhaque.ninetynine.ui.theme.HeroContainer
 import io.github.muntasimulhaque.ninetynine.ui.theme.HeroGold
 import io.github.muntasimulhaque.ninetynine.ui.theme.HeroSubtext
 import io.github.muntasimulhaque.ninetynine.ui.theme.HeroText
+import io.github.muntasimulhaque.ninetynine.ui.theme.LocalMotionScale
 import io.github.muntasimulhaque.ninetynine.ui.theme.Motion
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.ArabicSize
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.ArabicText
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.FitText
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.NameListItem
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.NameRowInset
+import io.github.muntasimulhaque.ninetynine.ui.theme.components.EmptyState
+import io.github.muntasimulhaque.ninetynine.ui.theme.components.LazyScrollbarThumb
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.PageMessage
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.AboutAction
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.SettingsAction
@@ -243,35 +253,80 @@ fun HomeScreen(
         )
         // The rule between rows starts where the names do, not under their numbers.
         val dividerInset = nameRowTextInset()
-        LazyColumn(
-            state = listState,
-            contentPadding = contentPadding,
-            modifier = Modifier.fillMaxSize(),
-        ) {
-            if (query.isBlank() && dailyName != null) {
-                item {
-                    DailyHeroCard(dailyName, onClick = { onNameClick(dailyName.number) })
+        Box(Modifier.fillMaxSize()) {
+            LazyColumn(
+                state = listState,
+                contentPadding = contentPadding,
+                modifier = Modifier.fillMaxSize(),
+            ) {
+                if (query.isBlank() && dailyName != null) {
+                    item {
+                        // A midnight sitter sees the card turn rather than cut:
+                        // the new day's name rises gently into the plate, the way
+                        // a pushed screen arrives. Motion.spec, not tween: a
+                        // transitionSpec is not a composable context, so the
+                        // scale-aware specs build from the hoisted scale exactly
+                        // like the NavHost's do.
+                        val motionScale = LocalMotionScale.current
+                        AnimatedContent(
+                            targetState = dailyName.number,
+                            transitionSpec = {
+                                (fadeIn(Motion.spec(motionScale, Motion.GENTLE, easing = Motion.Settle)) +
+                                    slideInVertically(
+                                        Motion.spec(motionScale, Motion.GENTLE, easing = Motion.Settle),
+                                    ) { it / 12 })
+                                    .togetherWith(fadeOut(Motion.spec(motionScale, Motion.QUICK)))
+                            },
+                            label = "dailyHero",
+                        ) { number ->
+                            val turningName = names.firstOrNull { it.number == number }
+                                ?: dailyName
+                            DailyHeroCard(turningName, onClick = { onNameClick(turningName.number) })
+                        }
+                    }
+                }
+                if (names.isEmpty() && namesLoaded) {
+                    // The asset failed to read. Without this the screen would be
+                    // blank paper with no explanation at all.
+                    item { PageMessage(stringResource(R.string.names_unavailable)) }
+                } else if (filtered.isEmpty() && names.isNotEmpty()) {
+                    item(key = "no-results") {
+                        // Centred in the viewport, not hugging the bar: an empty
+                        // result is the whole content of the screen while it lasts.
+                        Box(
+                            modifier = Modifier.fillParentMaxSize(),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            EmptyState(
+                                title = stringResource(R.string.no_results_title),
+                                body = stringResource(R.string.no_results_body),
+                                actionLabel = stringResource(R.string.action_clear_search),
+                                onAction = { viewModel.setSearchQuery("") },
+                            )
+                        }
+                    }
+                }
+                items(filtered, key = { it.number }) { name ->
+                    NameListItem(
+                        name = name,
+                        learned = name.number in learned,
+                        onClick = { onNameClick(name.number) },
+                    )
+                    HorizontalDivider(
+                        modifier = Modifier.padding(start = dividerInset, end = NameRowInset),
+                        thickness = 0.5.dp,
+                        color = MaterialTheme.colorScheme.outlineVariant,
+                    )
                 }
             }
-            if (names.isEmpty() && namesLoaded) {
-                // The asset failed to read. Without this the screen would be
-                // blank paper with no explanation at all.
-                item { PageMessage(stringResource(R.string.names_unavailable)) }
-            } else if (filtered.isEmpty() && names.isNotEmpty()) {
-                item { PageMessage(stringResource(R.string.no_results)) }
-            }
-            items(filtered, key = { it.number }) { name ->
-                NameListItem(
-                    name = name,
-                    learned = name.number in learned,
-                    onClick = { onNameClick(name.number) },
-                )
-                HorizontalDivider(
-                    modifier = Modifier.padding(start = dividerInset, end = NameRowInset),
-                    thickness = 0.5.dp,
-                    color = MaterialTheme.colorScheme.outlineVariant,
-                )
-            }
+            // The same quiet position thumb the reading pages carry, so a deep
+            // fling through 99 rows answers the hand the way a long meaning does.
+            LazyScrollbarThumb(
+                listState = listState,
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(top = padding.calculateTopPadding() + 8.dp, bottom = 32.dp, end = 4.dp),
+            )
         }
     }
 }
