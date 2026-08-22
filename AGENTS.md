@@ -307,6 +307,21 @@ the source's own convention (regularised for #28, #32, #44, #48, #80, #87, #94,
   Resource ID #0x0` on the initial bind — "Problem loading widget" on stricter
   launchers (Vivo Funtouch on Android 8.1), silently recovered on others. Point
   it at `@layout/widget_preview`.
+- **Pre-API 26 launcher icons need real bitmaps.** `mipmap-anydpi/` (no `-v26`)
+  resolves on API 24–25, where `<adaptive-icon>` cannot inflate — devices got a
+  default icon. Since 1.0 the adaptive XML lives only in `mipmap-anydpi-v26/` and
+  `mipmap-{mdpi…xxxhdpi}/ic_launcher.png` carry the pre-26 case. Do not delete
+  the bitmaps while minSdk is 24.
+- **`android:previewLayout` renders only on API 31+.** Widget pickers on 26–30
+  fall back to `android:previewImage` — without it they show the app icon
+  (`drawable-nodpi/widget_preview_image.png`, added in 1.0).
+- **Generating image assets with Arabic locally:** this machine's Python/PIL has
+  FreeType but **no raqm**, so raw text draws unshaped — unacceptable. Working
+  recipe (used for the 1.0 widget preview): `pip install uharfbuzz`, shape with
+  HarfBuzz, rasterize glyph outlines via `font.draw_glyph_with_pen`, flatten
+  curves, fill even-odd (XOR contour masks within a glyph, OR across glyphs);
+  positions stay y-up, flip once at raster time. Spectral/HAFS TTFs are in
+  `res/font/`. Verify output against a known string (the basmala) before use.
 - **A widget's tap PendingIntent dies on app update on Android 8.0–8.1.** The
   launcher keeps the pre-update RemoteViews, and the system invalidates the
   PendingIntent inside them (created by the old APK) on package replace — the
