@@ -340,7 +340,11 @@ eight places (#28, #32, #44, #48, #80, #87, #94, #95).
   - The swiftshader SystemUI ANR appears seconds after launch — loop checks;
     if Wait doesn't stick, kill the emulator process and cold-boot
     (`-no-window -no-snapshot` is fine; first screencaps may still be black —
-    poll for page content, never background colour).
+    poll for page content, never background colour). Better: prevent the
+    dialog outright with `adb shell settings put global hide_error_dialogs
+    1` — uiautomator dump runs through SystemUI's accessibility pipeline, so
+    while the ANR dialog is up the dump itself fails and `Wait` can never be
+    found by text; suppressing the dialog keeps dumps and captures clean.
   - The list starts 1 Allah, 2 Al-Ahad, 3 Al-A'laa … (source order):
     Ar-Rahmaan is NOT near the top. For detail/share scenes use search
     ("Aleem" → Al-Aleem, longest meaning, scrollbar thumb visible) or the row
