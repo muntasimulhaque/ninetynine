@@ -27,14 +27,18 @@ import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.MenuBook
+import androidx.compose.material.icons.automirrored.outlined.MenuBook
 import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.School
+import androidx.compose.material.icons.outlined.Bookmark
+import androidx.compose.material.icons.outlined.School
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -82,8 +86,19 @@ class MainActivity : ComponentActivity() {
 
     private var startNumber by mutableIntStateOf(-1)
 
+    /** False until Compose's first composition has committed; holds the splash. */
+    private var contentReady = false
+
     override fun onCreate(savedInstanceState: Bundle?) {
-        installSplashScreen()
+        val splashScreen = installSplashScreen()
+        // Hold the system splash until the app's first frame is committed.
+        // Without this, a slow device can dismiss the splash a frame or two
+        // before Compose draws — a flash of bare window background between
+        // splash and app. The condition is polled every frame on the main
+        // thread, so a plain boolean is enough; SideEffect fires exactly when
+        // the first composition has been applied, releasing the splash as the
+        // real content lands.
+        splashScreen.setKeepOnScreenCondition { !contentReady }
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
@@ -100,7 +115,10 @@ class MainActivity : ComponentActivity() {
         // activity would force-navigate to the deep-linked name again. The
         // extra was already consumed and navigated before the death.
         if (savedInstanceState == null) startNumber = consumeNameNumber(intent)
-        setContent { App(startNumber, onStartNumberConsumed = { startNumber = -1 }) }
+        setContent {
+            SideEffect { contentReady = true }
+            App(startNumber, onStartNumberConsumed = { startNumber = -1 })
+        }
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -149,6 +167,8 @@ private data class TopLevelRoute(
     val route: String,
     val labelRes: Int,
     val icon: ImageVector,
+    /** The quieter outline a tab wears whenever ANOTHER tab is selected. */
+    val iconResting: ImageVector,
 )
 
 /*
@@ -159,9 +179,9 @@ private data class TopLevelRoute(
  * system font (see the note on FitText below).
  */
 private val topLevelRoutes = listOf(
-    TopLevelRoute("names", R.string.nav_names, Icons.AutoMirrored.Filled.MenuBook),
-    TopLevelRoute("memorize", R.string.memorize, Icons.Filled.School),
-    TopLevelRoute("bookmarks", R.string.bookmarks, Icons.Filled.Bookmark),
+    TopLevelRoute("names", R.string.nav_names, Icons.AutoMirrored.Filled.MenuBook, Icons.AutoMirrored.Outlined.MenuBook),
+    TopLevelRoute("memorize", R.string.memorize, Icons.Filled.School, Icons.Outlined.School),
+    TopLevelRoute("bookmarks", R.string.bookmarks, Icons.Filled.Bookmark, Icons.Outlined.Bookmark),
 )
 
 @Composable
@@ -406,7 +426,12 @@ private fun QuietBottomBar(
                         verticalArrangement = androidx.compose.foundation.layout.Arrangement.Center,
                     ) {
                         Icon(
-                            item.icon,
+                            // Shape carries selection beside colour and weight:
+                            // the chosen tab's glyph fills, the resting ones
+                            // stand open — Google's own bar grammar, still no
+                            // pill and no motion. Greyscale screens and the
+                            // ~8% who cannot trust hue get a third channel.
+                            if (selected) item.icon else item.iconResting,
                             contentDescription = null,
                             tint = tint,
                             modifier = Modifier.size(22.dp),

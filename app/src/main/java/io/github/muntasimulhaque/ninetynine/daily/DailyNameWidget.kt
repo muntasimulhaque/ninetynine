@@ -3,6 +3,7 @@ package io.github.muntasimulhaque.ninetynine.daily
 import android.content.Context
 import android.os.Build
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -36,8 +37,7 @@ import io.github.muntasimulhaque.ninetynine.util.DailyName
 
 class DailyNameWidget : GlanceAppWidget() {
 
-    companion object {
-        // Responsive height buckets: show only as many lines as fit completely.
+    companion object {        // Responsive height buckets: show only as many lines as fit completely.
         // The longest title (#39, 71 chars) wraps to three lines and ellipsizes
         // at the minimum 110dp width — the Arabic + transliteration above carry
         // the day's name, and the title's full sense is one tap away.
@@ -77,6 +77,12 @@ class DailyNameWidget : GlanceAppWidget() {
     private suspend fun render(context: Context): Unit {
         val names = NamesRepository.load(context)
         val name = names.firstOrNull { it.number == DailyName.numberFor(System.currentTimeMillis()) }
+        // Ask the device what radius ITS widgets round to, so this plate's
+        // corners agree with the system's on every launcher. Falls back to
+        // 20dp when an OEM does not publish the dimen.
+        val corner = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            systemCornerRadius(context)
+        } else null
         // Always call provideContent, even when name is null. Without this, a
         // transient load failure (empty list from NamesRepository) would skip
         // the render entirely, and the Glance SessionWorker would consider the
@@ -121,14 +127,13 @@ class DailyNameWidget : GlanceAppWidget() {
             // Android its no-op path breaks the clickable modifier that follows
             // it, so the widget rendered but never answered a tap (verified on
             // an Android 8.1 device/emulator). On API < 31 the corners stay
-            // square; on 31+ they round through the system. The order matters —
+            // square; on 31+ they round through the system — at THIS device's
+            // own system radius, not a hardcoded guess. The order matters —
             // cornerRadius must precede clickable, which is how API 31+ shipped.
             val plate = GlanceModifier
                 .fillMaxSize()
                 .background(background)
-                .let { m ->
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) m.cornerRadius(20.dp) else m
-                }
+                .let { m -> if (corner != null) m.cornerRadius(corner) else m }
                 .padding(horizontal = 16.dp, vertical = 8.dp)
                 .clickable(
                     actionStartActivity<MainActivity>(
@@ -201,3 +206,21 @@ class DailyNameWidget : GlanceAppWidget() {
 class DailyNameWidgetReceiver : GlanceAppWidgetReceiver() {
     override val glanceAppWidget: GlanceAppWidget = DailyNameWidget()
 }
+
+/**
+ * This device's own widget corner radius, from the framework dimen Android 12
+ * publishes so widgets can match the launcher's rounding (`16dp` on Pixel,
+ * other values elsewhere). Read by name — the dimen is hidden, and OEM builds
+ * may not carry it — with a fallback to the 20dp the widget has always used.
+ * getDimension returns px; convert once here so callers stay in dp.
+ */
+private fun systemCornerRadius(context: Context): Dp = runCatching {
+    val id = context.resources.getIdentifier(
+        "system_app_widget_background_radius",
+        "dimen",
+        "android",
+    )
+    if (id == 0) return@runCatching 20.dp
+    val density = context.resources.displayMetrics.density
+    (context.resources.getDimension(id) / density).dp
+}.getOrDefault(20.dp)
