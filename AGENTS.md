@@ -52,7 +52,7 @@ implement it and update this file in the same change.
 `versionName`/`versionCode` live in `app/build.gradle.kts`; Settings shows
 `BuildConfig.VERSION_NAME`, so they can never disagree. Rule: **+0.1 on
 versionName, +1 on versionCode per release.** Sequence since the store
-restart: 0.1 … 0.9, then **1.0 / 10 (current)**.
+restart: 0.1 … 0.9, then 1.0 / 10, then **1.1 / 11 (current)**.
 
 The release keystore path/credentials live in a `keystore.properties` outside
 the repo (Google Play Signing Key folder). When absent (CI, fresh clone) the
@@ -219,6 +219,17 @@ app/src/main/assets/     names.json (99 entries), intro.txt, fonts/ (+licenses).
   lists use `LazyScrollbarThumb` (estimated from average row height × count —
   position cue only, shares THUMB_MAX_FRACTION/24dp floor). Both display-only;
   dragging would make them a fast-scroller (rejected decision).
+- **Bottom bar:** the SELECTED tab's glyph fills; resting tabs wear outlined
+  variants (`TopLevelRoute.iconResting`) — a third selection channel beside
+  tint and label weight. Don't collapse back to one filled icon.
+- **Splash is held until first frame:**
+  `setKeepOnScreenCondition { !contentReady }`, released by a `SideEffect`
+  after the first composition commits — without it a slow device flashes bare
+  window background between splash and app.
+- **Widget corners follow the device:** render-time read of the framework
+  dimen `system_app_widget_background_radius` (24dp on Pixel images), falling
+  back to 20dp when an OEM omits it; still API 31+-only and still applied
+  before `clickable` (see pitfalls below).
 
 ## Content invariants (guarded by NamesAssetTest)
 
