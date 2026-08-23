@@ -52,7 +52,7 @@ implement it and update this file in the same change.
 `versionName`/`versionCode` live in `app/build.gradle.kts`; Settings shows
 `BuildConfig.VERSION_NAME`, so they can never disagree. Rule: **+0.1 on
 versionName, +1 on versionCode per release.** Sequence since the store
-restart: 0.1 … 0.9, then 1.0 / 10, then **1.1 / 11 (current)**.
+restart: 0.1 … 0.9, then 1.0 / 10, then 1.1 / 11, then **1.2 / 12 (current)**.
 
 The release keystore path/credentials live in a `keystore.properties` outside
 the repo (Google Play Signing Key folder). When absent (CI, fresh clone) the
@@ -289,10 +289,12 @@ eight places (#28, #32, #44, #48, #80, #87, #94, #95).
 
 ## Testing
 
-- **64 unit tests** (JUnit4, `app/src/test`): daily rotation, quiz generation
-  + subsuming-distractor guards, search, deck building (incl. 10-card cap),
+- **75 unit tests** (JUnit4, `app/src/test`): daily rotation, quiz generation
+  + subsuming-distractor guards, search and the literal highlight ranges,
+  deck building (incl. 10-card cap),
   ViewModels (incl. the tagged-selection contract that keeps a turning
-  question's verdict), NamesAssetTest over the real asset, CounterFormatTest.
+  question's verdict and the best-before capture), NamesAssetTest over the
+  real asset, CounterFormatTest.
   Count grows as guards are added — sum the XMLs in
   `app/build/test-results/testDebugUnitTest/`.
 - Instrumentation (`ScreenshotTest`) renders five scenes (home, home-dark,
@@ -365,6 +367,11 @@ eight places (#28, #32, #44, #48, #80, #87, #94, #95).
 - The three name strings are never merged.
 - No first-run epigraph/"opening" page (implemented, reverted — app opens on
   the list).
+- No spaced-repetition queue, no separate review screen, no reverse
+  flashcards, no sticky learned button, no first-run explainer line — all
+  designed or built during the 1.2 review and rejected on the simplicity
+  rule: the app stays a book that asks for almost no decisions, and its
+  controls explain themselves. Re-propose only with a genuinely better idea.
 - No grid view (implemented, removed).
 - No `applicationId` change.
 - No re-extracting `names.json`; no title clause re-added to meanings.
