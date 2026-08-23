@@ -1,0 +1,5 @@
+<resources>
+    <!-- Night launchers bubble shortcut icons on dark surfaces; the deep
+         emerald would vanish there, so the glyph takes the scheme's mint. -->
+    <color name="shortcut_glyph">#93CBB5</color>
+</resources>

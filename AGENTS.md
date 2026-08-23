@@ -197,7 +197,29 @@ app/src/main/assets/     names.json (99 entries), intro.txt, fonts/ (+licenses).
 - **Empty screens that offer an action use `EmptyState`** (title + optional
   line + optional TextButton); `PageMessage` stays for failure cases with no
   action. Empty states sit centred via `Modifier.fillParentMaxSize()` inside
-  their `item {}` (a LazyItemScope member — no import).
+  their `item {}` (a LazyItemScope member — no import). The bookmarks and
+  learned empties offer "Browse the names" — an empty screen that can act
+  should act.
+- **Search shows its work:** literal query matches in a row's transliteration
+  and title render gold + SemiBold. `util/Highlight` computes the ranges
+  (≥2-char trimmed query, case-insensitive, non-overlapping); fuzzy-only
+  matches stay uncoloured — never invent a span that corresponds to nothing.
+  Only Home passes a `query` to `NameListItem`; other lists stay pristine.
+- **The text-size slider previews live:** the specimen answers the bead
+  mid-drag, set at the slider's CURRENT absolute value
+  (`appTypography(sliderValue).headlineMedium`), not the theme's committed
+  scale. Commit-on-release guards DataStore, never the preview.
+- **Flashcard drags answer the hand:** the card wears an overline label —
+  I KNOW IT / STILL LEARNING — that fades in toward the commit threshold, and
+  a tick haptic fires exactly once as the drag crosses it. The label composes
+  only while a drag is live (merged-node children reach TalkBack even at zero
+  alpha), and its graded alpha reads in the draw phase so a moving finger
+  redraws without recomposing the faces.
+- **The quiz celebrates a new best:** `QuizViewModel.bestBefore` captures the
+  standing best once, when a round finishes (guarded — a rotation re-runs the
+  capturing effect after the round's own write has raised the stored best).
+  The result page shows the gold NEW BEST overline only when an existing best
+  fell; first rounds stay silent.
 - **Pushed-screen TITLES sit left (`ScreenLabel` in `TopAppBar`); sequence
   COUNTERS sit centre** (`CenterAlignedTopAppBar`: detail "3 of 99",
   flashcards "3 of 12", quiz "3 of 10"). Don't mix.
@@ -226,6 +248,30 @@ app/src/main/assets/     names.json (99 entries), intro.txt, fonts/ (+licenses).
   `setKeepOnScreenCondition { !contentReady }`, released by a `SideEffect`
   after the first composition commits — without it a slow device flashes bare
   window background between splash and app.
+- **The hero card rises in once:** the daily card enters like a pushed screen
+  (fade + 24dp rise, CALM/Settle), guarded by rememberSaveable so returning
+  to the tab or rotating never replays it — the same discipline as the detail
+  and About entrance fades.
+- **Every reading page carries the thumb:** About is a reading page too and
+  runs to several screens; it wears the same quiet `ScrollbarThumb` the name
+  pages do.
+- **The share sheet offers the plate AND the words:** "Share text" sends the
+  Arabic, the name and epithet on one line, the full meaning, and the store
+  title — the card's hierarchy as plain text. The name page's meaning is the
+  app's one selectable text (`SelectionContainer`, long-press to copy); the
+  flashcard faces stay swipe surfaces on purpose.
+- **Theme rows wear a swatch:** a 22dp circle of the theme's own paper with
+  its ink as an 8dp bead — System split across both papers. The eye picks
+  before the mind reads; the row still carries all the semantics.
+- **Themed launcher icons already ship:** the adaptive icon's monochrome layer
+  is the Kufic mark — do not re-add it.
+- **The two axes need no manual, by design:** the pill is a verb ("Mark as
+  learned"), the bookmark is the platform's universal keep glyph, and every
+  empty state teaches its own axis at the moment it matters. An explainer
+  line was tried and deleted on review — if the controls ever need one again,
+  fix the controls, not the prose.
+- **The notification's one line is set, not joined:** Arabic · transliteration,
+  the same middle dot the feature graphic's tagline wears.
 - **Widget corners follow the device:** render-time read of the framework
   dimen `system_app_widget_background_radius` (24dp on Pixel images), falling
   back to 20dp when an OEM omits it; still API 31+-only and still applied
@@ -274,6 +320,13 @@ eight places (#28, #32, #44, #48, #80, #87, #94, #95).
 - **Deep links:** activity is `singleTop` with an exported intent; consume the
   `nameNumber` extra and guard cold-start replay with
   `savedInstanceState == null`.
+- **Launcher shortcuts** (long-press the icon → Flashcards, Quiz; API 25+,
+  ignored below) ride a `startRoute` extra consumed exactly like
+  `nameNumber`. `App()` pushes the memorize tab first, then the screen, so
+  Back lands where a reader who walked there would be. Keep
+  `res/xml/shortcuts.xml` in step with the ROUTE_* constants in
+  MainActivity, and the two glyph drawables tinted by `shortcut_glyph`
+  (values/ day emerald, values-night/ mint).
 - **Scheduler anchoring:** `Application.onCreate` KEEPs the schedule
   (re-anchoring there cancels the work that woke the process);
   `MainActivity.onCreate` re-anchors, guarded by an is-running check.

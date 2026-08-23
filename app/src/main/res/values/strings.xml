@@ -113,11 +113,17 @@
     <string name="empty_bookmarks_body">Open any name and tap the bookmark to keep it here.</string>
     <string name="empty_learned_title">None marked yet</string>
     <string name="empty_learned_body">Open any name and tap Mark as learned.</string>
+    <!-- The way out an empty shelf offers: the lists are one tap apart, and
+         an empty screen that can act should act. -->
+    <string name="action_browse_names">Browse the names</string>
 
     <!-- Share -->
     <string name="cd_share">Share this name</string>
     <string name="share_title">Share this name</string>
     <string name="share_image">Share image</string>
+    <!-- The plate is for framing; plenty of contexts want the words themselves
+         — a caption, a quote, a note — so the sheet offers the plain text too. -->
+    <string name="share_text">Share text</string>
     <string name="share_failed">Couldn\u2019t create the image.</string>
     <string name="link_failed">Couldn\u2019t open the link.</string>
 
@@ -135,6 +141,9 @@
         <item quantity="other">%1$d names still to learn</item>
     </plurals>
     <string name="quiz_best">Best quiz score: %1$d of 10</string>
+    <!-- Celebrated only when a round beats a best that already existed; a
+         first round beats nothing, and saying so would cheapen the moment. -->
+    <string name="quiz_new_best">New best score</string>
     <string name="learned_names">Learned names</string>
     <string name="undo_card">Undo last card</string>
     <string name="all_learned_title">All 99 names learned</string>

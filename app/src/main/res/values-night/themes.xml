@@ -1,19 +1,20 @@
 <resources>
+    <!-- The launch follows the reader's choice: a Dark or Black reader must
+         not be flashed cream at cold start — the one second the theme used to
+         be ignored. The emerald plate and gold mark are the identity and stay;
+         only the paper around them turns to night paper. Light status-bar
+         icons on the near-black, mirroring the day theme's dark-on-cream. -->
     <style name="Theme.Names99" parent="android:Theme.Material.NoActionBar">
         <item name="android:windowBackground">@color/night_paper</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">false</item>
     </style>
 
-    <!-- Parent must be Theme.SplashScreen.IconBackground, not Theme.SplashScreen:
-         in core-splashscreen 1.0.1 the plain theme forwards only the icon, the
-         background and the duration to the platform attributes on API 31+, and
-         android:windowSplashScreenIconBackgroundColor is forwarded by the
-         IconBackground style alone. Inheriting the plain one silently drops the
-         emerald plate, leaving the gold mark on paper at 1.84:1. -->
     <style name="Theme.Names99.Starting" parent="Theme.SplashScreen.IconBackground">
         <item name="windowSplashScreenBackground">@color/night_paper</item>
         <item name="windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground</item>
         <item name="windowSplashScreenIconBackgroundColor">@color/ic_launcher_background</item>
         <item name="postSplashScreenTheme">@style/Theme.Names99</item>
+        <item name="android:windowLightStatusBar">false</item>
     </style>
 </resources>

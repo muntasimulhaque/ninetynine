@@ -42,6 +42,7 @@ import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -86,6 +87,9 @@ class MainActivity : ComponentActivity() {
 
     private var startNumber by mutableIntStateOf(-1)
 
+    /** The launcher-shortcut deep link, if this launch came from one. */
+    private var startRoute by mutableStateOf<String?>(null)
+
     /** False until Compose's first composition has committed; holds the splash. */
     private var contentReady = false
 
@@ -114,10 +118,18 @@ class MainActivity : ComponentActivity() {
         // never propagates to the system's ActivityRecord), so a restored
         // activity would force-navigate to the deep-linked name again. The
         // extra was already consumed and navigated before the death.
-        if (savedInstanceState == null) startNumber = consumeNameNumber(intent)
+        if (savedInstanceState == null) {
+            startNumber = consumeNameNumber(intent)
+            startRoute = consumeStartRoute(intent)
+        }
         setContent {
             SideEffect { contentReady = true }
-            App(startNumber, onStartNumberConsumed = { startNumber = -1 })
+            App(
+                startNumber,
+                startRoute,
+                onStartNumberConsumed = { startNumber = -1 },
+                onStartRouteConsumed = { startRoute = null },
+            )
         }
     }
 
@@ -125,6 +137,7 @@ class MainActivity : ComponentActivity() {
         super.onNewIntent(intent)
         setIntent(intent)
         startNumber = consumeNameNumber(intent)
+        startRoute = consumeStartRoute(intent)
     }
 
     /**
@@ -154,14 +167,28 @@ class MainActivity : ComponentActivity() {
         number
     }.getOrDefault(-1)
 
+    /** Same consume-and-remove discipline as [consumeNameNumber], for shortcut routes. */
+    private fun consumeStartRoute(intent: Intent?): String? = runCatching {
+        val route = intent?.getStringExtra(EXTRA_START_ROUTE)
+        intent?.removeExtra(EXTRA_START_ROUTE)
+        route
+    }.getOrNull()
+
     companion object {
         const val EXTRA_NAME_NUMBER = "nameNumber"
+
+        /** Carried by the launcher shortcuts (res/xml/shortcuts.xml). */
+        const val EXTRA_START_ROUTE = "startRoute"
     }
 }
 
 /** Which list a name page pages through. Absent means all 99. */
 private const val SCOPE_ALL = "all"
 private const val SCOPE_BOOKMARKS = "bookmarks"
+
+/** The routes a launcher shortcut may name in its [MainActivity.EXTRA_START_ROUTE]. */
+private const val ROUTE_FLASHCARDS = "flashcards"
+private const val ROUTE_QUIZ = "quiz"
 
 private data class TopLevelRoute(
     val route: String,
@@ -185,7 +212,12 @@ private val topLevelRoutes = listOf(
 )
 
 @Composable
-private fun App(startNumber: Int, onStartNumberConsumed: () -> Unit) {
+private fun App(
+    startNumber: Int,
+    startRoute: String?,
+    onStartNumberConsumed: () -> Unit,
+    onStartRouteConsumed: () -> Unit,
+) {
     val viewModel: NamesViewModel = viewModel()
     val themeMode by viewModel.themeMode.collectAsStateWithLifecycle()
     val textScale by viewModel.textScale.collectAsStateWithLifecycle()
@@ -210,6 +242,30 @@ private fun App(startNumber: Int, onStartNumberConsumed: () -> Unit) {
                 // without pressing Back in between — stacks a name page on top
                 // of a name page, and Back then lands on an identical screen.
                 navController.navigate("detail/$startNumber") { launchSingleTop = true }
+            }
+        }
+
+        // A launcher shortcut lands mid-book: long-pressing the icon offers
+        // the practice screens that otherwise sit two taps in. The memorize
+        // tab goes on the stack first, so Back from the shortcut's screen
+        // arrives where a reader who walked there would be.
+        LaunchedEffect(startRoute) {
+            val route = startRoute ?: return@LaunchedEffect
+            onStartRouteConsumed()
+            navController.navigate("memorize") {
+                popUpTo(navController.graph.findStartDestination().id) {
+                    saveState = true
+                }
+                launchSingleTop = true
+                restoreState = true
+            }
+            when (route) {
+                ROUTE_FLASHCARDS -> navController.navigate("flashcards") {
+                    launchSingleTop = true
+                }
+                ROUTE_QUIZ -> navController.navigate("quiz") {
+                    launchSingleTop = true
+                }
             }
         }
 
@@ -272,6 +328,17 @@ private fun App(startNumber: Int, onStartNumberConsumed: () -> Unit) {
                         onAbout = { navController.navigate("about") },
                     )
                 }
+                // The two list tabs offer their empties the same way out: the
+                // names list, where a bookmark or a learned tick begins.
+                val browseNames: () -> Unit = {
+                    navController.navigate("names") {
+                        popUpTo(navController.graph.findStartDestination().id) {
+                            saveState = true
+                        }
+                        launchSingleTop = true
+                        restoreState = true
+                    }
+                }
                 composable("bookmarks", enterTransition = tabFade(motionScale), exitTransition = tabFadeOut(motionScale)) {
                     BookmarksScreen(
                         viewModel = viewModel,
@@ -282,6 +349,7 @@ private fun App(startNumber: Int, onStartNumberConsumed: () -> Unit) {
                         },
                         onSettings = { navController.navigate("settings") },
                         onAbout = { navController.navigate("about") },
+                        onBrowseNames = browseNames,
                         listState = bookmarksListState,
                     )
                 }
@@ -295,6 +363,7 @@ private fun App(startNumber: Int, onStartNumberConsumed: () -> Unit) {
                     LearnedScreen(
                         viewModel = viewModel,
                         onNameClick = { number -> navController.navigate("detail/$number") },
+                        onBrowseNames = browseNames,
                         onBack = { navController.popBackStack() },
                     )
                 }

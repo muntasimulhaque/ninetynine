@@ -51,6 +51,7 @@ fun BookmarksScreen(
     onNameClick: (Int) -> Unit,
     onSettings: () -> Unit,
     onAbout: () -> Unit,
+    onBrowseNames: () -> Unit,
     listState: LazyListState,
 ) {
     val names by viewModel.names.collectAsStateWithLifecycle()
@@ -102,7 +103,9 @@ fun BookmarksScreen(
                     } else {
                         item(key = "empty") {
                             // Centred in the viewport: an empty shelf is the whole
-                            // content of the screen while it lasts.
+                            // content of the screen while it lasts. And an empty
+                            // screen that can act should act — the way to start
+                            // keeping names is one tap away, so the state offers it.
                             Box(
                                 modifier = Modifier.fillParentMaxSize(),
                                 contentAlignment = Alignment.Center,
@@ -110,6 +113,8 @@ fun BookmarksScreen(
                                 EmptyState(
                                     title = stringResource(R.string.empty_bookmarks_title),
                                     body = stringResource(R.string.empty_bookmarks_body),
+                                    actionLabel = stringResource(R.string.action_browse_names),
+                                    onAction = onBrowseNames,
                                 )
                             }
                         }

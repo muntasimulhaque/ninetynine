@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.widget.Toast
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -54,6 +55,7 @@ import io.github.muntasimulhaque.ninetynine.ui.theme.components.readingMeasure
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.scaledGap
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.paperTopBarColors
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.ScreenLabel
+import io.github.muntasimulhaque.ninetynine.ui.theme.components.ScrollbarThumb
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.SectionLabel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -107,79 +109,94 @@ fun AboutScreen(onBack: () -> Unit) {
             )
         },
     ) { padding ->
-        Column(
+        // About is a reading page like the name pages, and it runs to several
+        // screens on a phone — so it carries the same quiet edge cue for how
+        // much front matter lies below, instead of being the one page without.
+        val aboutScroll = rememberScrollState()
+        Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = ReadingInset)
-                .graphicsLayer { alpha = enterAlpha },
-            horizontalAlignment = Alignment.CenterHorizontally,
+                .padding(padding),
         ) {
             Column(
-                modifier = Modifier.widthIn(max = readingMeasure()).fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(aboutScroll)
+                    .padding(horizontal = ReadingInset)
+                    .graphicsLayer { alpha = enterAlpha },
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                Spacer(Modifier.height(28.dp))
-                ArabicText(
-                    text = stringResource(R.string.basmala),
-                    fontSize = ArabicSize.Line,
-                    color = MaterialTheme.colorScheme.primary,
-                    textAlign = TextAlign.Center,
-                )
-                Spacer(Modifier.height(32.dp))
+                Column(
+                    modifier = Modifier.widthIn(max = readingMeasure()).fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    Spacer(Modifier.height(28.dp))
+                    ArabicText(
+                        text = stringResource(R.string.basmala),
+                        fontSize = ArabicSize.Line,
+                        color = MaterialTheme.colorScheme.primary,
+                        textAlign = TextAlign.Center,
+                    )
+                    Spacer(Modifier.height(32.dp))
 
-                if (paragraphs.isEmpty()) {
-                    // The asset failed to read; say so instead of jumping
-                    // silently to the colophon.
+                    if (paragraphs.isEmpty()) {
+                        // The asset failed to read; say so instead of jumping
+                        // silently to the colophon.
+                        Text(
+                            text = stringResource(R.string.about_intro_unavailable),
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontStyle = FontStyle.Italic,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    } else {
+                        paragraphs.forEachIndexed { index, para ->
+                            when {
+                                para.startsWith("##") -> ChapterHeading(para.trimStart('#').trim())
+                                para.startsWith(">") -> Quote(para.removePrefix(">").trim())
+                                else -> Text(
+                                    text = para,
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = MaterialTheme.colorScheme.onBackground,
+                                    textAlign = TextAlign.Start,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        // A line that introduces a quote stays close to it.
+                                        .padding(
+                                            bottom = if (paragraphs.getOrNull(index + 1)
+                                                    ?.startsWith(">") == true
+                                            ) scaledGap(12.dp) else scaledGap(20.dp)
+                                        ),
+                                )
+                            }
+                        }
+                    }
+
+                    // The closing prayer, set apart as an envoi.
+                    Spacer(Modifier.height(16.dp))
+                    PageRule(Modifier.fillMaxWidth())
+                    Spacer(Modifier.height(32.dp))
                     Text(
-                        text = stringResource(R.string.about_intro_unavailable),
-                        style = MaterialTheme.typography.bodyMedium,
+                        text = stringResource(R.string.about_dua),
+                        style = MaterialTheme.typography.titleLarge,
                         fontStyle = FontStyle.Italic,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        color = MaterialTheme.colorScheme.secondary,
                         textAlign = TextAlign.Center,
                         modifier = Modifier.fillMaxWidth(),
                     )
-                } else {
-                    paragraphs.forEachIndexed { index, para ->
-                        when {
-                            para.startsWith("##") -> ChapterHeading(para.trimStart('#').trim())
-                            para.startsWith(">") -> Quote(para.removePrefix(">").trim())
-                            else -> Text(
-                                text = para,
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = MaterialTheme.colorScheme.onBackground,
-                                textAlign = TextAlign.Start,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    // A line that introduces a quote stays close to it.
-                                    .padding(
-                                        bottom = if (paragraphs.getOrNull(index + 1)
-                                                ?.startsWith(">") == true
-                                        ) scaledGap(12.dp) else scaledGap(20.dp)
-                                    ),
-                            )
-                        }
-                    }
+                    Spacer(Modifier.height(40.dp))
+
+                    Colophon(context)
+                    Spacer(Modifier.height(40.dp))
                 }
-
-                // The closing prayer, set apart as an envoi.
-                Spacer(Modifier.height(16.dp))
-                PageRule(Modifier.fillMaxWidth())
-                Spacer(Modifier.height(32.dp))
-                Text(
-                    text = stringResource(R.string.about_dua),
-                    style = MaterialTheme.typography.titleLarge,
-                    fontStyle = FontStyle.Italic,
-                    color = MaterialTheme.colorScheme.secondary,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-                Spacer(Modifier.height(40.dp))
-
-                Colophon(context)
-                Spacer(Modifier.height(40.dp))
             }
+            ScrollbarThumb(
+                scrollState = aboutScroll,
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(top = 16.dp, bottom = 16.dp, end = 8.dp),
+            )
         }
     }
 }

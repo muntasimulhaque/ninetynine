@@ -28,6 +28,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -74,6 +75,7 @@ fun ShareSheet(name: Name, onDismiss: () -> Unit) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val graphicsLayer = rememberGraphicsLayer()
+    val wordmark = stringResource(R.string.store_title)
     var sharing by remember { mutableStateOf(false) }
 
     ModalBottomSheet(
@@ -140,6 +142,18 @@ fun ShareSheet(name: Name, onDismiss: () -> Unit) {
                 Icon(Icons.Filled.Share, contentDescription = null)
                 Spacer(Modifier.padding(start = 8.dp))
                 Text(stringResource(R.string.share_image))
+            }
+            // The card is the artifact, but most share contexts want the words
+            // themselves — a caption, a quote, a note — so the sheet offers the
+            // plain text beside the plate, set exactly as the card sets it.
+            TextButton(
+                onClick = {
+                    val sent = shareNameText(context, name, wordmark)
+                    if (sent) onDismiss()
+                    else Toast.makeText(context, R.string.share_failed, Toast.LENGTH_SHORT).show()
+                },
+            ) {
+                Text(stringResource(R.string.share_text))
             }
         }
     }
@@ -273,4 +287,27 @@ private suspend fun shareNameImage(context: Context, bitmap: ImageBitmap, name: 
         addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
     }
     context.startActivity(Intent.createChooser(sendIntent, null))
+}
+
+/**
+ * The name as words, for the contexts a picture does not fit: the Arabic, the
+ * name and epithet on one line, the full meaning, and the store title where a
+ * stranger can find the app — the same hierarchy the exported card sets.
+ */
+private fun shareNameText(context: Context, name: Name, wordmark: String): Boolean {
+    val text = buildString {
+        appendLine(name.arabic)
+        appendLine("${name.transliteration} — ${name.title}")
+        appendLine()
+        appendLine(name.meaning)
+        appendLine()
+        append(wordmark)
+    }
+    val sendIntent = Intent(Intent.ACTION_SEND).apply {
+        type = "text/plain"
+        putExtra(Intent.EXTRA_TEXT, text)
+    }
+    return runCatching {
+        context.startActivity(Intent.createChooser(sendIntent, null))
+    }.isSuccess
 }

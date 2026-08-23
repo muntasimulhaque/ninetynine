@@ -1,0 +1,42 @@
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+    <!--
+      Long-press the launcher icon: straight into the practice screens that
+      otherwise sit two taps in. Both routes carry their startRoute extra to
+      MainActivity, which consumes it exactly the way it consumes the
+      widget's nameNumber — removeExtra, savedInstanceState guard — so a
+      process death can never replay the navigation.
+    -->
+    <shortcut
+        android:shortcutId="flashcards"
+        android:enabled="true"
+        android:icon="@drawable/ic_shortcut_flashcards"
+        android:shortcutShortLabel="@string/flashcards"
+        android:shortcutLongLabel="@string/flashcards_subtitle"
+        tools:targetApi="25">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="io.github.muntasimulhaque.ninetynine"
+            android:targetClass="io.github.muntasimulhaque.ninetynine.MainActivity">
+            <extra
+                android:name="startRoute"
+                android:value="flashcards" />
+        </intent>
+    </shortcut>
+    <shortcut
+        android:shortcutId="quiz"
+        android:enabled="true"
+        android:icon="@drawable/ic_shortcut_quiz"
+        android:shortcutShortLabel="@string/quiz"
+        android:shortcutLongLabel="@string/quiz_subtitle"
+        tools:targetApi="25">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="io.github.muntasimulhaque.ninetynine"
+            android:targetClass="io.github.muntasimulhaque.ninetynine.MainActivity">
+            <extra
+                android:name="startRoute"
+                android:value="quiz" />
+        </intent>
+    </shortcut>
+</shortcuts>

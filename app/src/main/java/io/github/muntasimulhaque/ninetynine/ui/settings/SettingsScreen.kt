@@ -23,11 +23,13 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
@@ -57,6 +59,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
@@ -77,7 +80,11 @@ import io.github.muntasimulhaque.ninetynine.BuildConfig
 import io.github.muntasimulhaque.ninetynine.R
 import io.github.muntasimulhaque.ninetynine.data.ThemeMode
 import io.github.muntasimulhaque.ninetynine.ui.NamesViewModel
+import io.github.muntasimulhaque.ninetynine.ui.theme.BlackColors
+import io.github.muntasimulhaque.ninetynine.ui.theme.DarkColors
+import io.github.muntasimulhaque.ninetynine.ui.theme.LightColors
 import io.github.muntasimulhaque.ninetynine.ui.theme.Motion
+import io.github.muntasimulhaque.ninetynine.ui.theme.appTypography
 import io.github.muntasimulhaque.ninetynine.ui.theme.rememberHaptics
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.BackButton
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.ListInset
@@ -124,7 +131,10 @@ fun SettingsScreen(
         // Say something on denial. Android stops showing the system dialog
         // after the second refusal, so without this the switch would simply do
         // nothing, for ever, with no way for the reader to find out why.
-        if (granted) viewModel.setDailyEnabled(true) else {
+        if (granted) {
+            haptics.tick()
+            viewModel.setDailyEnabled(true)
+        } else {
             pendingEnable = true
             showBlockedDialog = true
         }
@@ -137,6 +147,7 @@ fun SettingsScreen(
     LifecycleResumeEffect(dailyEnabled, pendingEnable) {
         if (pendingEnable && notificationsAllowed(context)) {
             pendingEnable = false
+            haptics.tick()
             viewModel.setDailyEnabled(true)
         }
         if (dailyEnabled && !notificationsAllowed(context)) viewModel.setDailyEnabled(false)
@@ -189,10 +200,17 @@ fun SettingsScreen(
             SectionBreak()
             SectionLabel(stringResource(R.string.text_size))
             Spacer(Modifier.height(16.dp))
-            // The specimen itself is the preview — no box around it.
+            // The specimen itself is the preview — no box around it — and it
+            // answers the bead mid-drag, not only after release: set at the
+            // slider's CURRENT value (absolute, via appTypography, not the
+            // theme's committed scale), so the reader sees exactly the size
+            // they are choosing before it is written to DataStore.
+            val previewStyle = remember(sliderValue) {
+                appTypography(sliderValue).headlineMedium
+            }
             MixedText(
                 text = stringResource(R.string.text_size_preview),
-                style = MaterialTheme.typography.headlineMedium,
+                style = previewStyle,
                 color = MaterialTheme.colorScheme.onSurface,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.fillMaxWidth(),
@@ -222,6 +240,9 @@ fun SettingsScreen(
                             if (enable && Build.VERSION.SDK_INT >= 33) {
                                 notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
                             } else {
+                                // The same featherweight tick every other
+                                // toggle in the app answers with.
+                                haptics.tick()
                                 viewModel.setDailyEnabled(enable)
                             }
                         },
@@ -446,6 +467,8 @@ private fun ThemeOption(
             .padding(vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
+        ThemeSwatch(mode)
+        Spacer(Modifier.width(14.dp))
         Text(
             text = stringResource(labelRes),
             style = MaterialTheme.typography.bodyLarge,
@@ -462,6 +485,39 @@ private fun ThemeOption(
                 .size(18.dp)
                 .graphicsLayer { alpha = checkAlpha },
         )
+    }
+}
+
+/**
+ * A theme in miniature: its paper, and its ink as a bead — the eye picks
+ * before the mind reads. System wears both papers split, because it is
+ * whichever the device is in; its bead follows the theme actually rendering.
+ * Purely visual: the row above carries the name and the state for readers.
+ */
+@Composable
+private fun ThemeSwatch(mode: ThemeMode) {
+    val ink = when (mode) {
+        ThemeMode.LIGHT -> LightColors.primary
+        ThemeMode.DARK, ThemeMode.BLACK -> DarkColors.primary
+        ThemeMode.SYSTEM -> MaterialTheme.colorScheme.primary
+    }
+    Box(
+        modifier = Modifier
+            .size(22.dp)
+            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, CircleShape)
+            .clip(CircleShape),
+        contentAlignment = Alignment.Center,
+    ) {
+        when (mode) {
+            ThemeMode.SYSTEM -> Row(Modifier.fillMaxSize()) {
+                Box(Modifier.weight(1f).fillMaxHeight().background(LightColors.background))
+                Box(Modifier.weight(1f).fillMaxHeight().background(DarkColors.background))
+            }
+            ThemeMode.LIGHT -> Box(Modifier.fillMaxSize().background(LightColors.background))
+            ThemeMode.DARK -> Box(Modifier.fillMaxSize().background(DarkColors.background))
+            ThemeMode.BLACK -> Box(Modifier.fillMaxSize().background(BlackColors.background))
+        }
+        Box(Modifier.size(8.dp).background(ink, CircleShape))
     }
 }
 

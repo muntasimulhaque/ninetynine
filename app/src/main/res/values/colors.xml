@@ -2,6 +2,9 @@
     <color name="ic_launcher_background">#1F4E42</color>
     <color name="paper">#FAF5EA</color>
     <color name="night_paper">#14120D</color>
+    <!-- Launcher shortcut glyphs sit on the launcher's own bubble, so they
+         carry the identity directly: the deep emerald by day. -->
+    <color name="shortcut_glyph">#17624E</color>
     <!-- The widget draws its colors inline (DailyNameWidget): one fixed
          emerald-and-gold identity in every theme. -->
 </resources>

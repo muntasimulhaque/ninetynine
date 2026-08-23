@@ -46,6 +46,7 @@ import io.github.muntasimulhaque.ninetynine.ui.theme.components.paperTopBarColor
 fun LearnedScreen(
     viewModel: NamesViewModel,
     onNameClick: (Int) -> Unit,
+    onBrowseNames: () -> Unit,
     onBack: () -> Unit,
 ) {
     val names by viewModel.names.collectAsStateWithLifecycle()
@@ -90,6 +91,8 @@ fun LearnedScreen(
                                 EmptyState(
                                     title = stringResource(R.string.empty_learned_title),
                                     body = stringResource(R.string.empty_learned_body),
+                                    actionLabel = stringResource(R.string.action_browse_names),
+                                    onAction = onBrowseNames,
                                 )
                             }
                         }

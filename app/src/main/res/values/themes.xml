@@ -2,6 +2,9 @@
     <style name="Theme.Names99" parent="android:Theme.Material.NoActionBar">
         <item name="android:windowBackground">@color/paper</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
+        <!-- The splash second: dark icons on the cream paper, so the clock
+             reads. Night flips it in values-night. -->
+        <item name="android:windowLightStatusBar">true</item>
     </style>
 
     <!-- Parent must be Theme.SplashScreen.IconBackground, not Theme.SplashScreen:
@@ -15,5 +18,6 @@
         <item name="windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground</item>
         <item name="windowSplashScreenIconBackgroundColor">@color/ic_launcher_background</item>
         <item name="postSplashScreenTheme">@style/Theme.Names99</item>
+        <item name="android:windowLightStatusBar">true</item>
     </style>
 </resources>

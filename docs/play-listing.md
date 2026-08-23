@@ -10,7 +10,7 @@ so do not add a word or a stray space.
 
 - **Application ID (package name):** `io.github.muntasimulhaque.ninetynine`
 - **Privacy policy URL:** `https://muntasimulhaque.github.io/ninetynine/privacy-policy.html`
-- **Version (this release):** versionName `1.1`, versionCode `11`
+- **Version (this release):** versionName `1.2`, versionCode `12`
 
 ---
 
@@ -20,10 +20,10 @@ so do not add a word or a stray space.
 The Ninety Nine Names of Allah
 ```
 
-## Short description (≤ 80 characters — 79 here)
+## Short description (≤ 80 characters — 77 here)
 
 ```
-Learn and memorize the 99 Names of Allah — Arabic, transliteration and meanings.
+Memorize the 99 Names of Allah — Arabic, transliteration & meanings. Offline.
 ```
 
 ## Full description
@@ -44,6 +44,8 @@ Learn at your own pace:
 • Flashcards to recall the meaning, and a ten-question quiz to test yourself
 • Mark the Names you have learned and watch your progress
 • Keep the Names that matter to you in Bookmarks
+• Search by name, meaning, or number
+• Share any Name as a beautiful card — or as plain text
 
 Made to be read:
 
@@ -53,6 +55,22 @@ Made to be read:
 
 Free and open source. May Allah make us among those who learn, memorize,
 understand and act upon His beautiful Names.
+```
+
+## What's new (version 1.2)
+
+```
+The app answers back, quietly, wherever a finger or an eye asks:
+
+• Search paints matching letters gold.
+• A dragged flashcard shows its verdict, and ticks at the point of no return.
+• Beating your quiz best earns a gold "New best".
+• The text-size specimen grows live under the slider.
+• Long-press the launcher icon for Flashcards or Quiz.
+• Share a Name as text too; hold a meaning to copy it.
+• Night readers get a night splash; theme rows wear swatches.
+
+All 99 Names are unchanged.
 ```
 
 ## What's new (version 1.1)

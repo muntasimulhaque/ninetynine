@@ -18,6 +18,7 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
@@ -408,15 +409,19 @@ private fun NamePage(
                     minScale = 0.45f,
                 )
                 Spacer(Modifier.height(scaledGap(20.dp)))
-                // Centred like the share card — the reading line, set the same
-                // way on every surface that carries the full meaning.
-                Text(
-                    text = name.meaning,
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.widthIn(max = readingMeasure()),
-                )
+                // Long-press copies: a meaning worth keeping travels further
+                // than the page, and every serious reading surface answers a
+                // held finger with selection. The one selectable text in the
+                // app — the flashcard faces stay swipe surfaces on purpose.
+                SelectionContainer {
+                    Text(
+                        text = name.meaning,
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.widthIn(max = readingMeasure()),
+                    )
+                }
                 if (name.note != null) {
                     // One step down from the meaning's 20: the note is an
                     // annex of the meaning, not its sibling (at 26 the two

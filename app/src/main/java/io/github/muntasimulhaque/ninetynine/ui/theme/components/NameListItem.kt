@@ -24,7 +24,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -33,6 +37,7 @@ import androidx.compose.ui.unit.dp
 import io.github.muntasimulhaque.ninetynine.R
 import io.github.muntasimulhaque.ninetynine.data.Name
 import io.github.muntasimulhaque.ninetynine.ui.theme.Motion
+import io.github.muntasimulhaque.ninetynine.util.Highlight
 
 /**
  * The list's inset from both page edges. The folio numbers are the leftmost
@@ -78,6 +83,12 @@ fun nameRowTextInset(): Dp = NameRowInset + folioWidth() + FolioGap
  * for one version and it was redundant twice over — the name's own page shows a
  * filled bookmark, and the Bookmarks tab is the list of them. A third indicator
  * only added ink to the surface the app opens on.
+ *
+ * [query], when given, paints the spans where it literally matches the
+ * transliteration or the title in the app's gold — search shows its work the
+ * way a system search does, instead of handing back a list and asking the
+ * reader to find the reason themselves. Only Home passes one; everywhere else
+ * a row is met without context, exactly as before.
  */
 @Composable
 fun NameListItem(
@@ -85,11 +96,22 @@ fun NameListItem(
     learned: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    query: String = "",
 ) {
     // clickable on the modifier rather than Surface's onClick overload: M3's
     // Surface takes no onClickLabel, and this way TalkBack announces what the
     // row opens instead of its bare "double-tap to activate". The surface is
     // transparent and unshaped, so the ripple bounds are unchanged.
+    val matchStyle = SpanStyle(
+        color = MaterialTheme.colorScheme.secondary,
+        fontWeight = FontWeight.SemiBold,
+    )
+    val translitText = remember(name.transliteration, query, matchStyle) {
+        highlighted(name.transliteration, query, matchStyle)
+    }
+    val titleText = remember(name.title, query, matchStyle) {
+        highlighted(name.title, query, matchStyle)
+    }
     Surface(
         modifier = modifier
             .fillMaxWidth()
@@ -117,14 +139,14 @@ fun NameListItem(
             Spacer(Modifier.width(FolioGap))
             Column(Modifier.weight(1f)) {
                 Text(
-                    text = name.transliteration,
+                    text = translitText,
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurface,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
                 Text(
-                    text = name.title,
+                    text = titleText,
                     style = MaterialTheme.typography.bodyMedium,
                     fontStyle = FontStyle.Italic,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -158,5 +180,20 @@ fun NameListItem(
                 color = MaterialTheme.colorScheme.primary,
             )
         }
+    }
+}
+
+/**
+ * The row's text with every literal match of [query] set apart in [matchStyle].
+ * A query the [Highlight] rules leave alone (too short, or only fuzzy-matched)
+ * returns the bare string unchanged, so an unhighlighted row renders exactly
+ * the way it always has.
+ */
+private fun highlighted(text: String, query: String, matchStyle: SpanStyle): AnnotatedString {
+    val ranges = Highlight.matches(text, query)
+    if (ranges.isEmpty()) return AnnotatedString(text)
+    return buildAnnotatedString {
+        append(text)
+        ranges.forEach { addStyle(matchStyle, it.first, it.last + 1) }
     }
 }

@@ -42,6 +42,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -92,6 +93,7 @@ import io.github.muntasimulhaque.ninetynine.ui.theme.components.ScrollbarThumb
 import io.github.muntasimulhaque.ninetynine.ui.theme.rememberHaptics
 import io.github.muntasimulhaque.ninetynine.util.DeckBuilder
 import kotlinx.coroutines.launch
+import kotlin.math.absoluteValue
 
 /** Session state for one flashcard run; survives rotation with the ViewModel. */
 class FlashcardsViewModel(private val savedState: SavedStateHandle) : ViewModel() {
@@ -330,6 +332,7 @@ fun FlashcardsScreen(
                                 session.flip()
                             },
                             offsetX = offsetX,
+                            cardWidth = cardWidth,
                             onDragCommit = ::commit,
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -488,10 +491,19 @@ private fun SwipeFlipCard(
     flipped: Boolean,
     onFlip: () -> Unit,
     offsetX: Animatable<Float, *>,
+    cardWidth: Float,
     onDragCommit: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val scope = rememberCoroutineScope()
+    val haptics = rememberHaptics()
+
+    // A finger mid-drag is asking a question the card should answer: which
+    // verdict is it heading toward? The sign alone flips cheaply, so it is a
+    // Boolean state; the graded strength of the hint is read in the draw
+    // phase below, where per-frame changes cost no recomposition.
+    var dragging by remember(offsetX) { mutableStateOf(false) }
+    val dragKnow by remember(offsetX) { derivedStateOf { offsetX.value >= 0f } }
 
     // Each card arrives with a soft rise (keyed to the card's own offset state).
     val appear = remember(offsetX) { Animatable(0f) }
@@ -537,8 +549,14 @@ private fun SwipeFlipCard(
                 cameraDistance = 14f * density
             }
             .pointerInput(offsetX) {
+                var crossedThreshold = false
                 detectHorizontalDragGestures(
+                    onDragStart = {
+                        dragging = true
+                        crossedThreshold = false
+                    },
                     onDragEnd = {
+                        dragging = false
                         val threshold = size.width * 0.3f
                         when {
                             offsetX.value > threshold -> onDragCommit(true)
@@ -547,11 +565,20 @@ private fun SwipeFlipCard(
                         }
                     },
                     onDragCancel = {
+                        dragging = false
                         scope.launch { offsetX.animateTo(0f, Motion.softSpec(motionScale)) }
                     },
                 ) { change, amount ->
                     change.consume()
-                    scope.launch { offsetX.snapTo(offsetX.value + amount) }
+                    val next = offsetX.value + amount
+                    scope.launch { offsetX.snapTo(next) }
+                    // One featherweight tick the instant the drag crosses the
+                    // commit threshold — the finger hears the point of no
+                    // return, so releasing past it stops being a guess.
+                    if (!crossedThreshold && next.absoluteValue >= size.width * 0.3f) {
+                        crossedThreshold = true
+                        haptics.tick()
+                    }
                 }
             },
         shape = MaterialTheme.shapes.large,
@@ -566,86 +593,121 @@ private fun SwipeFlipCard(
         // bounded emerald object to a shape with no perceivable outline.
         else BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
     ) {
-        if (rotation <= 90f) {
-            // Front: the name itself, set like the share card. Scrollable like
-            // the back: in landscape, or at a large system font, the card's
-            // height can drop below what the name needs, and the Card clips to
-            // its rounded shape — the one place a supported configuration
-            // could otherwise lose the Name entirely.
-            val frontScroll = rememberScrollState()
-            Box(modifier = Modifier.fillMaxSize()) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .verticalScroll(frontScroll)
-                        .padding(24.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center,
-                ) {
-                    ArabicText(
-                        text = name.arabic,
-                        fontSize = ArabicSize.Panel,
-                        color = HeroGold,
-                        textAlign = TextAlign.Center,
-                    )
-                    Spacer(Modifier.height(8.dp))
-                    FitText(
-                        text = name.transliteration,
-                        style = MaterialTheme.typography.displaySmall,
-                        color = HeroText,
-                        minScale = 0.45f,
-                    )
-                    Spacer(Modifier.height(24.dp))
-                    Text(
-                        text = stringResource(R.string.tap_to_flip),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = HeroSubtext,
-                        textAlign = TextAlign.Center,
+        Box(Modifier.fillMaxSize()) {
+            if (rotation <= 90f) {
+                // Front: the name itself, set like the share card. Scrollable like
+                // the back: in landscape, or at a large system font, the card's
+                // height can drop below what the name needs, and the Card clips to
+                // its rounded shape — the one place a supported configuration
+                // could otherwise lose the Name entirely.
+                val frontScroll = rememberScrollState()
+                Box(modifier = Modifier.fillMaxSize()) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .verticalScroll(frontScroll)
+                            .padding(24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center,
+                    ) {
+                        ArabicText(
+                            text = name.arabic,
+                            fontSize = ArabicSize.Panel,
+                            color = HeroGold,
+                            textAlign = TextAlign.Center,
+                        )
+                        Spacer(Modifier.height(8.dp))
+                        FitText(
+                            text = name.transliteration,
+                            style = MaterialTheme.typography.displaySmall,
+                            color = HeroText,
+                            minScale = 0.45f,
+                        )
+                        Spacer(Modifier.height(24.dp))
+                        Text(
+                            text = stringResource(R.string.tap_to_flip),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = HeroSubtext,
+                            textAlign = TextAlign.Center,
+                        )
+                    }
+                    // Same right-edge thumb as the back: only present when the
+                    // name overflows the card and needs scrolling.
+                    ScrollbarThumb(
+                        scrollState = frontScroll,
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .padding(top = 20.dp, bottom = 20.dp, end = 10.dp),
                     )
                 }
-                // Same right-edge thumb as the back: only present when the
-                // name overflows the card and needs scrolling.
-                ScrollbarThumb(
-                    scrollState = frontScroll,
+            } else {
+                // Back: the meaning alone (counter-rotated so it reads correctly).
+                val backScroll = rememberScrollState()
+                Box(
                     modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .padding(top = 20.dp, bottom = 20.dp, end = 10.dp),
-                )
+                        .fillMaxSize()
+                        .graphicsLayer { rotationY = 180f },
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .verticalScroll(backScroll)
+                            .padding(24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center,
+                    ) {
+                        // Centred like the share card — the reading line, set the
+                        // same way on every surface that carries the full meaning.
+                        Text(
+                            text = name.meaning,
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.widthIn(max = readingMeasure()),
+                        )
+                    }
+                    // A quiet scrollbar thumb on the card's right edge: position
+                    // says where you are, size says how long the meaning runs.
+                    // Only there while more lies below.
+                    ScrollbarThumb(
+                        scrollState = backScroll,
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .padding(top = 20.dp, bottom = 20.dp, end = 10.dp),
+                    )
+                }
             }
-        } else {
-            // Back: the meaning alone (counter-rotated so it reads correctly).
-            val backScroll = rememberScrollState()
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .graphicsLayer { rotationY = 180f },
-            ) {
-                Column(
+            // The verdict the drag is heading toward, fading in as the finger
+            // approaches the commit threshold: the same words the two buttons
+            // beneath the card carry, set as a tracked overline at the card's
+            // head. Composed only while a drag is live — an invisible merged
+            // child would still reach TalkBack through the card's merged node,
+            // and its graded alpha is read in the draw phase, so a moving
+            // finger redraws without recomposing the faces at all.
+            if (dragging) {
+                val front = rotation <= 90f
+                Text(
+                    text = stringResource(
+                        if (dragKnow) R.string.i_know_it else R.string.still_learning
+                    ).uppercase(),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = when {
+                        dragKnow && front -> HeroGold
+                        dragKnow -> MaterialTheme.colorScheme.secondary
+                        front -> HeroSubtext
+                        else -> MaterialTheme.colorScheme.onSurfaceVariant
+                    },
+                    textAlign = TextAlign.Center,
                     modifier = Modifier
-                        .fillMaxSize()
-                        .verticalScroll(backScroll)
-                        .padding(24.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center,
-                ) {
-                    // Centred like the share card — the reading line, set the
-                    // same way on every surface that carries the full meaning.
-                    Text(
-                        text = name.meaning,
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.widthIn(max = readingMeasure()),
-                    )
-                }
-                // A quiet scrollbar thumb on the card's right edge: position
-                // says where you are, size says how long the meaning runs.
-                // Only there while more lies below.
-                ScrollbarThumb(
-                    scrollState = backScroll,
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .padding(top = 20.dp, bottom = 20.dp, end = 10.dp),
+                        .fillMaxWidth()
+                        .align(Alignment.TopCenter)
+                        .padding(top = 18.dp)
+                        .graphicsLayer {
+                            val fraction = if (cardWidth <= 0f) 0f
+                            else (offsetX.value / (cardWidth * 0.3f)).coerceIn(-1f, 1f)
+                            alpha = ((fraction.absoluteValue - 0.15f) / 0.85f)
+                                .coerceIn(0f, 1f)
+                        },
                 )
             }
         }

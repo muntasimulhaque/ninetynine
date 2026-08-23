@@ -154,5 +154,44 @@ class QuizViewModelTest {
         assertFalse(vm.finished)
         assertTrue(vm.missed.isEmpty())
         assertEquals(10, vm.questions.size)
+        assertEquals(Int.MIN_VALUE, vm.bestBefore)
+    }
+
+    @Test
+    fun bestBeforeIgnoredWhileRoundStillRunning() {
+        val vm = vm()
+        vm.ensureQuiz(names, learned = emptySet())
+        vm.noteBestBefore(6)
+        assertEquals(Int.MIN_VALUE, vm.bestBefore)
+    }
+
+    @Test
+    fun bestBeforeCapturedOnceOnFinishedRound() {
+        val vm = vm()
+        vm.ensureQuiz(names, learned = emptySet())
+        for (i in vm.questions.indices) {
+            vm.select(vm.questions[i].answerIndex)
+            vm.next()
+        }
+        assertTrue(vm.finished)
+        vm.noteBestBefore(6)
+        assertEquals(6, vm.bestBefore)
+        // The caller's effect re-runs on every rotation while the result
+        // page is up; the first capture must hold, or the celebration dies.
+        vm.noteBestBefore(9)
+        assertEquals(6, vm.bestBefore)
+    }
+
+    @Test
+    fun restartClearsTheBestBeforeCapture() {
+        val vm = vm()
+        vm.ensureQuiz(names, learned = emptySet())
+        for (i in vm.questions.indices) {
+            vm.select(vm.questions[i].answerIndex)
+            vm.next()
+        }
+        vm.noteBestBefore(6)
+        vm.restart(names, learned = emptySet())
+        assertEquals(Int.MIN_VALUE, vm.bestBefore)
     }
 }

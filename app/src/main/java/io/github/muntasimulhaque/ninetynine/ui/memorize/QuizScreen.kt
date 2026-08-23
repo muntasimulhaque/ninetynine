@@ -113,6 +113,18 @@ class QuizViewModel(private val savedState: SavedStateHandle) : ViewModel() {
     var finished by mutableStateOf(savedState.get<Boolean>(KEY_FINISHED) ?: false); private set
 
     /**
+     * The standing best at the instant this round finished.
+     *
+     * Captured once, when [finished] turns true (see [noteBestBefore]), so
+     * the result page knows whether the score it shows beat something. The
+     * sentinel means "no round has finished in this sitting". Rides in the
+     * SavedStateHandle with the rest of the round: a process death on the
+     * result page must not demote a celebration, and a rotation must not
+     * re-capture from a best the round has already raised.
+     */
+    var bestBefore by mutableIntStateOf(savedState.get<Int>(KEY_BEST_BEFORE) ?: BEST_BEFORE_UNSEEN); private set
+
+    /**
      * The names answered wrongly, in the order they came up.
      *
      * The round used to keep only a score, so a reader saw "4 / 10" and had no
@@ -140,6 +152,21 @@ class QuizViewModel(private val savedState: SavedStateHandle) : ViewModel() {
         savedState[KEY_SELECTED_AT] = selectedAt
         savedState[KEY_FINISHED] = finished
         savedState[KEY_MISSED] = missed.toIntArray()
+        savedState[KEY_BEST_BEFORE] = bestBefore
+    }
+
+    /**
+     * Records the standing best exactly once, and only for a finished round:
+     * the caller's effect re-runs on every rotation while the result page is
+     * up, by which time the round's own write may already have raised the
+     * stored best — capturing again would compare the score against itself
+     * and the "new best" moment would silently never fire.
+     */
+    fun noteBestBefore(currentBest: Int) {
+        if (finished && bestBefore == BEST_BEFORE_UNSEEN) {
+            bestBefore = currentBest
+            saveSession()
+        }
     }
 
     fun ensureQuiz(names: List<Name>, learned: Set<Int>) {
@@ -186,6 +213,7 @@ class QuizViewModel(private val savedState: SavedStateHandle) : ViewModel() {
         selectedAt = -1
         finished = false
         missed = emptyList()
+        bestBefore = BEST_BEFORE_UNSEEN
         saveSession()
     }
 
@@ -197,9 +225,13 @@ class QuizViewModel(private val savedState: SavedStateHandle) : ViewModel() {
         savedState.remove<Int>(KEY_SELECTED_AT)
         savedState.remove<Boolean>(KEY_FINISHED)
         savedState.remove<IntArray>(KEY_MISSED)
+        savedState.remove<Int>(KEY_BEST_BEFORE)
     }
 
     private companion object {
+        /** [bestBefore] when no round has finished in this sitting. */
+        const val BEST_BEFORE_UNSEEN = Int.MIN_VALUE
+
         const val KEY_QUESTIONS = "quiz.questions"
         const val KEY_INDEX = "quiz.index"
         const val KEY_SCORE = "quiz.score"
@@ -207,6 +239,7 @@ class QuizViewModel(private val savedState: SavedStateHandle) : ViewModel() {
         const val KEY_SELECTED_AT = "quiz.selectedAt"
         const val KEY_FINISHED = "quiz.finished"
         const val KEY_MISSED = "quiz.missed"
+        const val KEY_BEST_BEFORE = "quiz.bestBefore"
         val json = Json
     }
 }
@@ -230,7 +263,12 @@ fun QuizScreen(
         quiz.ensureQuiz(names, learned)
     }
     LaunchedEffect(quiz.finished) {
-        if (quiz.finished) viewModel.setQuizBest(quiz.score)
+        if (quiz.finished) {
+            // Capture the standing best BEFORE this round's write lands: the
+            // result page celebrates only a score that beat something.
+            quiz.noteBestBefore(quizBest)
+            viewModel.setQuizBest(quiz.score)
+        }
     }
 
     Scaffold(
@@ -278,6 +316,7 @@ fun QuizScreen(
                     score = quiz.score,
                     total = quiz.questions.size,
                     best = quizBest,
+                    isNewBest = quiz.bestBefore >= 0 && quiz.score > quiz.bestBefore,
                     missed = quiz.missed.mapNotNull { n -> names.firstOrNull { it.number == n } },
                     onRestart = { quiz.restart(names, learned) },
                     onNameClick = onNameClick,
@@ -535,6 +574,7 @@ private fun QuizResultContent(
     score: Int,
     total: Int,
     best: Int,
+    isNewBest: Boolean,
     missed: List<Name>,
     onRestart: () -> Unit,
     onNameClick: (Int) -> Unit,
@@ -554,6 +594,14 @@ private fun QuizResultContent(
             Spacer(Modifier.height(20.dp))
         }
         ScoreCount(score = score, total = total)
+        // A round that beat the standing best says so, once, quietly — the
+        // tracked gold overline the app reserves for what matters. First
+        // rounds stay silent: everything beats nothing, and saying so would
+        // cheapen the moment a real best falls.
+        if (isNewBest) {
+            Spacer(Modifier.height(12.dp))
+            SectionLabel(stringResource(R.string.quiz_new_best))
+        }
         Spacer(Modifier.height(12.dp))
         Text(
             text = stringResource(
