@@ -51,7 +51,7 @@ class ScreenshotTest {
      * Studio runs).
      */
     private fun resolveOutDir(): File {
-        val path = InstrumentationRegistry.getInstrumentation().getArguments().getString("additionalTestOutputDir")
+        val path = InstrumentationRegistry.getArguments().getString("additionalTestOutputDir")
         if (path != null) {
             val dir = File(path)
             if (dir.isDirectory || dir.mkdirs()) return dir
