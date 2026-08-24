@@ -1,20 +1,18 @@
-name: Capture Play screenshots
+name: Capture store screenshots
 
-# Renders the five listing screens (home light, name page, home dark, quiz,
-# memorize) directly via an instrumentation screenshot test — no adb
-# navigation of the running app — on a phone, 7-inch and 10-inch emulator,
-# and uploads the PNGs as artifacts.
+# Renders REAL Play Store screenshots from the app's Compose UI, so the store
+# listing always matches the shipped build. Runs on GitHub's servers.
 #
-# The emulator infrastructure mirrors the proven screenshots.yml of the
-# count-and-play repo (API 35, KVM enabled, snapshot-less boots, cached AVDs):
-# that setup runs all three legs in about five minutes. The previous setup
-# (API 34, Nexus 10 profile, no KVM step) crawled for 45+ minutes and flaked
-# in teardown on the tablets.
-#
-# Artifacts: screenshots-<device>/<device>-<scene>.png for the five scenes.
-
+# Trigger manually, or automatically when the UI or the capture test changes.
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "app/src/main/**"
+      - "app/src/androidTest/**"
+      - "app/build.gradle.kts"
+      - ".github/workflows/screenshots.yml"
 
 permissions:
   contents: read
@@ -30,17 +28,19 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        # Play Store form factors: phone (16:9-ish), 7" and 10" tablets.
         include:
-          - device: phone
-            profile: pixel_2
-          - device: 7in
-            profile: Nexus 7
-          - device: 10in
-            profile: pixel_c
+          - name: phone
+            profile: pixel_2        # 1080x1920 (1.78:1), Play-safe
+          - name: tablet7
+            profile: Nexus 7        # 1200x1920, 7-inch
+          - name: tablet10
+            profile: pixel_c        # 2560x1800, 10-inch
     env:
-      # The newest image that boots reliably on hosted runners; the app's
-      # targetSdk (37) gains nothing for listing captures. Same pin the
-      # count-and-play repo uses.
+      # CI captures stay on the newest image that boots reliably under
+      # GitHub's virtualization: every Android 17 flavor tried here
+      # (37.0 classic, 37.1 ps16k) broke in CI emulation in a distinct way.
+      # Revisit when upstream stabilizes 37 images on hosted runners.
       API_LEVEL: "35"
     steps:
       - name: Check out source
@@ -65,8 +65,8 @@ jobs:
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
 
-      # The AVD is expensive to cold-create; cache it per form factor so only
-      # the first leg pays for it.
+      # The AVD and its snapshot are expensive to cold-create; cache them per
+      # form factor so only the first leg pays for it.
       - name: Cache AVD
         id: avd-cache
         uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
@@ -74,7 +74,7 @@ jobs:
           path: |
             ~/.android/avd/*
             ~/.android/adb*
-          key: avd-${{ env.API_LEVEL }}-${{ matrix.profile }}
+          key: avd-${{ env.SYSTEM_IMAGE_LEVEL }}-${{ matrix.profile }}
 
       - name: Create AVD and generate a snapshot to cache
         if: steps.avd-cache.outputs.cache-hit != 'true'
@@ -100,28 +100,21 @@ jobs:
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none -camera-front none -no-snapshot
           disable-animations: true
           script: |
-            # A cold boot can report completion before emulated storage is
-            # mounted; wait it out or the test's output dir breaks.
+            # A cold Android 17 boot reports completion before its emulated
+            # storage is mounted; wait it out or the test's output dir breaks.
             for i in $(seq 1 60); do adb -s emulator-5554 shell ls /sdcard/Android >/dev/null 2>&1 && break; sleep 2; done
-            # The slow tablet emulators can flake AFTER every PNG is saved: the
-            # final activity teardown sometimes times out ("Activity never
-            # becomes [DESTROYED]"), failing gradle without harming the
-            # captures. The deliverable is the PNGs: pull them regardless, then
-            # fail the leg only if an expected PNG is missing or empty, so a
-            # crashed scene or a skipped test still goes red. (The capture
-            # itself retries PixelCopy; see ScreenshotTest.)
-            ./gradlew :app:connectedDebugAndroidTest --console=plain || echo "WARNING: connectedDebugAndroidTest reported failures; verifying captures directly"
-            mkdir -p /tmp/screenshots
-            for f in home home-dark name quiz memorize; do adb exec-out run-as io.github.muntasimulhaque.ninetynine cat /data/data/io.github.muntasimulhaque.ninetynine/files/screenshots/$f.png > /tmp/screenshots/${{ matrix.device }}-$f.png || true; done
-            ls -la /tmp/screenshots
-            missing=0
-            for f in home home-dark name quiz memorize; do
-              if [ ! -s "/tmp/screenshots/${{ matrix.device }}-$f.png" ]; then
-                echo "MISSING OR EMPTY: ${{ matrix.device }}-$f.png"
-                missing=$((missing+1))
-              fi
-            done
-            if [ "$missing" -gt 0 ]; then
-              echo "$missing PNG(s) missing; failing the leg"
-              exit 1
-            fi
+            ./gradlew :app:connectedDebugAndroidTest
+            # AGP copies the test's additional output off-device (before it
+            # uninstalls the app) into app/build/outputs/.../additional output.
+            echo "All PNGs under app/build/outputs (diagnostic):"
+            find app/build/outputs -type f -name '*.png' -print
+            mkdir -p store-shots
+            find app/build/outputs/connected_android_test_additional_output -type f -name '*.png' -exec cp {} store-shots/ ';'
+            # Prefix every PNG with the form factor so per-leg artifacts never collide.
+            # (Single line: the emulator-runner feeds the script to sh, which chokes
+            # on multi-line compound commands.)
+            for f in store-shots/*.png; do mv "$f" "store-shots/${{ matrix.name }}_$(basename "$f")"; done
+            echo "Collected:"
+            ls -la store-shots
+            # Fail loudly if nothing was captured, rather than a false green.
+            test "$(ls store-shots/*.png 2>/dev/null | wc -l)" -ge 1

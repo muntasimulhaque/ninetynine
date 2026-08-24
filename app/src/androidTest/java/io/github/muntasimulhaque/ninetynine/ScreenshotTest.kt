@@ -23,10 +23,12 @@ import org.junit.runner.RunWith
 import java.io.File
 
 /**
- * Renders the four Play-listing screens directly (no app session, no adb taps)
+ * Renders the five Play-listing screens directly (no app session, no adb taps)
  * at whatever resolution the device reports, and saves a PNG per scene to the
- * app's internal files dir. The CI workflow runs this on a phone, 7-inch and
- * 10-inch emulator and pulls the PNGs off via `run-as`.
+ * instrumentation run's additional test output directory (falling back to the
+ * app's internal files dir). The CI workflow runs this on a phone, 7-inch and
+ * 10-inch emulator; AGP copies the PNGs off-device into the build's
+ * connected-androidTest additional output folder for the workflow to upload.
  *
  * This mirrors the other app's screenshot pipeline: mount a screen with a real
  * ViewModel, wait for the names to load, capture the idle frame. Deterministic
@@ -42,8 +44,27 @@ class ScreenshotTest {
     private fun app(): Application =
         InstrumentationRegistry.getInstrumentation().targetContext.applicationContext as Application
 
+    /**
+     * The directory AGP copies off-device after the connected test run, as
+     * wired by the instrumentation arg `additionalTestOutputDir` (falling
+     * back to the app's internal files dir when absent, e.g. Android
+     * Studio runs).
+     */
+    private fun resolveOutDir(): File {
+        val path = InstrumentationRegistry.getInstrumentation().getArguments().getString("additionalTestOutputDir")
+        if (path != null) {
+            val dir = File(path)
+            if (dir.isDirectory || dir.mkdirs()) return dir
+            // Cold-booted emulators can lag mounting shared storage; fall
+            // back rather than fail.
+        }
+        return File(
+            InstrumentationRegistry.getInstrumentation().targetContext.filesDir.absolutePath
+        ).apply { mkdirs() }
+    }
+
     private fun saveScreenshot(name: String) {
-        val dir = File(app().filesDir, "screenshots").apply { mkdirs() }
+        val dir = resolveOutDir()
         // The slow CI tablet emulators occasionally stall the PixelCopy behind
         // captureToImage ("Failed waiting for PixelCopy!"). The frame is static,
         // so a retry after a fresh idle wait is always safe.
