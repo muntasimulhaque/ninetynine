@@ -24,6 +24,14 @@ This file is guidance, not the last word. If a good idea contradicts it, do
 not reject it silently: bring it to the user, make the case, and if approved,
 implement it and update this file in the same change.
 
+## Pull before working
+
+The owner works from more than one machine (LENOVO and Dev Pro; see Build,
+test, verify), so this checkout is only one of several. At the start of any
+session, `git fetch` and pull whatever is new on `main` from GitHub, and do
+the work on that pulled head, never on a stale local one. This is the first
+action of every session, before any file is read or command run.
+
 ## Hard invariants (never violate)
 
 - **The app must never use the Internet.** No INTERNET permission (the only
@@ -83,7 +91,35 @@ release build degrades to unsigned rather than failing.
 7. **Screenshots: decide explicitly, every time.** Visible UI changed → hand
    over COMPLETE Play-ready sets (phone, 7-inch, 10-inch) per affected scene
    in a Desktop folder (`phone/`, `tablet-7/`, `tablet-10/`). If not, say
-   "no new screenshots needed" and why.
+   "no new screenshots needed" and why. Captures come from the screenshots.yml
+   run (see Store screenshots from CI below), never a hand-rolled local
+   session.
+
+### Store screenshots come from CI, not from a hand-rolled local session
+
+The Play sets are whatever `screenshots.yml` captured, never per-machine
+re-derivations. The workflow mirrors the proven one from the count-and-play
+repo (API 35, KVM enabled, snapshot-less boots, cached AVDs) and goes green
+in five to seven minutes (proven 2026-08-24, run 32762916428: all three
+legs, 15 PNGs). It triggers on pushes touching UI files, or via
+workflow_dispatch.
+
+- When visible UI changes: wait for the run, download the three
+  `store-screenshots-*` artifacts (phone/tablet7/tablet10, five scenes each),
+  and hand over/refresh from exactly those PNGs. On LENOVO
+  `gh run download <run-id> -R muntasimulhaque/ninetynine` works; on Dev Pro,
+  find the run and download artifacts through the GitHub Actions API with a
+  token from `git credential fill` (the CI section's pattern, full 40-char
+  SHA for `?head_sha=`).
+- Never re-capture a listing set by hand. The local adb recipes in Known
+  quirks remain for interactive checks and one-off scenes; if a local capture
+  fails twice, stop debugging the emulator and let CI do it.
+- Port proven code by DIFFING against the source, never by re-typing from
+  memory. When this workflow was ported, a re-typed line invented a
+  nonexistent method (`getArguments` lives on InstrumentationRegistry, not on
+  Instrumentation) and the upload step was dropped entirely; both reached CI
+  because the local check read a pipeline's exit code instead of gradle's.
+  Verify builds by the real exit code, never by grepping piped output.
 
 ## Build, test, verify
 
@@ -118,9 +154,10 @@ release build degrades to unsigned rather than failing.
   issues), `assembleDebug`, `assembleRelease` (minified, unsigned — R8 on
   every change), uploads the debug APK (7-day retention). Actions SHA-pinned;
   `permissions: contents: read`.
-- **screenshots.yml** (manual dispatch): renders five scenes via
-  ScreenshotTest on phone/7"/10" emulators. The scene list in its `for f in …`
-  loop must match ScreenshotTest, or a scene is never pulled.
+- **screenshots.yml** (pushes touching UI files, plus manual dispatch):
+  captures the five ScreenshotTest scenes on phone/7"/10" emulators at
+  API 35 and uploads `store-screenshots-phone/-tablet7/-tablet10` artifacts.
+  See Store screenshots from CI under Release hand-off.
 - Verify green runs via the GitHub Actions API with a token from
   `git credential fill` (no `gh` CLI here). `?head_sha=` matches only the
   FULL 40-char SHA; short SHAs return an empty list that reads as "running".
@@ -298,9 +335,10 @@ eight places (#28, #32, #44, #48, #80, #87, #94, #95).
   Count grows as guards are added — sum the XMLs in
   `app/build/test-results/testDebugUnitTest/`.
 - Instrumentation (`ScreenshotTest`) renders five scenes (home, home-dark,
-  name, quiz, memorize) to the app's `files/screenshots/`; pure render, no
-  input injection, so it runs on API ≤ 35 images. Used by screenshots.yml and
-  Android Studio captures.
+  name, quiz, memorize) to the instrumentation run's additional test output
+  directory (AGP copies them off-device for the workflow; local runs fall
+  back to the app's files dir); pure render, no input injection, so it runs
+  on API ≤ 35 images. Used by screenshots.yml and Android Studio captures.
 - Pure logic lives in `util/` precisely so it is unit-testable.
 
 ## Editing pitfalls that bite
@@ -397,10 +435,14 @@ eight places (#28, #32, #44, #48, #80, #87, #94, #95).
 - The app deliberately has no SnackbarHost (reset has no Undo; some failures
   surface as Toast). Don't assume one exists.
 - ScreenshotTest cannot run on local android-37.1 images (Espresso input
-  injection dies on an InputManager reflection error). Listing screenshots are
-  captured by driving the real app over adb (`uiautomator dump` → match text
-  or content-desc → `input tap` → `exec-out screencap`) with the debug APK
-  installed, or by ScreenshotTest on API ≤ 35 images. Hard-won adb gotchas:
+  injection dies on an InputManager reflection error). Listing screenshots
+  come from the CI workflow (see Store screenshots from CI under Release
+  hand-off); the local recipes below are fallback for interactive checks and
+  one-off scenes: driving the real app over adb (`uiautomator dump` → match
+  text or content-desc → `input tap` → `exec-out screencap`) with the debug
+  APK installed, or ScreenshotTest on API ≤ 35 images (the test now saves to
+  the AGP additional-test-output dir, not files/screenshots). Hard-won adb
+  gotchas:
   - Returning from a name page restores search mode with the query intact —
     tap "Close search" first.
   - Match text EXACTLY, not by substring ("NAMES" also occurs inside
