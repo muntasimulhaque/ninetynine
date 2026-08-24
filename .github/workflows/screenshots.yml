@@ -50,10 +50,27 @@ jobs:
           disable-animations: true
           emulator-boot-timeout: 900
           script: |
-            gradle connectedDebugAndroidTest --console=plain
+            # The slow CI tablet emulators can flake AFTER every PNG is saved:
+            # the final activity teardown sometimes times out ("Activity never
+            # becomes [DESTROYED]"), which fails gradle without harming the
+            # captures. The deliverable is the PNGs: pull them regardless, then
+            # fail the leg only if any expected PNG is missing or empty, so a
+            # crashed scene or a skipped test still goes red.
+            gradle connectedDebugAndroidTest --console=plain || echo "WARNING: connectedDebugAndroidTest reported failures; verifying captures directly"
             mkdir -p /tmp/screenshots
             for f in home home-dark name quiz memorize; do adb exec-out run-as io.github.muntasimulhaque.ninetynine cat /data/data/io.github.muntasimulhaque.ninetynine/files/screenshots/$f.png > /tmp/screenshots/${{ matrix.device }}-$f.png || true; done
-            ls -la /tmp/screenshots || true
+            ls -la /tmp/screenshots
+            missing=0
+            for f in home home-dark name quiz memorize; do
+              if [ ! -s "/tmp/screenshots/${{ matrix.device }}-$f.png" ]; then
+                echo "MISSING OR EMPTY: ${{ matrix.device }}-$f.png"
+                missing=$((missing+1))
+              fi
+            done
+            if [ "$missing" -gt 0 ]; then
+              echo "$missing PNG(s) missing; failing the leg"
+              exit 1
+            fi
 
       - name: Upload ${{ matrix.device }} screenshots
         uses: actions/upload-artifact@v4

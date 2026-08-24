@@ -43,11 +43,22 @@ class ScreenshotTest {
         InstrumentationRegistry.getInstrumentation().targetContext.applicationContext as Application
 
     private fun saveScreenshot(name: String) {
-        composeRule.waitForIdle()
         val dir = File(app().filesDir, "screenshots").apply { mkdirs() }
-        val bitmap = composeRule.onRoot(true).captureToImage().asAndroidBitmap()
-        File(dir, "$name.png").outputStream().use { fos ->
-            bitmap.compress(Bitmap.CompressFormat.PNG, 100, fos)
+        // The slow CI tablet emulators occasionally stall the PixelCopy behind
+        // captureToImage ("Failed waiting for PixelCopy!"). The frame is static,
+        // so a retry after a fresh idle wait is always safe.
+        repeat(3) { attempt ->
+            composeRule.waitForIdle()
+            try {
+                val bitmap = composeRule.onRoot(true).captureToImage().asAndroidBitmap()
+                File(dir, "$name.png").outputStream().use { fos ->
+                    bitmap.compress(Bitmap.CompressFormat.PNG, 100, fos)
+                }
+                return
+            } catch (e: AssertionError) {
+                if (attempt == 2) throw e
+                Thread.sleep(2_000)
+            }
         }
     }
 
