@@ -2,13 +2,23 @@ package io.github.muntasimulhaque.ninetynine
 
 import android.app.Application
 import android.graphics.Bitmap
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onRoot
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
@@ -20,8 +30,9 @@ import io.github.muntasimulhaque.ninetynine.ui.memorize.FlashcardsScreen
 import io.github.muntasimulhaque.ninetynine.ui.memorize.MemorizeScreen
 import io.github.muntasimulhaque.ninetynine.ui.memorize.QuizScreen
 import io.github.muntasimulhaque.ninetynine.ui.settings.SettingsScreen
-import io.github.muntasimulhaque.ninetynine.ui.share.ShareSheet
+import io.github.muntasimulhaque.ninetynine.ui.share.ShareCard
 import io.github.muntasimulhaque.ninetynine.ui.theme.Names99Theme
+import io.github.muntasimulhaque.ninetynine.ui.theme.components.PageInset
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -130,14 +141,29 @@ class ScreenshotTest {
     }
 
     @Test
-    fun share() = render("share", ThemeMode.LIGHT) {
-        // The share sheet over Al-Aleem — the longest meaning, the plate at
+    fun share() = render("share", ThemeMode.LIGHT) { vm ->
+        // The share plate over Al-Aleem — the longest meaning, the card at
         // its fullest (the same name the adb recipes pick for detail/share).
-        val names by it.names.collectAsStateWithLifecycle()
+        // The plate renders directly, not inside ShareSheet: the sheet lives
+        // in its own window, which the compose test root cannot PixelCopy.
+        // Scrollable + Centre arrangement = centred when the card fits,
+        // top-anchored and scrollable when it overflows (tablet7).
+        val names by vm.names.collectAsStateWithLifecycle()
         val aleem = names.firstOrNull { name ->
             name.transliteration.contains("Aleem", ignoreCase = true)
         }
-        if (aleem != null) ShareSheet(aleem, onDismiss = {})
+        if (aleem != null) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = PageInset, vertical = 32.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center,
+            ) {
+                ShareCard(name = aleem, modifier = Modifier.fillMaxWidth())
+            }
+        }
     }
 
     @Test

@@ -164,7 +164,7 @@ fun ShareSheet(name: Name, onDismiss: () -> Unit) {
  * identity, with a fine gold frame inside — like a printed plate.
  */
 @Composable
-private fun ShareCard(name: Name, modifier: Modifier = Modifier) {
+internal fun ShareCard(name: Name, modifier: Modifier = Modifier) {
     // One hairline gold rule serves the whole plate: the frame around the card
     // and the seal around the mark are drawn with the identical stroke.
     val frameGold = HeroGold.copy(alpha = 0.4f)
