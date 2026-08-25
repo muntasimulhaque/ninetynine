@@ -106,11 +106,9 @@ workflow_dispatch.
 
 - When visible UI changes: wait for the run, download the three
   `store-screenshots-*` artifacts (phone/tablet7/tablet10, five scenes each),
-  and hand over/refresh from exactly those PNGs. On LENOVO
-  `gh run download <run-id> -R muntasimulhaque/ninetynine` works; on Dev Pro,
-  find the run and download artifacts through the GitHub Actions API with a
-  token from `git credential fill` (the CI section's pattern, full 40-char
-  SHA for `?head_sha=`).
+  and hand over/refresh from exactly those PNGs.
+  `gh run download <run-id> -R muntasimulhaque/ninetynine` works on both
+  machines (gh is installed and authenticated on each).
 - Never re-capture a listing set by hand. The local adb recipes in Known
   quirks remain for interactive checks and one-off scenes; if a local capture
   fails twice, stop debugging the emulator and let CI do it.
@@ -158,9 +156,11 @@ workflow_dispatch.
   captures the five ScreenshotTest scenes on phone/7"/10" emulators at
   API 35 and uploads `store-screenshots-phone/-tablet7/-tablet10` artifacts.
   See Store screenshots from CI under Release hand-off.
-- Verify green runs via the GitHub Actions API with a token from
-  `git credential fill` (no `gh` CLI here). `?head_sha=` matches only the
-  FULL 40-char SHA; short SHAs return an empty list that reads as "running".
+- Verify green runs with `gh` — installed and authenticated on both machines
+  (e.g. `gh run view <run-id> -R muntasimulhaque/ninetynine`). The raw
+  Actions API with a token from `git credential fill` remains the fallback;
+  there, `?head_sha=` matches only the FULL 40-char SHA; short SHAs return
+  an empty list that reads as "running".
 
 ## Docs & Play listing assets
 
