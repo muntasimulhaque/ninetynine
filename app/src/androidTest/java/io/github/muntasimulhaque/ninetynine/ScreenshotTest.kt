@@ -150,7 +150,7 @@ class ScreenshotTest {
         // top-anchored and scrollable when it overflows (tablet7).
         val names by vm.names.collectAsStateWithLifecycle()
         val aleem = names.firstOrNull { name ->
-            name.transliteration.contains("Aleem", ignoreCase = true)
+            name.transliteration == "Al-Aleem"
         }
         if (aleem != null) {
             Column(
