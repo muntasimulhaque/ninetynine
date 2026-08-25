@@ -4,18 +4,23 @@ import android.app.Application
 import android.graphics.Bitmap
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onRoot
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import io.github.muntasimulhaque.ninetynine.data.ThemeMode
 import io.github.muntasimulhaque.ninetynine.ui.NamesViewModel
 import io.github.muntasimulhaque.ninetynine.ui.detail.DetailScreen
 import io.github.muntasimulhaque.ninetynine.ui.home.HomeScreen
+import io.github.muntasimulhaque.ninetynine.ui.memorize.FlashcardsScreen
 import io.github.muntasimulhaque.ninetynine.ui.memorize.MemorizeScreen
 import io.github.muntasimulhaque.ninetynine.ui.memorize.QuizScreen
+import io.github.muntasimulhaque.ninetynine.ui.settings.SettingsScreen
+import io.github.muntasimulhaque.ninetynine.ui.share.ShareSheet
 import io.github.muntasimulhaque.ninetynine.ui.theme.Names99Theme
 import org.junit.Rule
 import org.junit.Test
@@ -23,7 +28,7 @@ import org.junit.runner.RunWith
 import java.io.File
 
 /**
- * Renders the five Play-listing screens directly (no app session, no adb taps)
+ * Renders the eight Play-listing screens directly (no app session, no adb taps)
  * at whatever resolution the device reports, and saves a PNG per scene to the
  * instrumentation run's additional test output directory (falling back to the
  * app's internal files dir). The CI workflow runs this on a phone, 7-inch and
@@ -117,6 +122,27 @@ class ScreenshotTest {
     @Test
     fun quiz() = render("quiz", ThemeMode.LIGHT) {
         QuizScreen(it, onNameClick = {}, onBack = {})
+    }
+
+    @Test
+    fun flashcards() = render("flashcards", ThemeMode.LIGHT) {
+        FlashcardsScreen(it, onBack = {})
+    }
+
+    @Test
+    fun share() = render("share", ThemeMode.LIGHT) {
+        // The share sheet over Al-Aleem — the longest meaning, the plate at
+        // its fullest (the same name the adb recipes pick for detail/share).
+        val names by it.names.collectAsStateWithLifecycle()
+        val aleem = names.firstOrNull { name ->
+            name.transliteration.contains("Aleem", ignoreCase = true)
+        }
+        if (aleem != null) ShareSheet(aleem, onDismiss = {})
+    }
+
+    @Test
+    fun settings() = render("settings", ThemeMode.LIGHT) {
+        SettingsScreen(it, onBack = {})
     }
 
     private fun render(

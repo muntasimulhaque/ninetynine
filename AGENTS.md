@@ -105,7 +105,8 @@ legs, 15 PNGs). It triggers on pushes touching UI files, or via
 workflow_dispatch.
 
 - When visible UI changes: wait for the run, download the three
-  `store-screenshots-*` artifacts (phone/tablet7/tablet10, five scenes each),
+  `store-screenshots-*` artifacts (phone/tablet7/tablet10, eight scenes
+  each — 24 PNGs a full set),
   and hand over/refresh from exactly those PNGs.
   `gh run download <run-id> -R muntasimulhaque/ninetynine` works on both
   machines (gh is installed and authenticated on each).
@@ -153,7 +154,7 @@ workflow_dispatch.
   every change), uploads the debug APK (7-day retention). Actions SHA-pinned;
   `permissions: contents: read`.
 - **screenshots.yml** (pushes touching UI files, plus manual dispatch):
-  captures the five ScreenshotTest scenes on phone/7"/10" emulators at
+  captures the eight ScreenshotTest scenes on phone/7"/10" emulators at
   API 35 and uploads `store-screenshots-phone/-tablet7/-tablet10` artifacts.
   See Store screenshots from CI under Release hand-off.
 - Verify green runs with `gh` — installed and authenticated on both machines
@@ -334,8 +335,9 @@ eight places (#28, #32, #44, #48, #80, #87, #94, #95).
   real asset, CounterFormatTest.
   Count grows as guards are added — sum the XMLs in
   `app/build/test-results/testDebugUnitTest/`.
-- Instrumentation (`ScreenshotTest`) renders five scenes (home, home-dark,
-  name, quiz, memorize) to the instrumentation run's additional test output
+- Instrumentation (`ScreenshotTest`) renders eight scenes (home, home-dark,
+  name, quiz, memorize, flashcards, share, settings) to the instrumentation
+  run's additional test output
   directory (AGP copies them off-device for the workflow; local runs fall
   back to the app's files dir); pure render, no input injection, so it runs
   on API ≤ 35 images. Used by screenshots.yml and Android Studio captures.
