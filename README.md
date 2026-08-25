@@ -11,14 +11,14 @@ Based on the lecture of Sheikh Ibn Uthaymeen (Rahimahullah), as presented in *"T
 </p>
 
 <p>
-  <img src="docs/screenshots/home.png" width="205" alt="The home screen with the name of the day at the top">
-  <img src="docs/screenshots/detail.png" width="205" alt="A single name: Arabic, transliteration, meaning and a scholarly note">
-  <img src="docs/screenshots/quiz.png" width="205" alt="The ten-question quiz">
-  <img src="docs/screenshots/flashcards.png" width="205" alt="Flashcards with a flip animation">
-  <img src="docs/screenshots/bookmarks.png" width="205" alt="Bookmarked names">
-  <img src="docs/screenshots/memorize.png" width="205" alt="Memorization progress">
-  <img src="docs/screenshots/share.png" width="205" alt="Share a name as a rendered card">
-  <img src="docs/screenshots/settings.png" width="205" alt="Settings">
+  <img src="docs/screenshots/phone/phone_home.png" width="205" alt="The home screen with the name of the day at the top">
+  <img src="docs/screenshots/phone/phone_name.png" width="205" alt="A single name: Arabic, transliteration, meaning and a scholarly note">
+  <img src="docs/screenshots/phone/phone_quiz.png" width="205" alt="The ten-question quiz">
+  <img src="docs/screenshots/phone/phone_flashcards.png" width="205" alt="Flashcards with a flip animation">
+  <img src="docs/screenshots/phone/phone_home-dark.png" width="205" alt="The home screen in dark theme">
+  <img src="docs/screenshots/phone/phone_memorize.png" width="205" alt="Memorization progress">
+  <img src="docs/screenshots/phone/phone_share.png" width="205" alt="Share a name as a rendered card">
+  <img src="docs/screenshots/phone/phone_settings.png" width="205" alt="Settings">
 </p>
 
 ## Features

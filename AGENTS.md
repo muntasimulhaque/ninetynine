@@ -167,7 +167,9 @@ workflow_dispatch.
 
 `docs/` holds `play-listing.md` (copy/paste listing doc), `play-icon-512.png`,
 `play-feature-1024x500.png`, `privacy-policy.html` (hosted on GitHub Pages),
-and the phone screenshots under `docs/screenshots/` shown by the README.
+and the phone screenshots under `docs/screenshots/phone/` shown by the
+README (the CI-captured sets live beside it in `docs/screenshots/tablet7/`
+and `docs/screenshots/tablet10/`).
 The tablet screenshot sets were removed once already (commit `ac293db`) —
 do not re-add them; tablet captures are uploaded to Play by hand.
 
