@@ -110,6 +110,13 @@ workflow_dispatch.
   and hand over/refresh from exactly those PNGs.
   `gh run download <run-id> -R muntasimulhaque/ninetynine` works on both
   machines (gh is installed and authenticated on each).
+- The repo keeps a copy of the latest full set in `docs/screenshots/`
+  (`phone/`, `tablet7/`, `tablet10/`; the README thumbnails show the
+  phone set). Refresh it from the run's artifacts and commit —
+  `gh run download <run-id> -R muntasimulhaque/ninetynine -n
+  store-screenshots-phone -D docs/screenshots/phone` (likewise
+  tablet7/tablet10). Proven end-to-end by workflow_dispatch
+  (2026-08-25, run 32815084999, green in ~4 minutes).
 - Never re-capture a listing set by hand. The local adb recipes in Known
   quirks remain for interactive checks and one-off scenes; if a local capture
   fails twice, stop debugging the emulator and let CI do it.
@@ -170,8 +177,9 @@ workflow_dispatch.
 and the phone screenshots under `docs/screenshots/phone/` shown by the
 README (the CI-captured sets live beside it in `docs/screenshots/tablet7/`
 and `docs/screenshots/tablet10/`).
-The tablet screenshot sets were removed once already (commit `ac293db`) —
-do not re-add them; tablet captures are uploaded to Play by hand.
+The tablet sets were removed once (commit `ac293db`) and re-added later as
+CI-captured sets (owner decision, 2026-08-25); tablet captures are still
+uploaded to Play by hand.
 
 ## Code layout
 
