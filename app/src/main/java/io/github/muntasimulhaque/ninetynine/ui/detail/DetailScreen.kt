@@ -68,6 +68,8 @@ import io.github.muntasimulhaque.ninetynine.ui.share.ShareSheet
 import io.github.muntasimulhaque.ninetynine.ui.theme.LocalDarkTheme
 import io.github.muntasimulhaque.ninetynine.ui.theme.LocalMotionScale
 import io.github.muntasimulhaque.ninetynine.ui.theme.Motion
+import io.github.muntasimulhaque.ninetynine.ui.theme.NameGoldDark
+import io.github.muntasimulhaque.ninetynine.ui.theme.NameGoldLight
 import io.github.muntasimulhaque.ninetynine.ui.theme.TransliterationTealDark
 import io.github.muntasimulhaque.ninetynine.ui.theme.TransliterationTealLight
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.ArabicSize
@@ -374,12 +376,12 @@ private fun NamePage(
                 ArabicText(
                     text = name.arabic,
                     fontSize = ArabicSize.Page,
-                    // The Name is set in the app's gold (the same family the
-                    // share card's Arabic wears on its emerald plate), so it
-                    // stands apart from the teal transliteration beneath it.
-                    // Theme-aware: the hardened gold on paper, the lighter gold
-                    // on the night page.
-                    color = MaterialTheme.colorScheme.secondary,
+                    // The Name wears the app's gold — as close to the hero
+                    // plates' #D4B45A as paper contrast allows at large-text
+                    // 3:1 (see NameGoldLight). Theme-aware: the warmed gold
+                    // on paper, the brighter gold on the night page. It stands
+                    // apart from the teal transliteration beneath it.
+                    color = if (LocalDarkTheme.current) NameGoldDark else NameGoldLight,
                     textAlign = TextAlign.Center,
                 )
                 // The transliteration belongs to the Name: 8dp is the share

@@ -61,7 +61,7 @@ action of every session, before any file is read or command run.
 `BuildConfig.VERSION_NAME`, so they can never disagree. Rule: **+0.1 on
 versionName, +1 on versionCode per release.** Sequence since the store
 restart: 0.1 … 0.9, then 1.0 / 10, then 1.1 / 11, then 1.2 / 12, then
-**1.3 / 13 (current)**.
+1.3 / 13, then **1.4 / 14 (current)**.
 
 The release keystore path/credentials live in a `keystore.properties` outside
 the repo (Google Play Signing Key folder). When absent (CI, fresh clone) the
