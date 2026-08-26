@@ -25,9 +25,9 @@ Based on the lecture of Sheikh Ibn Uthaymeen (Rahimahullah), as presented in *"T
 
 - **Read** — all 99 names with Arabic script set in KFGQPC Uthmanic Script HAFS — the typeface of the Madinah Mushaf — with transliteration and full meanings, plus scholarly notes (e.g. the distinction between Ar-Rahmaan and Ar-Raheem). Browse the list, swipe between names, and search by name, meaning, note, or number.
 - **Keep** — bookmark the names you turn to and find them together in their own tab, in the order they appear in the book. Separate from memorization: resetting your progress leaves your bookmarks alone.
-- **Share** — turn any name into a beautifully rendered card (Arabic, transliteration, meaning) and share it as an image.
+- **Share** — turn any name into a beautifully rendered card (Arabic, transliteration, meaning) and share it as an image — or as plain text, for captions and notes.
 - **Memorize** — flashcards with a flip animation and an "I know it / Still learning" loop, a ten-question quiz with a remembered best score, and a quiet progress count (no streaks, no gamification).
-- **Daily** — a "Name of the Day" that rotates deterministically through all 99, shown on the home screen, as an optional notification at a time you choose, and as a resizable home-screen widget in the app's emerald-and-gold livery.
+- **Daily** — a "Name of the Day" that rotates deterministically through all 99, shown on the home screen, as an optional notification at a time you choose, and as a resizable home-screen widget in the app's emerald-and-gold livery, its Name set in the bundled Mushaf typeface.
 - **Considered** — warm paper light theme, dark, and true-black AMOLED; adjustable text size; quiet haptics; bundled KFGQPC Uthmanic Script HAFS (Arabic) and Spectral (Latin) typefaces; predictive back; edge-to-edge.
 - **Pure** — no ads, no analytics, no tracking, and **no INTERNET permission**, so the app cannot open a network connection at all. The only permission it declares for itself is notifications, and only if you turn the daily name on; the remaining manifest permissions come from Android's WorkManager library, which schedules the daily reminder. See [PRIVACY.md](PRIVACY.md).
 
