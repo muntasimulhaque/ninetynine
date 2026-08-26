@@ -13,6 +13,9 @@ captures/
 .cxx/
 *.apk
 *.aab
+# The release hand-off AAB lives in the repo by owner decision
+# (AGENTS.md, Release hand-off step 6) — un-ignore it there only.
+!releases/*.aab
 *.jks
 *.keystore
 output-metadata.json
