@@ -260,13 +260,17 @@ app/src/main/assets/     names.json (99 entries), intro.txt, fonts/ (+licenses).
   matches stay uncoloured — never invent a span that corresponds to nothing.
   Only Home passes a `query` to `NameListItem`; other lists stay pristine.
 - **Search is a field, not a mode:** a quiet BasicTextField sits at the head
-  of the home list content — below the daily card, above the rows, a hairline
-  under it, real air above and below it (26dp up toward the card, 24dp down
-  toward the first row — sectioning, not row rhythm; the card itself wears
-  the list's 20dp edges so plate and rows share one boundary) — always
-  present, filtering live through the shared ViewModel query. No search
-  icon, no bar swap, no BackHandler: nothing to open or close. The query
-  persists until cleared (row-end ✕). The tab bars carry
+  of the home list content — below the daily card, above the rows, set as a
+  quiet squircle PLATE (14dp radius matching the row Arabic's half-height,
+  52dp tall, `surfaceContainerHigh` deepening one step to
+  `surfaceContainerHighest` under the finger or the caret — the field is
+  one object read through material, not a hairline rule; the old rule under
+  it is gone), with real air above and below it (26dp up toward the card,
+  24dp down toward the first row — sectioning, not row rhythm; the card
+  itself wears the list's 20dp edges so plate and rows share one boundary)
+  — always present, filtering live through the shared ViewModel query. No
+  search icon, no bar swap, no BackHandler: nothing to open or close. The
+  query persists until cleared (the ✕ inside the plate). The tab bars carry
   ONE overflow glyph (`TabOverflowActions`: About, Settings) instead of two
   permanent icons.
 - **Tab heads differ by register:** Home passes `sizeScale = 1f` to
@@ -499,8 +503,8 @@ eight places (#28, #32, #44, #48, #80, #87, #94, #95).
   the AGP additional-test-output dir, not files/screenshots). Hard-won adb
   gotchas:
   - The search field lives at the head of the home list and its query
-    persists until cleared — tap the row-end ✕ ("Clear search") before
-    tapping rows you expected from the full list.
+    persists until cleared — tap the ✕ inside the search plate
+    ("Clear search") before tapping rows you expected from the full list.
   - Match text EXACTLY, not by substring ("NAMES" also occurs inside
     "99 names still to learn").
   - uiautomator dumps go stale during animations/IME — retry until the node

@@ -2,14 +2,17 @@ package io.github.muntasimulhaque.ninetynine.ui.home
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.LocalIndication
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,6 +22,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
@@ -50,6 +54,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -74,6 +81,7 @@ import io.github.muntasimulhaque.ninetynine.ui.theme.HeroSubtext
 import io.github.muntasimulhaque.ninetynine.ui.theme.HeroText
 import io.github.muntasimulhaque.ninetynine.ui.theme.LocalMotionScale
 import io.github.muntasimulhaque.ninetynine.ui.theme.Motion
+import io.github.muntasimulhaque.ninetynine.ui.theme.SquircleShape
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.ArabicSize
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.ArabicText
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.FitText
@@ -255,7 +263,7 @@ fun HomeScreen(
 }
 
 /**
- * The list's own search field — a quiet line at the head of the content,
+ * The list's own search field — a quiet plate at the head of the content,
  * below the day's name, above the rows.
  *
  * Search used to be a mode: an icon swapped the running head for a field, the
@@ -264,6 +272,16 @@ fun HomeScreen(
  * the field is simply part of the page, the way an index sits at the head of
  * a book's contents. Nothing to open, nothing to close; typing filters live,
  * and the query stays until the reader clears it.
+ *
+ * The plate, not the rule: the field is one object set in the paper's own
+ * darker shade — the shelf the book rests on — so its role reads through
+ * material rather than through a line. (A hairline said "divider", which is
+ * furniture; a surface says "press and speak", which is the truth.) The
+ * squircle is the house corner language, radius matching the row Arabic's
+ * 14dp half-height, so plate and Arabic end in the same curve. Under the
+ * finger or the caret it deepens one step toward the hand, the whole story
+ * told in shade, no border ever drawn. A focus trap sits over it so a tap
+ * that finds only its edge still opens the keyboard.
  */
 @Composable
 private fun SearchField(
@@ -272,6 +290,21 @@ private fun SearchField(
 ) {
     val focusManager = LocalFocusManager.current
     val searchLabel = stringResource(R.string.cd_search)
+    val interaction = remember { MutableInteractionSource() }
+    val focusRequester = remember { FocusRequester() }
+    // The plate deepens toward the hand: pressed or focused, one shade down.
+    // Motion.tween is the house fade, and it collapses to snap() when the
+    // animator scale is 0 — what the "remove animations" setting demands.
+    val pressed by interaction.collectIsPressedAsState()
+    val focused by interaction.collectIsFocusedAsState()
+    val plateColor by animateColorAsState(
+        targetValue = when {
+            pressed || focused -> MaterialTheme.colorScheme.surfaceContainerHighest
+            else -> MaterialTheme.colorScheme.surfaceContainerHigh
+        },
+        animationSpec = Motion.tween(Motion.QUICK),
+        label = "searchPlate",
+    )
     Column(
         Modifier.fillMaxWidth(),
         // The hero card above and the first row below must not lean on this
@@ -282,7 +315,19 @@ private fun SearchField(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = ListInset),
+                .padding(horizontal = ListInset)
+                // The plate itself: height 52dp — the minimum touch target,
+                // so the air IS the target and nothing is only decoration.
+                .heightIn(min = 52.dp)
+                .clip(SquircleShape(14.dp))
+                .background(plateColor)
+                // The tap trap lives on the same surface: taps that land on
+                // the plate but miss the text slot still summon the field.
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                ) { focusRequester.requestFocus() }
+                .padding(horizontal = 16.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             BasicTextField(
@@ -290,6 +335,7 @@ private fun SearchField(
                 onValueChange = onQueryChange,
                 modifier = Modifier
                     .weight(1f)
+                    .focusRequester(focusRequester)
                     // The label rides on the field only while it is
                     // empty. Set unconditionally, contentDescription
                     // would replace the field's text and a screen
@@ -297,6 +343,7 @@ private fun SearchField(
                     .semantics {
                         if (query.isEmpty()) contentDescription = searchLabel
                     },
+                interactionSource = interaction,
                 textStyle = MaterialTheme.typography.bodyLarge.copy(
                     color = MaterialTheme.colorScheme.onSurface,
                 ),
@@ -334,13 +381,8 @@ private fun SearchField(
                 }
             }
         }
-        HorizontalDivider(
-            modifier = Modifier.padding(horizontal = ListInset),
-            thickness = 0.5.dp,
-            color = MaterialTheme.colorScheme.outlineVariant,
-        )
-        // Below the hairline: the index turns back into the contents, and the
-        // first row opens with room rather than pressed against the rule.
+        // Below the plate: the index turns back into the contents, and the
+        // first row opens with room rather than pressed against the field.
         Spacer(Modifier.height(24.dp))
     }
 }

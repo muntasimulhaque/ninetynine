@@ -68,8 +68,8 @@ Polish where the hands and eyes rest:
 the preview upward a few times — it settles.
 • A larger title on the home screen, kept neatly within
 its bar at every text size.
-• Room to breathe around the search line: space above
-and below it, and the daily card aligned with the list.
+• The search field is now a quiet rounded plate — its own
+space above and below, set apart from the list.
 
 All 99 Names are unchanged.
 ```
