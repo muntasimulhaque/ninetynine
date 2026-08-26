@@ -65,11 +65,10 @@ A quieter, more exacting coat of paint:
 • Every corner icon — search, ⓘ, share, the gear, back — now wears one
 lighter weight.
 • Tab titles sit at a book's running-head size on all three tabs.
-• A finer progress line in Memorize; a disabled quiz button that no longer
-sits like mud.
-• Theme swatches get a paper mat; the names list breathes a touch more.
-• Widget, notification and app now share one emerald-and-gold, from one
-source of truth.
+• Finer progress line; the disabled quiz button no longer sits like mud.
+• Theme swatches get a paper mat; list rows breathe a touch more.
+• A refined launcher icon; widget, notification and app share one
+emerald-and-gold.
 
 All 99 Names are unchanged.
 ```

@@ -1,4 +1,5 @@
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
@@ -10,12 +11,32 @@
          script; lam and lam are the verticals, the final heh is the closed
          box, and the baseline joins heh to both lams.
 
-         Scaled 0.8636 about the centre (37.98 wide, bounds 35.01..70.99 —
-         still inside the 21..87 adaptive safe zone): at 35.2% of the canvas
-         the mark keeps its breathing room on the launcher grid while its ink
-         mass stays centred (centroid 53.6,53.6). Two steps down from the
-         48-unit crowding of v3.5. -->
+         v2 presentation (1.3): the geometry is untouched; the group below
+         scales it 1.166× about the centre — 37.98 → 44.28 units wide,
+         35.2% → 41% of the canvas — so the mark holds its own on the
+         launcher grid while its corners (±22.14 from centre, 31.3 on the
+         diagonal) stay inside the 33-unit adaptive safe zone. The fill is
+         top-lit gold, a quiet vertical step that suggests foil stamping
+         without pretending at 3D; the monochrome layer shares this
+         drawable and tints by alpha, which the gradient holds at 100%
+         everywhere. -->
+    <group
+        android:scaleX="1.166"
+        android:scaleY="1.166"
+        android:pivotX="54"
+        android:pivotY="54">
     <path
-        android:fillColor="#D4B45A"
-        android:pathData="M35.012,33.428h37.976v5.425h-37.976zM35.012,44.279h16.276v5.425h-16.276zM56.713,44.279h5.425v27.127h-5.425zM67.563,44.279h5.425v27.127h-5.425zM35.012,49.704h5.425v21.701h-5.425zM45.863,49.704h5.425v21.701h-5.425zM40.437,65.980h5.425v5.425h-5.425zM51.287,65.980h5.425v5.425h-5.425zM62.137,65.980h5.425v5.425h-5.425z" />
+        android:pathData="M35.012,33.428h37.976v5.425h-37.976zM35.012,44.279h16.276v5.425h-16.276zM56.713,44.279h5.425v27.127h-5.425zM67.563,44.279h5.425v27.127h-5.425zM35.012,49.704h5.425v21.701h-5.425zM45.863,49.704h5.425v21.701h-5.425zM40.437,65.980h5.425v5.425h-5.425zM51.287,65.980h5.425v5.425h-5.425zM62.137,65.980h5.425v5.425h-5.425z">
+            <aapt:attr name="android:fillColor">
+                <gradient
+                    android:type="linear"
+                    android:startX="54"
+                    android:startY="33.428"
+                    android:endX="54"
+                    android:endY="71.406"
+                    android:startColor="#DFBD5F"
+                    android:endColor="#C9AB55" />
+            </aapt:attr>
+        </path>
+    </group>
 </vector>
