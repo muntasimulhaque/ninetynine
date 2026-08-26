@@ -20,36 +20,38 @@ so do not add a word or a stray space.
 The Ninety Nine Names of Allah
 ```
 
-## Short description (≤ 80 characters — 77 here)
+## Short description (≤ 80 characters — 75 here)
 
 ```
-Memorize the 99 Names of Allah — Arabic, transliteration & meanings. Offline.
+Memorize Asma ul Husna — the 99 Names of Allah. Arabic & meanings. Offline.
 ```
 
 ## Full description
 
 ```
-The Ninety Nine Names of Allah is a calm, book-like companion for learning and
-memorizing the beautiful Names of Allah (Asma'ul Husna).
+A calm, book-like companion for reading and memorizing Al-Asma ul-Husna — the
+ninety-nine Names of Allah.
 
-Each of the 99 Names is presented carefully:
+Each of the 99 Names is set with care:
 
-• The Name in clear Arabic, set in the Uthmanic HAFS script of the Madinah Mushaf
+• The Name in clear Arabic, in the Uthmanic HAFS script of the Madinah Mushaf
 • A faithful transliteration
-• Its meaning in English, based on the lecture of Sheikh Ibn Uthaymeen (Rahimahullah)
+• Its meaning in English, drawn from the lecture of Sheikh Ibn Uthaymeen (Rahimahullah)
 
 Learn at your own pace:
 
-• A Name of the Day, with a home-screen widget and an optional daily notification
+• A Name of the Day — in the app, in an optional notification at a time you
+  choose, and on your home screen as a widget set in the Mushaf's own script
 • Flashcards to recall the meaning, and a ten-question quiz to test yourself
-• Mark the Names you have learned and watch your progress
+• Mark the Names you have learned and watch a quiet count grow — no streaks,
+  no pressure
 • Keep the Names that matter to you in Bookmarks
 • Search by name, meaning, or number
 • Share any Name as a beautiful card — or as plain text
 
 Made to be read:
 
-• Light, dark and pure-black (AMOLED) themes
+• Light, dark and true-black (AMOLED) themes
 • Adjustable text size
 • Offline, private and free — no ads, no tracking, no account
 
