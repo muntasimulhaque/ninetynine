@@ -83,17 +83,22 @@ release build degrades to unsigned rather than failing.
    ("jar verified"; the PKIX warning on the self-signed upload key is
    normal). Only if no keystore is available, fall back to the CI artifact
    and say so explicitly.
-6. **Hand over the AAB and release notes.** Copy the bundle somewhere obvious
-   named with the version (e.g. Desktop, `ninetynine-1.0-vc10.aab`) and paste
-   the notes VERBATIM as a standalone copy-paste block — never just point at
-   `play-listing.md`. Once the user confirms submission to Play, delete the
-   hand-off copy (the App Bundle Explorer retains the artifact).
-7. **Screenshots: decide explicitly, every time.** Visible UI changed → hand
-   over COMPLETE Play-ready sets (phone, 7-inch, 10-inch) per affected scene
-   in a Desktop folder (`phone/`, `tablet-7/`, `tablet-10/`). If not, say
-   "no new screenshots needed" and why. Captures come from the screenshots.yml
-   run (see Store screenshots from CI below), never a hand-rolled local
-   session.
+6. **Hand over the AAB and release notes.** Copy the bundle into the
+   repo's `releases/` folder named with the version (e.g.
+   `releases/ninetynine-1.0-vc10.aab`). Hand-off copies live in the repo —
+   never on the Desktop or anywhere outside it — so they travel with the
+   checkout to every machine. Paste the notes VERBATIM as a standalone
+   copy-paste block — never just point at `play-listing.md`. Once the user
+   confirms submission to Play, delete the copy from `releases/` (the App
+   Bundle Explorer retains the artifact).
+7. **Screenshots: decide explicitly, every time.** Visible UI changed →
+   refresh the COMPLETE Play-ready sets (phone, 7-inch, 10-inch) in
+   `docs/screenshots/` (`phone/`, `tablet7/`, `tablet10/`) from the
+   screenshots.yml run — that folder IS the hand-off destination; never
+   copy sets to the Desktop or anywhere else in the repo. If nothing
+   visible changed, say "no new screenshots needed" and why. Captures
+   come from the screenshots.yml run (see Store screenshots from CI
+   below), never a hand-rolled local session.
 
 ### Store screenshots come from CI, not from a hand-rolled local session
 
