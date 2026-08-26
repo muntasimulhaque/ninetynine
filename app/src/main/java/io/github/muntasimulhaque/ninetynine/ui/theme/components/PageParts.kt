@@ -12,8 +12,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.outlined.Settings
-import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.outlined.MoreVert
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -24,7 +25,10 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarColors
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -99,40 +103,48 @@ fun paperTopBarColors(): TopAppBarColors = TopAppBarDefaults.topAppBarColors(
 )
 
 /**
- * The way to Settings from a tab screen.
+ * The tab bar's single quiet corner.
  *
- * It sits on all three — Names, Bookmarks, Memorize — and always last in the
- * bar, so it reads as a fixed corner rather than something one screen happens
- * to offer. A gear present on some tabs and missing from others would be worse
- * than either extreme.
- */
-/**
- * The way to About from a tab screen.
- *
- * About is content, not configuration — the source it is drawn from, the
- * typefaces, the du'a, the hadith the whole app exists for. Reaching it took
- * Names → gear → About → About, so most readers never would. It sits to the
- * LEFT of the gear because the gear is the fixed corner of every tab bar, and
- * because About is the lighter of the two. The Settings row to it stays: a
- * second path costs nothing.
+ * Settings and About were two permanent icons on every tab bar — chrome a
+ * reader meets every hour but uses weekly. One glyph now opens a small menu
+ * carrying both rows (About first, then Settings, in the order the icons used
+ * to read left to right). Present on ALL THREE tab screens — Names,
+ * Bookmarks, Memorize — so it still reads as a fixed corner rather than
+ * something one screen happens to offer; it is just one icon instead of two
+ * beside each running head.
  */
 @Composable
-fun AboutAction(onClick: () -> Unit) {
-    IconButton(onClick = onClick) {
-        Icon(
-            Icons.Outlined.Info,
-            contentDescription = stringResource(R.string.about),
-        )
-    }
-}
-
-@Composable
-fun SettingsAction(onClick: () -> Unit) {
-    IconButton(onClick = onClick) {
-        Icon(
-            Icons.Outlined.Settings,
-            contentDescription = stringResource(R.string.settings),
-        )
+fun TabOverflowActions(
+    onSettings: () -> Unit,
+    onAbout: () -> Unit,
+) {
+    var expanded by remember { mutableStateOf(false) }
+    Box {
+        IconButton(onClick = { expanded = true }) {
+            Icon(
+                Icons.Outlined.MoreVert,
+                contentDescription = stringResource(R.string.cd_more),
+            )
+        }
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+        ) {
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.about)) },
+                onClick = {
+                    expanded = false
+                    onAbout()
+                },
+            )
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.settings)) },
+                onClick = {
+                    expanded = false
+                    onSettings()
+                },
+            )
+        }
     }
 }
 

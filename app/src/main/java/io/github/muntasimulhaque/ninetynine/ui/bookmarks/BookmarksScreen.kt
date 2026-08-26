@@ -28,10 +28,8 @@ import io.github.muntasimulhaque.ninetynine.ui.theme.components.NameRowInset
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.EmptyState
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.LazyScrollbarThumb
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.PageMessage
-import io.github.muntasimulhaque.ninetynine.ui.theme.components.AboutAction
-import io.github.muntasimulhaque.ninetynine.ui.theme.components.SettingsAction
+import io.github.muntasimulhaque.ninetynine.ui.theme.components.TabOverflowActions
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.TabTitle
-import io.github.muntasimulhaque.ninetynine.ui.theme.components.nameRowTextInset
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.paperTopBarColors
 
 /**
@@ -70,14 +68,13 @@ fun BookmarksScreen(
                     TabTitle(stringResource(R.string.bookmarks))
                 },
                 actions = {
-                    AboutAction(onAbout)
-                    SettingsAction(onSettings)
+                    TabOverflowActions(onSettings = onSettings, onAbout = onAbout)
                 },
             )
         },
     ) { padding ->
-        // The rule between rows starts where the names do, not under their numbers.
-        val dividerInset = nameRowTextInset()
+        // The rule between rows runs the row's own width — there are no
+        // folio numbers to indent past.
         Box(Modifier.fillMaxSize()) {
             LazyColumn(
                 state = listState,
@@ -121,7 +118,7 @@ fun BookmarksScreen(
                         onClick = { onNameClick(name.number) },
                     )
                     HorizontalDivider(
-                        modifier = Modifier.padding(start = dividerInset, end = NameRowInset),
+                        modifier = Modifier.padding(start = NameRowInset, end = NameRowInset),
                         thickness = 0.5.dp,
                         color = MaterialTheme.colorScheme.outlineVariant,
                     )

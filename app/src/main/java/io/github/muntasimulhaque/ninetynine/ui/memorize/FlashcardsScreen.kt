@@ -341,13 +341,16 @@ fun FlashcardsScreen(
                                 .onSizeChanged { cardWidth = it.width.toFloat() },
                         )
                     }
-                    // The hint on the first few cards; after that, the way back
-                    // from a mis-swipe. One line either way, so the row beneath
-                    // the card never changes height: the hint and the empty
-                    // placeholder are short Texts while the undo control is a
+                    // The way back from a mis-swipe. The row keeps a fixed
+                    // height whether the undo is present or not: the empty
+                    // placeholder is a short Text while the undo control is a
                     // TextButton with a 48dp minimum touch target, so without
                     // the fixed-height box the card would shrink ~30dp the
-                    // moment the undo appeared.
+                    // moment the undo appeared. (The swipe instructions that
+                    // once sat here are gone: the drag teaches itself — the
+                    // card wears the I KNOW IT / STILL LEARNING overline toward
+                    // the commit threshold, and the two buttons below name the
+                    // same verdicts.)
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -355,14 +358,7 @@ fun FlashcardsScreen(
                         contentAlignment = Alignment.Center,
                     ) {
                         val undoable = session.undoable
-                        if (session.index < 3 && undoable == null) {
-                            Text(
-                                text = stringResource(R.string.swipe_hint),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                textAlign = TextAlign.Center,
-                            )
-                        } else if (undoable != null) {
+                        if (undoable != null) {
                             TextButton(
                                 onClick = {
                                     session.undo()?.let { (number, wasMarked) ->
@@ -623,13 +619,9 @@ private fun SwipeFlipCard(
                             color = HeroText,
                             minScale = 0.45f,
                         )
-                        Spacer(Modifier.height(24.dp))
-                        Text(
-                            text = stringResource(R.string.tap_to_flip),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = HeroSubtext,
-                            textAlign = TextAlign.Center,
-                        )
+                        // No instruction line: the whole face is one plate
+                        // holding one Name, and tapping is the only thing a
+                        // finger can do with it.
                     }
                     // Same right-edge thumb as the back: only present when the
                     // name overflows the card and needs scrolling.

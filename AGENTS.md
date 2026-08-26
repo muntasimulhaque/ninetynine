@@ -246,7 +246,7 @@ app/src/main/assets/     names.json (99 entries), intro.txt, fonts/ (+licenses).
   `meaning` does NOT (Detail/Share/flashcard back: meaning only; list rows,
   hero card, widget, notification, quiz keep the title).
 - **Shared components live in `PageParts.kt`** (BackButton, FitText,
-  ScreenLabel, SectionLabel, NavRow, PageRule, SettingsAction, EmptyState,
+  ScreenLabel, SectionLabel, NavRow, PageRule, TabOverflowActions, EmptyState,
   paperTopBarColors, scaledGap, readingMeasure, named insets). Reuse them.
 - **Empty screens that offer an action use `EmptyState`** (title + optional
   line + optional TextButton); `PageMessage` stays for failure cases with no
@@ -259,6 +259,21 @@ app/src/main/assets/     names.json (99 entries), intro.txt, fonts/ (+licenses).
   (≥2-char trimmed query, case-insensitive, non-overlapping); fuzzy-only
   matches stay uncoloured — never invent a span that corresponds to nothing.
   Only Home passes a `query` to `NameListItem`; other lists stay pristine.
+- **Search is a field, not a mode:** a quiet BasicTextField sits at the head
+  of the home list content — below the daily card, above the rows, a hairline
+  under it — always present, filtering live through the shared ViewModel
+  query. No search icon, no bar swap, no BackHandler: nothing to open or
+  close. The query persists until cleared (row-end ✕). The tab bars carry
+  ONE overflow glyph (`TabOverflowActions`: About, Settings) instead of two
+  permanent icons.
+- **The list rows carry no folio numbers:** position survives where it means
+  something (detail counter, search, deep links), not as ink taxing every
+  resting row. Dividers run the row's own width (`NameRowInset` both sides).
+- **The flashcards carry no instruction lines:** "Tap the card…" and the
+  swipe hint are gone — the whole front face is one plate holding one Name
+  (nothing else to tap), and the drag answers the hand through the I KNOW IT
+  / STILL LEARNING overline. The fixed-height box under the card remains so
+  the undo control never resizes the deck.
 - **The text-size slider previews live:** the specimen answers the bead
   mid-drag, set at the slider's CURRENT absolute value
   (`appTypography(sliderValue).headlineMedium`), not the theme's committed
@@ -302,10 +317,13 @@ app/src/main/assets/     names.json (99 entries), intro.txt, fonts/ (+licenses).
   `setKeepOnScreenCondition { !contentReady }`, released by a `SideEffect`
   after the first composition commits — without it a slow device flashes bare
   window background between splash and app.
-- **The hero card rises in once:** the daily card enters like a pushed screen
-  (fade + 24dp rise, CALM/Settle), guarded by rememberSaveable so returning
-  to the tab or rotating never replays it — the same discipline as the detail
-  and About entrance fades.
+- **Motion only where meaning changes:** pages turn, counters roll, drags
+  answer the hand, and pushed screens arrive through the house push —
+  everything else stands still. The hero card, detail page and About entrance
+  fades were removed on the grounds that a first frame is not an event; the
+  daily card still turns at midnight (AnimatedContent), because THAT is a
+  change of meaning. Stillness between changes is what makes the remaining
+  motion read.
 - **Every reading page carries the thumb:** About is a reading page too and
   runs to several screens; it wears the same quiet `ScrollbarThumb` the name
   pages do.
@@ -319,11 +337,14 @@ app/src/main/assets/     names.json (99 entries), intro.txt, fonts/ (+licenses).
   before the mind reads; the row still carries all the semantics.
 - **Themed launcher icons already ship:** the adaptive icon's monochrome layer
   is the Kufic mark — do not re-add it.
-- **The two axes need no manual, by design:** the pill is a verb ("Mark as
-  learned"), the bookmark is the platform's universal keep glyph, and every
-  empty state teaches its own axis at the moment it matters. An explainer
-  line was tried and deleted on review — if the controls ever need one again,
-  fix the controls, not the prose.
+- **The two axes need no manual, by design:** on the name page both acts of
+  keeping sit side by side in the bar as glyphs — an unfilled check-circle
+  that fills gold when learned (`LearnedAction`), and the bookmark, the
+  platform's universal keep glyph — and every empty state teaches its own
+  axis at the moment it matters. An explainer line was tried and deleted on
+  review; the footer pill that once carried the learned verb moved into the
+  bar so the two axes share one place and one feel. If the controls ever need
+  one again, fix the controls, not the prose.
 - **The notification's one line is set, not joined:** Arabic · transliteration,
   the same middle dot the feature graphic's tagline wears.
 - **Widget corners follow the device:** render-time read of the framework
@@ -440,9 +461,11 @@ eight places (#28, #32, #44, #48, #80, #87, #94, #95).
 
 ## Known quirks & accepted limitations
 
-- The home-screen widget renders Arabic in the system serif (Noto Naskh), not
-  HAFS — Glance can't bundle fonts; numerals/marks sanitized via
-  `systemFontSafeArabic()`.
+- The widget's Arabic now renders in the bundled HAFS — drawn into a bitmap
+  by Canvas (which shapes vocalized text correctly), stepped down until its
+  whole line box fits the bucket, since Glance Text can't wear bundled fonts.
+  Latin falls back to the system serif; the notification still draws with
+  system fonts and keeps `systemFontSafeArabic()` sanitization for الله.
 - Counters always render Western digits via `%1$s` on purpose (`%d` follows
   device locale; ar/ur bidi reversed the pairs). Guarded by CounterFormatTest.
 - WorkManager notification timing drifts a few minutes (system batching).
@@ -461,8 +484,9 @@ eight places (#28, #32, #44, #48, #80, #87, #94, #95).
   APK installed, or ScreenshotTest on API ≤ 35 images (the test now saves to
   the AGP additional-test-output dir, not files/screenshots). Hard-won adb
   gotchas:
-  - Returning from a name page restores search mode with the query intact —
-    tap "Close search" first.
+  - The search field lives at the head of the home list and its query
+    persists until cleared — tap the row-end ✕ ("Clear search") before
+    tapping rows you expected from the full list.
   - Match text EXACTLY, not by substring ("NAMES" also occurs inside
     "99 names still to learn").
   - uiautomator dumps go stale during animations/IME — retry until the node

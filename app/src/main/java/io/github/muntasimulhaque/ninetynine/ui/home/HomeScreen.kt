@@ -1,6 +1,5 @@
 package io.github.muntasimulhaque.ninetynine.ui.home
 
-import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -15,6 +14,7 @@ import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -27,9 +27,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.outlined.Close
-import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -46,15 +44,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.graphicsLayer
@@ -83,15 +77,14 @@ import io.github.muntasimulhaque.ninetynine.ui.theme.Motion
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.ArabicSize
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.ArabicText
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.FitText
+import io.github.muntasimulhaque.ninetynine.ui.theme.components.ListInset
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.NameListItem
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.NameRowInset
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.TabTitle
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.EmptyState
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.LazyScrollbarThumb
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.PageMessage
-import io.github.muntasimulhaque.ninetynine.ui.theme.components.AboutAction
-import io.github.muntasimulhaque.ninetynine.ui.theme.components.SettingsAction
-import io.github.muntasimulhaque.ninetynine.ui.theme.components.nameRowTextInset
+import io.github.muntasimulhaque.ninetynine.ui.theme.components.TabOverflowActions
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.paperTopBarColors
 import io.github.muntasimulhaque.ninetynine.util.SearchFilter
 import kotlinx.coroutines.delay
@@ -110,11 +103,6 @@ fun HomeScreen(
     val learned by viewModel.learned.collectAsStateWithLifecycle()
     val query by viewModel.searchQuery.collectAsStateWithLifecycle()
 
-    var searching by rememberSaveable { mutableStateOf(false) }
-    // Focus is requested the moment search mode is entered, and only then:
-    // returning from a pushed screen restores the field and the query but
-    // must not re-open the keyboard over a list the reader may consider done.
-    var searchFocusRequested by rememberSaveable { mutableStateOf(false) }
     var dailyNumber by remember { mutableIntStateOf(viewModel.dailyNameNumber()) }
 
     // The daily name rolls over at local midnight. The recompute runs once a
@@ -133,27 +121,8 @@ fun HomeScreen(
         }
     }
 
-    if (searching) {
-        BackHandler {
-            viewModel.setSearchQuery("")
-            searching = false
-        }
-    }
-
     val filtered = remember(names, query) { SearchFilter.filter(names, query) }
     val dailyName = remember(names, dailyNumber) { names.firstOrNull { it.number == dailyNumber } }
-
-    // The hero card arrives the way pushed screens do: one gentle rise and
-    // settle on the very first frame, never again. rememberSaveable keeps a
-    // return to this tab — or a rotation — from replaying it, exactly like
-    // the name page's entrance fade; with animations off it simply is there.
-    var heroEntered by rememberSaveable { mutableStateOf(false) }
-    LaunchedEffect(Unit) { heroEntered = true }
-    val heroEnterAlpha by animateFloatAsState(
-        targetValue = if (heroEntered) 1f else 0f,
-        animationSpec = Motion.tween(Motion.CALM, easing = Motion.Settle),
-        label = "heroEnter",
-    )
 
     // The bar tucks itself away while reading and returns on the first upward pull.
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(rememberTopAppBarState())
@@ -165,78 +134,15 @@ fun HomeScreen(
                 scrollBehavior = scrollBehavior,
                 colors = paperTopBarColors(),
                 title = {
-                    // The bar crosses between its two modes instead of cutting:
-                    // the running head gives way to the field as the field gives
-                    // way back. Motion.spec, not tween — the transitionSpec is
-                    // not a composable context.
-                    val barMotionScale = LocalMotionScale.current
-                    AnimatedContent(
-                        targetState = searching,
-                        transitionSpec = {
-                            fadeIn(Motion.spec(barMotionScale, Motion.GENTLE, easing = Motion.Settle))
-                                .togetherWith(fadeOut(Motion.spec(barMotionScale, Motion.QUICK)))
-                        },
-                        label = "searchMode",
-                    ) { isSearching ->
-                        if (isSearching) {
-                            SearchTitle(
-                                query = query,
-                                onQueryChange = viewModel::setSearchQuery,
-                                requestFocus = searchFocusRequested,
-                                onFocusRequested = { searchFocusRequested = false },
-                            )
-                        } else {
-                            // 0.25f floor: see TabTitle — the app's own name must
-                            // survive the narrowest bar at the largest scales.
-                            TabTitle(stringResource(R.string.app_title), minScale = 0.25f)
-                        }
-                    }
-                },
-                navigationIcon = {
-                    if (searching) {
-                        IconButton(onClick = {
-                            viewModel.setSearchQuery("")
-                            searching = false
-                        }) {
-                            Icon(
-                                Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = stringResource(R.string.cd_close_search),
-                            )
-                        }
-                    }
+                    // The running head never leaves: search is a field at the
+                    // head of the list now, not a mode the bar has to swap
+                    // into, so there is nothing to cross between.
+                    // 0.25f floor: see TabTitle — the app's own name must
+                    // survive the narrowest bar at the largest scales.
+                    TabTitle(stringResource(R.string.app_title), minScale = 0.25f)
                 },
                 actions = {
-                    if (searching) {
-                        // The clear button breathes in and out with the query it
-                        // serves instead of blinking into existence.
-                        AnimatedVisibility(
-                            visible = query.isNotEmpty(),
-                            enter = fadeIn(Motion.tween(Motion.QUICK)),
-                            exit = fadeOut(Motion.tween(Motion.QUICK)),
-                        ) {
-                            IconButton(onClick = { viewModel.setSearchQuery("") }) {
-                                Icon(
-                                    Icons.Outlined.Close,
-                                    contentDescription = stringResource(R.string.cd_clear_search),
-                                )
-                            }
-                        }
-                    } else {
-                        IconButton(onClick = {
-                            searching = true
-                            searchFocusRequested = true
-                        }) {
-                            Icon(
-                                Icons.Outlined.Search,
-                                contentDescription = stringResource(R.string.cd_search),
-                            )
-                        }
-                        // About then the gear, last in the bar, as on every tab
-                        // screen. Absent while searching, which is a mode, not
-                        // a place.
-                        AboutAction(onAbout)
-                        SettingsAction(onSettings)
-                    }
+                    TabOverflowActions(onSettings = onSettings, onAbout = onAbout)
                 },
             )
         },
@@ -247,8 +153,8 @@ fun HomeScreen(
             top = padding.calculateTopPadding(),
             bottom = padding.calculateBottomPadding() + 16.dp,
         )
-        // The rule between rows starts where the names do, not under their numbers.
-        val dividerInset = nameRowTextInset()
+        // The rule between rows runs the row's own width now — there are no
+        // folio numbers to indent past.
         Box(Modifier.fillMaxSize()) {
             LazyColumn(
                 state = listState,
@@ -256,37 +162,38 @@ fun HomeScreen(
                 modifier = Modifier.fillMaxSize(),
             ) {
                 if (query.isBlank() && dailyName != null) {
+                    // A midnight sitter sees the card turn rather than cut:
+                    // the new day's name rises gently into the plate, the way
+                    // a pushed screen arrives. Motion.spec, not tween: a
+                    // transitionSpec is not a composable context, so the
+                    // scale-aware specs build from the hoisted scale exactly
+                    // like the NavHost's do. The card itself is simply there —
+                    // no entrance of its own; motion belongs to changes of
+                    // meaning, not to first frames.
                     item {
-                        Box(
-                            modifier = Modifier.graphicsLayer {
-                                alpha = heroEnterAlpha
-                                translationY = (1f - heroEnterAlpha) * 24.dp.toPx()
+                        val motionScale = LocalMotionScale.current
+                        AnimatedContent(
+                            targetState = dailyName.number,
+                            transitionSpec = {
+                                (fadeIn(Motion.spec(motionScale, Motion.GENTLE, easing = Motion.Settle)) +
+                                    slideInVertically(
+                                        Motion.spec(motionScale, Motion.GENTLE, easing = Motion.Settle),
+                                    ) { it / 12 })
+                                    .togetherWith(fadeOut(Motion.spec(motionScale, Motion.QUICK)))
                             },
-                        ) {
-                            // A midnight sitter sees the card turn rather than cut:
-                            // the new day's name rises gently into the plate, the way
-                            // a pushed screen arrives. Motion.spec, not tween: a
-                            // transitionSpec is not a composable context, so the
-                            // scale-aware specs build from the hoisted scale exactly
-                            // like the NavHost's do.
-                            val motionScale = LocalMotionScale.current
-                            AnimatedContent(
-                                targetState = dailyName.number,
-                                transitionSpec = {
-                                    (fadeIn(Motion.spec(motionScale, Motion.GENTLE, easing = Motion.Settle)) +
-                                        slideInVertically(
-                                            Motion.spec(motionScale, Motion.GENTLE, easing = Motion.Settle),
-                                        ) { it / 12 })
-                                        .togetherWith(fadeOut(Motion.spec(motionScale, Motion.QUICK)))
-                                },
-                                label = "dailyHero",
-                            ) { number ->
-                                val turningName = names.firstOrNull { it.number == number }
-                                    ?: dailyName
-                                DailyHeroCard(turningName, onClick = { onNameClick(turningName.number) })
-                            }
+                            label = "dailyHero",
+                        ) { number ->
+                            val turningName = names.firstOrNull { it.number == number }
+                                ?: dailyName
+                            DailyHeroCard(turningName, onClick = { onNameClick(turningName.number) })
                         }
                     }
+                }
+                item(key = "search") {
+                    SearchField(
+                        query = query,
+                        onQueryChange = viewModel::setSearchQuery,
+                    )
                 }
                 if (names.isEmpty() && namesLoaded) {
                     // The asset failed to read. Without this the screen would be
@@ -319,7 +226,7 @@ fun HomeScreen(
                         query = query,
                     )
                     HorizontalDivider(
-                        modifier = Modifier.padding(start = dividerInset, end = NameRowInset),
+                        modifier = Modifier.padding(start = NameRowInset, end = NameRowInset),
                         thickness = 0.5.dp,
                         color = MaterialTheme.colorScheme.outlineVariant,
                     )
@@ -338,63 +245,84 @@ fun HomeScreen(
 }
 
 /**
- * The bar's search mode: a bare field where the running head sits.
+ * The list's own search field — a quiet line at the head of the content,
+ * below the day's name, above the rows.
  *
- * [requestFocus] is the moment search mode is ENTERED, and only then: the
- * flag is consumed through [onFocusRequested] before the request, so
- * returning from a pushed screen restores the field and the query but must
- * not re-open the keyboard over a list the reader may consider done.
+ * Search used to be a mode: an icon swapped the running head for a field, the
+ * keyboard rose, and Back had to walk it all back. The machinery existed
+ * because search was a place you went. It is a thing you do instead now —
+ * the field is simply part of the page, the way an index sits at the head of
+ * a book's contents. Nothing to open, nothing to close; typing filters live,
+ * and the query stays until the reader clears it.
  */
 @Composable
-private fun SearchTitle(
+private fun SearchField(
     query: String,
     onQueryChange: (String) -> Unit,
-    requestFocus: Boolean,
-    onFocusRequested: () -> Unit,
 ) {
-    val focusRequester = remember { FocusRequester() }
     val focusManager = LocalFocusManager.current
     val searchLabel = stringResource(R.string.cd_search)
-    BasicTextField(
-        value = query,
-        onValueChange = onQueryChange,
-        modifier = Modifier
-            .fillMaxWidth()
-            .focusRequester(focusRequester)
-            // The label rides on the field only while it is
-            // empty. Set unconditionally, contentDescription
-            // would replace the field's text and a screen
-            // reader would never read the query back.
-            .semantics {
-                if (query.isEmpty()) contentDescription = searchLabel
-            },
-        textStyle = MaterialTheme.typography.titleMedium.copy(
-            color = MaterialTheme.colorScheme.onSurface,
-        ),
-        cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
-        singleLine = true,
-        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-        // Filtering is live, so the action key's only job
-        // is to dismiss the keyboard — it must not be dead.
-        keyboardActions = KeyboardActions(onSearch = { focusManager.clearFocus() }),
-        decorationBox = { inner ->
-            Box(contentAlignment = Alignment.CenterStart) {
-                if (query.isEmpty()) {
-                    Text(
-                        text = stringResource(R.string.search_hint),
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    Column(Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = ListInset),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            BasicTextField(
+                value = query,
+                onValueChange = onQueryChange,
+                modifier = Modifier
+                    .weight(1f)
+                    // The label rides on the field only while it is
+                    // empty. Set unconditionally, contentDescription
+                    // would replace the field's text and a screen
+                    // reader would never read the query back.
+                    .semantics {
+                        if (query.isEmpty()) contentDescription = searchLabel
+                    },
+                textStyle = MaterialTheme.typography.bodyLarge.copy(
+                    color = MaterialTheme.colorScheme.onSurface,
+                ),
+                cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                // Filtering is live, so the action key's only job
+                // is to dismiss the keyboard — it must not be dead.
+                keyboardActions = KeyboardActions(onSearch = { focusManager.clearFocus() }),
+                decorationBox = { inner ->
+                    Box(contentAlignment = Alignment.CenterStart) {
+                        if (query.isEmpty()) {
+                            Text(
+                                text = stringResource(R.string.search_hint),
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                        inner()
+                    }
+                },
+            )
+            // The clear button breathes in and out with the query it
+            // serves instead of blinking into existence.
+            AnimatedVisibility(
+                visible = query.isNotEmpty(),
+                enter = fadeIn(Motion.tween(Motion.QUICK)),
+                exit = fadeOut(Motion.tween(Motion.QUICK)),
+            ) {
+                IconButton(onClick = { onQueryChange("") }) {
+                    Icon(
+                        Icons.Outlined.Close,
+                        contentDescription = stringResource(R.string.cd_clear_search),
                     )
                 }
-                inner()
             }
-        },
-    )
-    LaunchedEffect(Unit) {
-        if (requestFocus) {
-            onFocusRequested()
-            focusRequester.requestFocus()
         }
+        HorizontalDivider(
+            modifier = Modifier.padding(horizontal = ListInset),
+            thickness = 0.5.dp,
+            color = MaterialTheme.colorScheme.outlineVariant,
+        )
     }
 }
 
@@ -479,4 +407,3 @@ private fun DailyHeroCard(name: Name, onClick: () -> Unit) {
         }
     }
 }
-

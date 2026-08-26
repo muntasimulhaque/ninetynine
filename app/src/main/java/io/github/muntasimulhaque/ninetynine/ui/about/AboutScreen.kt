@@ -3,7 +3,6 @@ package io.github.muntasimulhaque.ninetynine.ui.about
 import android.content.Context
 import android.content.Intent
 import android.widget.Toast
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -20,18 +19,13 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.heading
@@ -43,7 +37,6 @@ import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import io.github.muntasimulhaque.ninetynine.BuildConfig
 import io.github.muntasimulhaque.ninetynine.R
-import io.github.muntasimulhaque.ninetynine.ui.theme.Motion
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.ArabicSize
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.ArabicText
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.BackButton
@@ -88,16 +81,6 @@ fun AboutScreen(onBack: () -> Unit) {
             .filter { it.isNotEmpty() }
     }
 
-    // Once per process, not once per rotation: rememberSaveable keeps the
-    // fade from replaying on every configuration change.
-    var entered by rememberSaveable { mutableStateOf(false) }
-    LaunchedEffect(Unit) { entered = true }
-    val enterAlpha by animateFloatAsState(
-        targetValue = if (entered) 1f else 0f,
-        animationSpec = Motion.tween(Motion.CALM),
-        label = "aboutEnter",
-    )
-
     Scaffold(
         topBar = {
             TopAppBar(
@@ -122,8 +105,7 @@ fun AboutScreen(onBack: () -> Unit) {
                 modifier = Modifier
                     .fillMaxSize()
                     .verticalScroll(aboutScroll)
-                    .padding(horizontal = ReadingInset)
-                    .graphicsLayer { alpha = enterAlpha },
+                    .padding(horizontal = ReadingInset),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 Column(

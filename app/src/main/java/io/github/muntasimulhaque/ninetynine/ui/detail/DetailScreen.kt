@@ -1,7 +1,6 @@
 package io.github.muntasimulhaque.ninetynine.ui.detail
 
 import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -25,6 +24,8 @@ import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.BookmarkBorder
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.Share
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -76,7 +77,6 @@ import io.github.muntasimulhaque.ninetynine.ui.theme.components.ArabicSize
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.ArabicText
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.BackButton
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.FitText
-import io.github.muntasimulhaque.ninetynine.ui.theme.components.LearnedButton
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.MixedText
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.PageMessage
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.ReadingInset
@@ -200,16 +200,6 @@ fun DetailScreen(
         ShareSheet(name = current, onDismiss = { showShare = false })
     }
 
-    // A single calm fade as the screen settles in — once. rememberSaveable,
-    // or the fade replayed on every rotation.
-    var entered by rememberSaveable { mutableStateOf(false) }
-    LaunchedEffect(Unit) { entered = true }
-    val enterAlpha by animateFloatAsState(
-        targetValue = if (entered) 1f else 0f,
-        animationSpec = Motion.tween(Motion.CALM),
-        label = "detailEnter",
-    )
-
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
@@ -227,9 +217,18 @@ fun DetailScreen(
                     )
                 },
                 navigationIcon = { BackButton(onBack) },
-                // Keeping, then sending: the inward act sits inside, and Share
+                // Learning, keeping, then sending: the two inward acts sit
+                // inside, adjacent — both are acts of keeping — and Share
                 // keeps the edge it has always had.
                 actions = {
+                    LearnedAction(
+                        learned = current.number in learned,
+                        number = current.number,
+                        onToggle = {
+                            val number = current.number
+                            viewModel.setLearned(number, number !in learned)
+                        },
+                    )
                     BookmarkAction(
                         bookmarked = current.number in bookmarked,
                         number = current.number,
@@ -251,16 +250,10 @@ fun DetailScreen(
             state = pagerState,
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
-                .graphicsLayer { alpha = enterAlpha },
+                .padding(padding),
         ) { page ->
             NamePage(
                 name = pages[page],
-                learned = pages[page].number in learned,
-                onToggleLearned = {
-                    val number = pages[page].number
-                    viewModel.setLearned(number, number !in learned)
-                },
                 pagerState = pagerState,
                 page = page,
                 previousLabel = pages.getOrNull(page - 1)?.transliteration,
@@ -280,13 +273,66 @@ fun DetailScreen(
 }
 
 /**
- * Keeping a name, from the bar rather than the foot of the page.
+ * Learning a name, in the bar.
  *
- * The page is one scroll container, so the footer travels with the text — on a
- * long meaning it is well below the fold at exactly the moment a name strikes
- * you. The bar does not move.
+ * The page is one scroll container, so a footer control travels with the text —
+ * on a long meaning it is well below the fold at exactly the moment a name
+ * strikes you. The bar does not move, and the learned axis now sits beside the
+ * bookmark: two acts of keeping, one place, the same feel.
  *
- * The pop and the haptic are lifted from [LearnedButton] deliberately: the app
+ * The unfilled check-circle rests in the page's ink; learned, it fills and
+ * wears the app's gold — the same filled-and-gold treatment the bookmark has.
+ * TalkBack hears the button once ("Mark as learned") and the state after it
+ * ("Learned" / "Not learned"), never a label that changes under it.
+ */
+@Composable
+private fun LearnedAction(learned: Boolean, number: Int, onToggle: () -> Unit) {
+    val haptics = rememberHaptics()
+
+    // The pop means "you just changed this", so it must not fire when the
+    // reader swipes from an unlearned name to a learned one. The button lives
+    // in the bar and survives page changes, so the latch is per-name: arriving
+    // at a new number adopts its state silently, and only a toggle pops.
+    val scale = remember { Animatable(1f) }
+    val seededFor = remember { mutableStateOf<Int?>(null) }
+    val motionScale = LocalMotionScale.current
+    LaunchedEffect(number, learned) {
+        if (seededFor.value != number) {
+            seededFor.value = number
+        } else {
+            scale.snapTo(0.94f)
+            scale.animateTo(1f, Motion.livelySpec(motionScale))
+        }
+    }
+
+    val state = stringResource(if (learned) R.string.learned else R.string.not_learned)
+    IconButton(
+        onClick = {
+            haptics.confirm()
+            onToggle()
+        },
+        modifier = Modifier.semantics { stateDescription = state },
+    ) {
+        Icon(
+            imageVector = if (learned) Icons.Filled.CheckCircle else Icons.Outlined.CheckCircle,
+            contentDescription = stringResource(R.string.mark_learned),
+            tint = if (learned) MaterialTheme.colorScheme.secondary else LocalContentColor.current,
+            modifier = Modifier.graphicsLayer {
+                scaleX = scale.value
+                scaleY = scale.value
+            },
+        )
+    }
+}
+
+/**
+ * Keeping a name, in the bar.
+ *
+ * The page is one scroll container, so a footer control travels with the text —
+ * on a long meaning it is well below the fold at exactly the moment a name
+ * strikes you. The bar does not move.
+ *
+ * The pop and the haptic are shared with [LearnedAction] deliberately: the app
  * has two per-name toggles on two different axes, and they should at least feel
  * like they were made by the same hand.
  */
@@ -338,8 +384,6 @@ private fun BookmarkAction(bookmarked: Boolean, number: Int, onToggle: () -> Uni
 @Composable
 private fun NamePage(
     name: Name,
-    learned: Boolean,
-    onToggleLearned: () -> Unit,
     pagerState: PagerState,
     page: Int,
     previousLabel: String?,
@@ -448,8 +492,6 @@ private fun NamePage(
                 }
                 Spacer(Modifier.weight(1f))
                 Spacer(Modifier.height(28.dp))
-                LearnedButton(learned = learned, onToggle = onToggleLearned)
-                Spacer(Modifier.height(10.dp))
                 Row(
                     // Widened back out through the page inset so the chevrons
                     // land on the same vertical line as the back and share

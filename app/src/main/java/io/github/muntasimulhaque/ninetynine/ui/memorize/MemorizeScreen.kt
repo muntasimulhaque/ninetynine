@@ -49,8 +49,7 @@ import io.github.muntasimulhaque.ninetynine.ui.theme.components.NavRow
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.PageMessage
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.PageRule
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.TabTitle
-import io.github.muntasimulhaque.ninetynine.ui.theme.components.AboutAction
-import io.github.muntasimulhaque.ninetynine.ui.theme.components.SettingsAction
+import io.github.muntasimulhaque.ninetynine.ui.theme.components.TabOverflowActions
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.paperTopBarColors
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -100,8 +99,7 @@ fun MemorizeScreen(
                     TabTitle(stringResource(R.string.memorize))
                 },
                 actions = {
-                    AboutAction(onAbout)
-                    SettingsAction(onSettings)
+                    TabOverflowActions(onSettings = onSettings, onAbout = onAbout)
                 },
             )
         },

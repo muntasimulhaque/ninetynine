@@ -58,7 +58,6 @@
     <!-- Home -->
     <string name="search_hint">Search name, meaning, or number…</string>
     <string name="cd_search">Search</string>
-    <string name="cd_close_search">Close search</string>
     <string name="cd_clear_search">Clear search</string>
 
     <!-- Detail -->
@@ -112,7 +111,7 @@
     <string name="empty_bookmarks_title">Nothing kept yet</string>
     <string name="empty_bookmarks_body">Open any name and tap the bookmark to keep it here.</string>
     <string name="empty_learned_title">None marked yet</string>
-    <string name="empty_learned_body">Open any name and tap Mark as learned.</string>
+    <string name="empty_learned_body">Open any name and tap the check to mark it learned.</string>
     <!-- The way out an empty shelf offers: the lists are one tap apart, and
          an empty screen that can act should act. -->
     <string name="action_browse_names">Browse the names</string>
@@ -153,13 +152,11 @@
     <!-- Flashcards -->
     <string name="i_know_it">I know it</string>
     <string name="still_learning">Still learning</string>
-    <string name="tap_to_flip">Tap the card to reveal the meaning</string>
     <string name="reshuffle">New set of ten</string>
     <string name="deck_done">You finished this set of ten. Take the next?</string>
     <string name="start_again">Next set</string>
     <string name="include_learned">Include learned names</string>
     <string name="card_x_of_y">%1$s of %2$s</string>
-    <string name="swipe_hint">Swipe right if you know it — left to keep practicing</string>
 
     <!-- Quiz -->
     <string name="quiz_perfect">Masha\'Allah — a perfect round.</string>
