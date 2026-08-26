@@ -25,7 +25,7 @@ import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.BookmarkBorder
-import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.outlined.Share
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -237,7 +237,7 @@ fun DetailScreen(
                     )
                     IconButton(onClick = { showShare = true }) {
                         Icon(
-                            Icons.Filled.Share,
+                            Icons.Outlined.Share,
                             contentDescription = stringResource(R.string.cd_share),
                         )
                     }

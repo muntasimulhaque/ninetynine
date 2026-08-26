@@ -8,6 +8,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
+import androidx.compose.ui.graphics.toArgb
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import androidx.glance.appwidget.updateAll
@@ -21,6 +22,7 @@ import io.github.muntasimulhaque.ninetynine.MainActivity
 import io.github.muntasimulhaque.ninetynine.R
 import io.github.muntasimulhaque.ninetynine.data.NamesRepository
 import io.github.muntasimulhaque.ninetynine.data.Prefs
+import io.github.muntasimulhaque.ninetynine.ui.theme.HeroContainer
 import io.github.muntasimulhaque.ninetynine.util.DailyName
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
@@ -247,7 +249,7 @@ class NotificationWorker(context: Context, params: WorkerParameters) :
             .setSmallIcon(R.drawable.ic_notification)
             // Many skins tint the small icon's backdrop circle with this —
             // the app's own emerald, so even the shade carries the identity.
-            .setColor(0xFF1F4E42.toInt())
+            .setColor(HeroContainer.toArgb())
             // A daily invitation to read, not an alarm or a calendar event.
             .setCategory(NotificationCompat.CATEGORY_REMINDER)
             // System-font surface: use the Noto-safe form of الله (see DailyNameWidget).

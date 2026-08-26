@@ -10,7 +10,7 @@ so do not add a word or a stray space.
 
 - **Application ID (package name):** `io.github.muntasimulhaque.ninetynine`
 - **Privacy policy URL:** `https://muntasimulhaque.github.io/ninetynine/privacy-policy.html`
-- **Version (this release):** versionName `1.2`, versionCode `12`
+- **Version (this release):** versionName `1.3`, versionCode `13`
 
 ---
 
@@ -55,6 +55,23 @@ Made to be read:
 
 Free and open source. May Allah make us among those who learn, memorize,
 understand and act upon His beautiful Names.
+```
+
+## What's new (version 1.3)
+
+```
+A quieter, more exacting coat of paint:
+
+• Every corner icon — search, ⓘ, share, the gear, back — now wears one
+lighter weight.
+• Tab titles sit at a book's running-head size on all three tabs.
+• A finer progress line in Memorize; a disabled quiz button that no longer
+sits like mud.
+• Theme swatches get a paper mat; the names list breathes a touch more.
+• Widget, notification and app now share one emerald-and-gold, from one
+source of truth.
+
+All 99 Names are unchanged.
 ```
 
 ## What's new (version 1.2)

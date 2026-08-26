@@ -28,8 +28,8 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.outlined.Close
+import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -61,14 +61,12 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -87,6 +85,7 @@ import io.github.muntasimulhaque.ninetynine.ui.theme.components.ArabicText
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.FitText
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.NameListItem
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.NameRowInset
+import io.github.muntasimulhaque.ninetynine.ui.theme.components.TabTitle
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.EmptyState
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.LazyScrollbarThumb
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.PageMessage
@@ -187,7 +186,9 @@ fun HomeScreen(
                                 onFocusRequested = { searchFocusRequested = false },
                             )
                         } else {
-                            HomeTitle()
+                            // 0.25f floor: see TabTitle — the app's own name must
+                            // survive the narrowest bar at the largest scales.
+                            TabTitle(stringResource(R.string.app_title), minScale = 0.25f)
                         }
                     }
                 },
@@ -215,7 +216,7 @@ fun HomeScreen(
                         ) {
                             IconButton(onClick = { viewModel.setSearchQuery("") }) {
                                 Icon(
-                                    Icons.Filled.Close,
+                                    Icons.Outlined.Close,
                                     contentDescription = stringResource(R.string.cd_clear_search),
                                 )
                             }
@@ -226,7 +227,7 @@ fun HomeScreen(
                             searchFocusRequested = true
                         }) {
                             Icon(
-                                Icons.Filled.Search,
+                                Icons.Outlined.Search,
                                 contentDescription = stringResource(R.string.cd_search),
                             )
                         }
@@ -334,47 +335,6 @@ fun HomeScreen(
             )
         }
     }
-}
-
-/**
- * The app's full name, set to fit the bar on one line.
- *
- * It must never ellipsize: "The 99 Names of A…" would cut Allah's name, which
- * is the whole reason the launcher label is the short form instead. The bar's
- * height is fixed, so wrapping would clip it too — it shrinks to fit.
- *
- * Material measures a top bar's title with the width left over after the
- * navigation icon and the actions, so the three buttons on the right are
- * already accounted for. Each one costs 48dp, which on a Pixel 4 leaves 247dp
- * of the 343dp bar.
- *
- * Set at 0.85 of headlineSmall — about 16sp rather than 19. "The Ninety Nine
- * Names of Allah" is 14.864 em in Spectral SemiBold, so at 19sp it needed 282dp
- * and was shrinking to 0.875 on a Pixel 4 once About joined the bar; at 16sp it
- * needs 240dp and renders whole there. It is a running head, and a running head
- * is meant to be quieter than the page it sits over — a book sets them smaller
- * than the body, so this is closer to right than 19sp was.
- *
- * The floor is 0.25 because the worst case is real: on a 320dp screen with the
- * in-app slider at 1.4x on top of a 2.0 system font scale it needs 672dp of the
- * 172dp available. It must never ellipsize — "The Ninety Nine Names of A…"
- * would cut Allah's name, which is the whole reason the launcher label is the
- * short form instead.
- */
-private const val RunningHeadScale = 0.85f
-
-@Composable
-private fun HomeTitle() {
-    val base = MaterialTheme.typography.headlineSmall
-    FitText(
-        text = stringResource(R.string.app_title),
-        style = base.copy(fontSize = base.fontSize * RunningHeadScale),
-        color = MaterialTheme.colorScheme.onSurface,
-        minScale = 0.25f,
-        // The tab screens' titles are headings, so heading navigation covers
-        // the whole top level — the running head included.
-        modifier = Modifier.semantics { heading() },
-    )
 }
 
 /**

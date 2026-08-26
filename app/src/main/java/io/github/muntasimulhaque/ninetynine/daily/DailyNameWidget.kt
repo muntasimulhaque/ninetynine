@@ -2,7 +2,6 @@ package io.github.muntasimulhaque.ninetynine.daily
 
 import android.content.Context
 import android.os.Build
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
@@ -33,6 +32,10 @@ import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
 import io.github.muntasimulhaque.ninetynine.MainActivity
 import io.github.muntasimulhaque.ninetynine.data.NamesRepository
+import io.github.muntasimulhaque.ninetynine.ui.theme.HeroContainer
+import io.github.muntasimulhaque.ninetynine.ui.theme.HeroGold
+import io.github.muntasimulhaque.ninetynine.ui.theme.HeroSubtext
+import io.github.muntasimulhaque.ninetynine.ui.theme.HeroText
 import io.github.muntasimulhaque.ninetynine.util.DailyName
 
 class DailyNameWidget : GlanceAppWidget() {
@@ -104,11 +107,13 @@ class DailyNameWidget : GlanceAppWidget() {
             // to the system serif — which matches the app's book-like feel.
             val serif = FontFamily("serif")
             // One identity on every home screen: the emerald-and-gold of the
-            // hero and share cards, deliberately NOT day/night switched.
-            val background = ColorProvider(Color(0xFF1F4E42))
-            val gold = ColorProvider(Color(0xFFD4B45A))
-            val textColor = ColorProvider(Color(0xFFF2EDE2))
-            val subtextColor = ColorProvider(Color(0xFFBFD5CB))
+            // hero and share cards, deliberately NOT day/night switched. Bound
+            // to the theme's constants rather than copied — if the plates are
+            // ever tuned, the widget moves with them instead of drifting.
+            val background = ColorProvider(HeroContainer)
+            val gold = ColorProvider(HeroGold)
+            val textColor = ColorProvider(HeroText)
+            val subtextColor = ColorProvider(HeroSubtext)
 
             val arabicSize = when {
                 roomy -> 38.sp

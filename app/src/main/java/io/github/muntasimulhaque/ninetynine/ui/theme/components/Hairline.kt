@@ -41,12 +41,15 @@ private const val THUMB_MAX_FRACTION = 0.40f
 /**
  * A whisper of a progress bar: a hairline gold fill on a paper track.
  * Used for memorization progress, flashcard decks, and the quiz.
+ *
+ * At 2dp the empty track reads as a track rather than a dirty rule — at rest
+ * (a new reader at 0%) most of what shows IS track, and it must stay quiet.
  */
 @Composable
 fun HairlineProgress(
     progress: Float,
     modifier: Modifier = Modifier,
-    height: Dp = 3.dp,
+    height: Dp = 2.dp,
 ) {
     val fraction by animateFloatAsState(
         targetValue = progress.coerceIn(0f, 1f),

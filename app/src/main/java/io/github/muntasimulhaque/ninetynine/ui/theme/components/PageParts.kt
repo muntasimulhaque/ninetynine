@@ -10,9 +10,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -130,18 +130,51 @@ fun AboutAction(onClick: () -> Unit) {
 fun SettingsAction(onClick: () -> Unit) {
     IconButton(onClick = onClick) {
         Icon(
-            Icons.Filled.Settings,
+            Icons.Outlined.Settings,
             contentDescription = stringResource(R.string.settings),
         )
     }
 }
+
+/**
+ * A tab screen's running head.
+ *
+ * Set at 0.85 of headlineSmall — about 16sp rather than 19. "The Ninety Nine
+ * Names of Allah" is 14.864 em in Spectral SemiBold, so at 19sp it needed 282dp
+ * and shrank to 0.875 on a Pixel 4 once About joined the bar; at 16sp it needs
+ * 240dp and renders whole there. A running head is meant to be quieter than the
+ * page beneath it — a book sets them smaller than the body — and all three tab
+ * screens now wear the same quiet register, instead of one shrinking while the
+ * other two shouted.
+ *
+ * [minScale] is FitText's floor. Names passes 0.25f because its worst case is
+ * real: a 320dp screen at the in-app 1.4x on top of a 2.0 system font scale
+ * needs 672dp of the 172dp available, and the app's own name must never
+ * ellipsize — "…Names of A…" would cut Allah's name. Shorter titles never
+ * reach the floor, so they take the default.
+ */
+@Composable
+fun TabTitle(text: String, minScale: Float = 0.55f) {
+    val base = MaterialTheme.typography.headlineSmall
+    FitText(
+        text = text,
+        style = base.copy(fontSize = base.fontSize * RunningHeadScale),
+        color = MaterialTheme.colorScheme.onSurface,
+        minScale = minScale,
+        // The tab screens' titles are headings, so heading navigation covers
+        // the whole top level — the running head included.
+        modifier = Modifier.semantics { heading() },
+    )
+}
+
+private const val RunningHeadScale = 0.85f
 
 /** The way back, identical on every pushed screen. */
 @Composable
 fun BackButton(onBack: () -> Unit) {
     IconButton(onClick = onBack) {
         Icon(
-            Icons.AutoMirrored.Filled.ArrowBack,
+            Icons.AutoMirrored.Outlined.ArrowBack,
             contentDescription = stringResource(R.string.cd_back),
         )
     }

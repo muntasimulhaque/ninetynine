@@ -121,7 +121,7 @@ fun NameListItem(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = NameRowInset, vertical = 13.dp),
+                .padding(horizontal = NameRowInset, vertical = 15.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             // A quiet folio number instead of a badge — typography, not chrome.

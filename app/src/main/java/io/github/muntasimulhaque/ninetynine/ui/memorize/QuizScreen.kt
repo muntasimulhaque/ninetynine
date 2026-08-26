@@ -32,6 +32,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Cancel
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -471,6 +472,13 @@ private fun QuizQuestionContent(
                     modifier = Modifier
                         .fillMaxWidth()
                         .heightIn(min = 52.dp),
+                    // Disabled as a quiet ghost of itself, not mud: the scheme's
+                    // own containers instead of Material's 12% ink wash, which
+                    // sat like a dirty band under the four crisp options.
+                    colors = ButtonDefaults.buttonColors(
+                        disabledContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                        disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    ),
                 ) {
                     Text(
                         stringResource(

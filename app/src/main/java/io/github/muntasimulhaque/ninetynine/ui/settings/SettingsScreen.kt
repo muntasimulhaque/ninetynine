@@ -517,7 +517,18 @@ private fun ThemeSwatch(mode: ThemeMode) {
             ThemeMode.DARK -> Box(Modifier.fillMaxSize().background(DarkColors.background))
             ThemeMode.BLACK -> Box(Modifier.fillMaxSize().background(BlackColors.background))
         }
-        Box(Modifier.size(8.dp).background(ink, CircleShape))
+        // A 1dp mat of the page's own surface around the bead: the ink never
+        // touches either paper directly, so it reads cleanly even on System's
+        // split circle — where the bead straddles light and dark halves at once.
+        Box(
+            modifier = Modifier
+                .size(10.dp)
+                .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.surface),
+            contentAlignment = Alignment.Center,
+        ) {
+            Box(Modifier.size(8.dp).background(ink, CircleShape))
+        }
     }
 }
 
