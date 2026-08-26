@@ -40,14 +40,19 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.graphics.rememberGraphicsLayer
 import androidx.compose.ui.graphics.layer.drawLayer
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
 import io.github.muntasimulhaque.ninetynine.R
@@ -78,6 +83,41 @@ fun ShareSheet(name: Name, onDismiss: () -> Unit) {
     val wordmark = stringResource(R.string.store_title)
     var sharing by remember { mutableStateOf(false) }
 
+    // The vibrancy fix. With skipPartiallyExpanded the sheet's only resting
+    // place is Expanded, pressed hard against the status bar: an upward drag
+    // or fling on the card pushes the sheet into its own bounds' rubber band
+    // while the inner scroller still holds velocity, so the two fight —
+    // content scrolls up, the sheet bounces back down, forever. (Seen with a
+    // few taps on material3 1.4.0; matches the known upstream reports.) This
+    // connection sits BETWEEN the card's scroller and the sheet, where it can
+    // take the hit once: upward leftover is simply eaten, downward leftover
+    // passes through untouched so swipe-to-dismiss keeps its reach and feel.
+    // One rule for both drag and fling, no special cases.
+    val quenchUpward = remember {
+        object : NestedScrollConnection {
+            // Mixed upstream signatures: onPostScroll is non-suspend now,
+            // onPostFling remains suspend.
+            override fun onPostScroll(
+                consumed: Offset,
+                available: Offset,
+                source: NestedScrollSource,
+            ): Offset = if (available.y < 0f) {
+                Offset(0f, available.y)
+            } else {
+                Offset.Zero
+            }
+
+            override suspend fun onPostFling(
+                consumed: Velocity,
+                available: Velocity,
+            ): Velocity = if (available.y < 0f) {
+                Velocity(0f, available.y)
+            } else {
+                Velocity.Zero
+            }
+        }
+    }
+
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
@@ -99,7 +139,11 @@ fun ShareSheet(name: Name, onDismiss: () -> Unit) {
             Column(
                 modifier = Modifier
                     .weight(1f, fill = false)
-                    .verticalScroll(rememberScrollState()),
+                    .verticalScroll(rememberScrollState())
+                    // Between the scroller and the sheet — see quenchUpward:
+                    // upward leftovers end here, so the sheet can never be set
+                    // oscillating against the content by a few taps.
+                    .nestedScroll(quenchUpward),
             ) {
                 // The exported image is a public artifact — render at the
                 // design-intended scale regardless of the reader's slider.

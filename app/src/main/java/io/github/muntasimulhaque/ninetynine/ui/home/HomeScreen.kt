@@ -137,9 +137,19 @@ fun HomeScreen(
                     // The running head never leaves: search is a field at the
                     // head of the list now, not a mode the bar has to swap
                     // into, so there is nothing to cross between.
-                    // 0.25f floor: see TabTitle — the app's own name must
-                    // survive the narrowest bar at the largest scales.
-                    TabTitle(stringResource(R.string.app_title), minScale = 0.25f)
+                    // Home is the book's title page — with no icons left in
+                    // the bar it has the row to itself, so it runs at the
+                    // full headlineSmall where the other tabs stay quiet
+                    // (sizeScale defaults to their 0.85 register). FitText
+                    // keeps it inside the bar at every screen width and
+                    // font scale; 0.25f floor: see TabTitle — the app's own
+                    // name must survive the narrowest bar at the largest
+                    // scales.
+                    TabTitle(
+                        stringResource(R.string.app_title),
+                        minScale = 0.25f,
+                        sizeScale = 1f,
+                    )
                 },
                 actions = {
                     TabOverflowActions(onSettings = onSettings, onAbout = onAbout)
@@ -262,7 +272,13 @@ private fun SearchField(
 ) {
     val focusManager = LocalFocusManager.current
     val searchLabel = stringResource(R.string.cd_search)
-    Column(Modifier.fillMaxWidth()) {
+    Column(
+        Modifier.fillMaxWidth(),
+        // The hero card above and the first row below must not lean on this
+        // line: as an index between two kinds of content it gets its own
+        // room on both sides (the rows' 15dp is row rhythm, not sectioning).
+    ) {
+        Spacer(Modifier.height(26.dp))
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -323,6 +339,9 @@ private fun SearchField(
             thickness = 0.5.dp,
             color = MaterialTheme.colorScheme.outlineVariant,
         )
+        // Below the hairline: the index turns back into the contents, and the
+        // first row opens with room rather than pressed against the rule.
+        Spacer(Modifier.height(24.dp))
     }
 }
 
@@ -344,7 +363,10 @@ private fun DailyHeroCard(name: Name, onClick: () -> Unit) {
     // feeding clickable the same interaction source the scale animation reads.
     Card(
         modifier = Modifier
-            .padding(horizontal = 16.dp, vertical = 8.dp)
+            // Horizontal 20dp puts the card on the same edge as the list
+            // beneath it; 12dp is the sheet's own top air, so the plate
+            // never hugs the app bar.
+            .padding(start = 20.dp, end = 20.dp, top = 12.dp, bottom = 8.dp)
             .fillMaxWidth()
             .graphicsLayer {
                 scaleX = scale

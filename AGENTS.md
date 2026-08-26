@@ -61,7 +61,7 @@ action of every session, before any file is read or command run.
 `BuildConfig.VERSION_NAME`, so they can never disagree. Rule: **+0.1 on
 versionName, +1 on versionCode per release.** Sequence since the store
 restart: 0.1 … 0.9, then 1.0 / 10, then 1.1 / 11, then 1.2 / 12, then
-1.3 / 13, then **1.4 / 14 (current)**.
+1.3 / 13, then 1.4 / 14, then 1.5 / 15, then **1.6 / 16 (current)**.
 
 The release keystore path/credentials live in a `keystore.properties` outside
 the repo (Google Play Signing Key folder). When absent (CI, fresh clone) the
@@ -261,11 +261,19 @@ app/src/main/assets/     names.json (99 entries), intro.txt, fonts/ (+licenses).
   Only Home passes a `query` to `NameListItem`; other lists stay pristine.
 - **Search is a field, not a mode:** a quiet BasicTextField sits at the head
   of the home list content — below the daily card, above the rows, a hairline
-  under it — always present, filtering live through the shared ViewModel
-  query. No search icon, no bar swap, no BackHandler: nothing to open or
-  close. The query persists until cleared (row-end ✕). The tab bars carry
+  under it, real air above and below it (26dp up toward the card, 24dp down
+  toward the first row — sectioning, not row rhythm; the card itself wears
+  the list's 20dp edges so plate and rows share one boundary) — always
+  present, filtering live through the shared ViewModel query. No search
+  icon, no bar swap, no BackHandler: nothing to open or close. The query
+  persists until cleared (row-end ✕). The tab bars carry
   ONE overflow glyph (`TabOverflowActions`: About, Settings) instead of two
   permanent icons.
+- **Tab heads differ by register:** Home passes `sizeScale = 1f` to
+  `TabTitle` — the book's title page, the full `headlineSmall` now that
+  nothing shares its bar — while Bookmarks and Memorize keep the default
+  0.85 quiet running head. FitText does the fitting either way, so the
+  bigger name only grows where the bar's measured width allows.
 - **The list rows carry no folio numbers:** position survives where it means
   something (detail counter, search, deep links), not as ink taxing every
   resting row. Dividers run the row's own width (`NameRowInset` both sides).
@@ -332,6 +340,12 @@ app/src/main/assets/     names.json (99 entries), intro.txt, fonts/ (+licenses).
   title — the card's hierarchy as plain text. The name page's meaning is the
   app's one selectable text (`SelectionContainer`, long-press to copy); the
   flashcard faces stay swipe surfaces on purpose.
+- **The share sheet must always settle:** its card scroller wears the
+  `quenchUpward` nested-scroll connection (ShareSheet.kt), which eats upward
+  drag/fling leftover between content and sheet. Without it a few upward
+  pushes set the near-full-height sheet oscillating against its own bounds
+  (m3 1.4.0, `skipPartiallyExpanded`) — do not remove it as redundant, and
+  keep any future sheet content behind the same guard.
 - **Theme rows wear a swatch:** a 22dp circle of the theme's own paper with
   its ink as an 8dp bead — System split across both papers. The eye picks
   before the mind reads; the row still carries all the semantics.

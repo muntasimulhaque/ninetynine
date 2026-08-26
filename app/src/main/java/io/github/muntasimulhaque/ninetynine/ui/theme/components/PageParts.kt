@@ -164,13 +164,25 @@ fun TabOverflowActions(
  * needs 672dp of the 172dp available, and the app's own name must never
  * ellipsize — "…Names of A…" would cut Allah's name. Shorter titles never
  * reach the floor, so they take the default.
+ *
+ * [sizeScale] resizes the head itself. With the search field and the About/
+ * Settings glyphs gone from the Home bar, its title has an entire row to
+ * itself, so Home passes 1f and runs at the full headlineSmall — the one tab
+ * that reads like a title page rather than a running head. FitText still does
+ * the fitting: the size only rises where the measured width allows it, so a
+ * large font scale or a narrow screen simply shrinks it back inside the bar,
+ * never over the overflow corner.
  */
 @Composable
-fun TabTitle(text: String, minScale: Float = 0.55f) {
+fun TabTitle(
+    text: String,
+    minScale: Float = 0.55f,
+    sizeScale: Float = RunningHeadScale,
+) {
     val base = MaterialTheme.typography.headlineSmall
     FitText(
         text = text,
-        style = base.copy(fontSize = base.fontSize * RunningHeadScale),
+        style = base.copy(fontSize = base.fontSize * sizeScale),
         color = MaterialTheme.colorScheme.onSurface,
         minScale = minScale,
         // The tab screens' titles are headings, so heading navigation covers
