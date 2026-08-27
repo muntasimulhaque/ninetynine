@@ -23,7 +23,7 @@ Based on the lecture of Sheikh Ibn Uthaymeen (Rahimahullah), as presented in *"T
 
 ## Features
 
-- **Read** — all 99 names with Arabic script set in KFGQPC Uthmanic Script HAFS — the typeface of the Madinah Mushaf — with transliteration and full meanings, plus scholarly notes (e.g. the distinction between Ar-Rahmaan and Ar-Raheem). Browse the list, swipe between names, and search by name, meaning, note, or number.
+- **Read** — all 99 names with Arabic script set in KFGQPC Uthmanic Script HAFS — the typeface of the Madinah Mushaf — with transliteration and full meanings, plus scholarly notes (e.g. the distinction between Ar-Rahmaan and Ar-Raheem). Browse the list, swipe between names, and search by name, meaning, note, or number; hold your finger down on a name page to copy the Name itself — Arabic or transliteration — or its meaning.
 - **Keep** — bookmark the names you turn to and find them together in their own tab, in the order they appear in the book. Separate from memorization: resetting your progress leaves your bookmarks alone.
 - **Share** — turn any name into a beautifully rendered card (Arabic, transliteration, meaning) and share it as an image — or as plain text, for captions and notes.
 - **Memorize** — flashcards with a flip animation and an "I know it / Still learning" loop, a ten-question quiz with a remembered best score, and a quiet progress count (no streaks, no gamification).
@@ -35,9 +35,9 @@ Based on the lecture of Sheikh Ibn Uthaymeen (Rahimahullah), as presented in *"T
 
 Please say so — it is far more use as an issue than as a review. Open a
 [content correction](https://github.com/muntasimulhaque/ninetynine/issues/new?template=content-correction.yml)
-with the name's number (the figure to its left in the list), what the app
-shows, and what it should say. From inside the app, About → Send feedback
-opens an email instead.
+with the name's number (open the name; the counter at the top of its page
+shows its position), what the app shows, and what it should say. From inside
+the app, About → Send feedback opens an email instead.
 
 Transliteration in particular has no single correct convention, and this app
 follows its source rather than standardising it — so if a spelling looks wrong
