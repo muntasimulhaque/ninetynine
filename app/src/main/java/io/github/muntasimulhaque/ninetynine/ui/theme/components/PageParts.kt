@@ -12,7 +12,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.MoreVert
+import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -112,6 +114,12 @@ fun paperTopBarColors(): TopAppBarColors = TopAppBarDefaults.topAppBarColors(
  * Bookmarks, Memorize — so it still reads as a fixed corner rather than
  * something one screen happens to offer; it is just one icon instead of two
  * beside each running head.
+ *
+ * Each row wears its glyph in the outlined family the chrome already speaks
+ * (MoreVert's own register): an icon anchors the eye while it scans down two
+ * lines, and neither glyph is news to anyone — Info and Settings are the
+ * platform's own universals, the same logic that keeps the bookmark a
+ * bookmark.
  */
 @Composable
 fun TabOverflowActions(
@@ -132,6 +140,13 @@ fun TabOverflowActions(
         ) {
             DropdownMenuItem(
                 text = { Text(stringResource(R.string.about)) },
+                leadingIcon = {
+                    Icon(
+                        Icons.Outlined.Info,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                },
                 onClick = {
                     expanded = false
                     onAbout()
@@ -139,6 +154,13 @@ fun TabOverflowActions(
             )
             DropdownMenuItem(
                 text = { Text(stringResource(R.string.settings)) },
+                leadingIcon = {
+                    Icon(
+                        Icons.Outlined.Settings,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                },
                 onClick = {
                     expanded = false
                     onSettings()

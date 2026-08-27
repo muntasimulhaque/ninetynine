@@ -83,16 +83,26 @@ fun ShareSheet(name: Name, onDismiss: () -> Unit) {
     val wordmark = stringResource(R.string.store_title)
     var sharing by remember { mutableStateOf(false) }
 
-    // The vibrancy fix. With skipPartiallyExpanded the sheet's only resting
-    // place is Expanded, pressed hard against the status bar: an upward drag
-    // or fling on the card pushes the sheet into its own bounds' rubber band
-    // while the inner scroller still holds velocity, so the two fight —
-    // content scrolls up, the sheet bounces back down, forever. (Seen with a
-    // few taps on material3 1.4.0; matches the known upstream reports.) This
-    // connection sits BETWEEN the card's scroller and the sheet, where it can
-    // take the hit once: upward leftover is simply eaten, downward leftover
-    // passes through untouched so swipe-to-dismiss keeps its reach and feel.
-    // One rule for both drag and fling, no special cases.
+    // The vibrancy fix, and the reason it initially failed.
+    //
+    // With skipPartiallyExpanded the sheet's only resting place is Expanded,
+    // pressed hard against the status bar: an upward drag or fling on the
+    // card pushes the sheet into its own bounds' rubber band while the inner
+    // scroller still holds velocity, so the two fight — content scrolls up,
+    // the sheet bounces back down, forever (material3 1.4.0; matches the
+    // known upstream reports). A nested-scroll connection is the dam that
+    // stops it — but a connection must be an ANCESTOR of the scroller it
+    // guards to sit between that scroller and its parent (the sheet), and
+    // this one was first chained AFTER verticalScroll on the same modifier,
+    // which makes it a descendant. Leftover from the card's own scroller
+    // never passed through it at all, so the fight survived every guard and
+    // shipped shaking anyway.
+    //
+    // Chained BEFORE verticalScroll it is truly BETWEEN the card's scroller
+    // and the sheet, where it takes each leftover exactly once: upward is
+    // simply eaten, downward passes through untouched so swipe-to-dismiss
+    // keeps its reach and feel. One rule for both drag and fling, no special
+    // cases.
     val quenchUpward = remember {
         object : NestedScrollConnection {
             // Mixed upstream signatures: onPostScroll is non-suspend now,
@@ -139,11 +149,12 @@ fun ShareSheet(name: Name, onDismiss: () -> Unit) {
             Column(
                 modifier = Modifier
                     .weight(1f, fill = false)
-                    .verticalScroll(rememberScrollState())
-                    // Between the scroller and the sheet — see quenchUpward:
-                    // upward leftovers end here, so the sheet can never be set
-                    // oscillating against the content by a few taps.
-                    .nestedScroll(quenchUpward),
+                    // Order here is the whole fix — see quenchUpward: the
+                    // connection must wrap the scroller (be its ancestor) to
+                    // catch what the scroller leaves over before the sheet
+                    // ever sees it.
+                    .nestedScroll(quenchUpward)
+                    .verticalScroll(rememberScrollState()),
             ) {
                 // The exported image is a public artifact — render at the
                 // design-intended scale regardless of the reader's slider.

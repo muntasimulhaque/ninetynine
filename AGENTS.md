@@ -61,7 +61,8 @@ action of every session, before any file is read or command run.
 `BuildConfig.VERSION_NAME`, so they can never disagree. Rule: **+0.1 on
 versionName, +1 on versionCode per release.** Sequence since the store
 restart: 0.1 … 0.9, then 1.0 / 10, then 1.1 / 11, then 1.2 / 12, then
-1.3 / 13, then 1.4 / 14, then 1.5 / 15, then **1.6 / 16 (current)**.
+1.3 / 13, then 1.4 / 14, then 1.5 / 15, then 1.6 / 16, then **1.7 / 17
+(current)**.
 
 The release keystore path/credentials live in a `keystore.properties` outside
 the repo (Google Play Signing Key folder). When absent (CI, fresh clone) the
@@ -259,25 +260,26 @@ app/src/main/assets/     names.json (99 entries), intro.txt, fonts/ (+licenses).
   (≥2-char trimmed query, case-insensitive, non-overlapping); fuzzy-only
   matches stay uncoloured — never invent a span that corresponds to nothing.
   Only Home passes a `query` to `NameListItem`; other lists stay pristine.
-- **Search is a field, not a mode:** a quiet BasicTextField sits at the head
-  of the home list content — below the daily card, above the rows, set as a
-  quiet squircle PLATE (14dp radius matching the row Arabic's half-height,
-  52dp tall, `surfaceContainerHigh` deepening one step to
-  `surfaceContainerHighest` under the finger or the caret — the field is
-  one object read through material, not a hairline rule; the old rule under
-  it is gone), with real air above and below it (26dp up toward the card,
-  24dp down toward the first row — sectioning, not row rhythm; the card
-  itself wears the list's 20dp edges so plate and rows share one boundary)
-  — always present, filtering live through the shared ViewModel query. No
-  search icon, no bar swap, no BackHandler: nothing to open or close. The
-  query persists until cleared (the ✕ inside the plate). The tab bars carry
-  ONE overflow glyph (`TabOverflowActions`: About, Settings) instead of two
-  permanent icons.
+- **Search lives in the bar, one entry point, everywhere:** the home bar
+  carries a magnifier beside the ONE overflow glyph (`TabOverflowActions`:
+  About, Settings, each row wearing its outlined glyph). Tapping it swaps the
+  running head for a BasicTextField (Crossfade, QUICK — both slots fade as
+  one switch; the magnifier's corner becomes the ✕'s) and the keyboard
+  rises. This replaced the plate that scrolled with the list: from row
+  sixty there was no path to search except scrolling all the way home.
+  Typing filters live through the shared ViewModel query; openness is
+  `rememberSaveable` AND re-derived from a live query (a filtered list must
+  never appear without its field). **Back unwinds search one layer per
+  press** — typed text → empty field → out of search — and only past all
+  three does Back exit on a top-level tab (`BackHandler(enabled =
+  searchOpen)` in HomeScreen); never eject a reader who can still see
+  evidence of their search. The ✕ clears AND closes in one tap. The query
+  persists until cleared (✕, Back, or the no-results empty's "Clear search").
 - **Tab heads differ by register:** Home passes `sizeScale = 1f` to
-  `TabTitle` — the book's title page, the full `headlineSmall` now that
-  nothing shares its bar — while Bookmarks and Memorize keep the default
-  0.85 quiet running head. FitText does the fitting either way, so the
-  bigger name only grows where the bar's measured width allows.
+  `TabTitle` — the book's title page, at the full `headlineSmall` where the
+  measured width allows (FitText shrinks it back for the second bar icon or
+  a large font scale) — while Bookmarks and Memorize keep the default 0.85
+  quiet running head.
 - **The list rows carry no folio numbers:** position survives where it means
   something (detail counter, search, deep links), not as ink taxing every
   resting row. Dividers run the row's own width (`NameRowInset` both sides).
@@ -339,17 +341,31 @@ app/src/main/assets/     names.json (99 entries), intro.txt, fonts/ (+licenses).
 - **Every reading page carries the thumb:** About is a reading page too and
   runs to several screens; it wears the same quiet `ScrollbarThumb` the name
   pages do.
+- **Landing at the top means ALL of the top:** re-tapping NAMES animates
+  item 0 back into view AND reveals the tucked-away home bar — HomeScreen
+  snaps `scrollBehavior.state.heightOffset` to 0 on ARRIVAL at item 0 — an
+  edge, not a state: parked at the top the bar must still tuck normally, so
+  a continuous watch would fight it. Who caused the arrival (the re-tap or
+  a reader who flung back) is irrelevant. Without it the bar stayed hidden
+  and "top of the list" read as "top of the hero card". Only Home has a
+  hiding bar; don't generalize to others.
 - **The share sheet offers the plate AND the words:** "Share text" sends the
   Arabic, the name and epithet on one line, the full meaning, and the store
   title — the card's hierarchy as plain text. The name page's meaning is the
   app's one selectable text (`SelectionContainer`, long-press to copy); the
-  flashcard faces stay swipe surfaces on purpose.
+  flashcard faces stay swipe surfaces on purpose. The Name pairs its Arabic
+  and transliteration into one selectable unit above the meaning — either
+  copies whole, long-press as anywhere.
 - **The share sheet must always settle:** its card scroller wears the
   `quenchUpward` nested-scroll connection (ShareSheet.kt), which eats upward
   drag/fling leftover between content and sheet. Without it a few upward
   pushes set the near-full-height sheet oscillating against its own bounds
-  (m3 1.4.0, `skipPartiallyExpanded`) — do not remove it as redundant, and
-  keep any future sheet content behind the same guard.
+  (m3 1.4.0, `skipPartiallyExpanded`). It shipped ONCE on the wrong side —
+  chained after `.verticalScroll` it is a DESCENDANT of the scroller, the
+  leftovers never passed through it, and the sheet still shook; see the
+  pitfall below. Do not remove it as redundant, keep it BEFORE
+  `.verticalScroll`, and keep any future sheet content behind the same
+  guard.
 - **Theme rows wear a swatch:** a 22dp circle of the theme's own paper with
   its ink as an 8dp bead — System split across both papers. The eye picks
   before the mind reads; the row still carries all the semantics.
@@ -409,6 +425,11 @@ eight places (#28, #32, #44, #48, #80, #87, #94, #95).
 - **Modifier order matters:** `heightIn(max=X)` BEFORE `fillMaxHeight()`, or
   the cap is ignored; never pair `heightIn` on a Column child with
   `fillMaxHeight` on its children (expands to full screen, blanks the app).
+  The same is true in nested scroll: a `NestedScrollConnection` must chain
+  BEFORE (outside of) the `.verticalScroll` it guards — after it, the
+  connection is a descendant and the scroller's own leftover never passes
+  through it. This shipped the share-sheet shake for one release
+  (`quenchUpward`); the fix was swapping two modifier lines.
 - **Arabic widths from hmtx are nominal (isolated advances)** — no shaping in
   stdlib; shaped runs ~0.6–0.7× narrower. Never assert Arabic overflow from
   nominal widths alone ("upper bound, needs device check").
@@ -502,9 +523,11 @@ eight places (#28, #32, #44, #48, #80, #87, #94, #95).
   APK installed, or ScreenshotTest on API ≤ 35 images (the test now saves to
   the AGP additional-test-output dir, not files/screenshots). Hard-won adb
   gotchas:
-  - The search field lives at the head of the home list and its query
-    persists until cleared — tap the ✕ inside the search plate
-    ("Clear search") before tapping rows you expected from the full list.
+  - Search lives in the home bar: stop an upward scroll to reveal it (or tap
+    NAMES' re-tap to land at a fully revealed top), tap the magnifier. A live
+    query persists until cleared — tap the bar's ✕ ("Close search") or press
+    Back (clears first, then closes) before tapping rows you expected from
+    the full list.
   - Match text EXACTLY, not by substring ("NAMES" also occurs inside
     "99 names still to learn").
   - uiautomator dumps go stale during animations/IME — retry until the node

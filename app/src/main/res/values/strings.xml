@@ -58,7 +58,7 @@
     <!-- Home -->
     <string name="search_hint">Search name, meaning, or number…</string>
     <string name="cd_search">Search</string>
-    <string name="cd_clear_search">Clear search</string>
+    <string name="cd_close_search">Close search</string>
 
     <!-- Detail -->
     <!--

@@ -417,48 +417,62 @@ private fun NamePage(
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 Spacer(Modifier.height(30.dp))
-                ArabicText(
-                    text = name.arabic,
-                    fontSize = ArabicSize.Page,
-                    // The Name wears the app's gold — as close to the hero
-                    // plates' #D4B45A as paper contrast allows at large-text
-                    // 3:1 (see NameGoldLight). Theme-aware: the warmed gold
-                    // on paper, the brighter gold on the night page. It stands
-                    // apart from the teal transliteration beneath it.
-                    color = if (LocalDarkTheme.current) NameGoldDark else NameGoldLight,
-                    textAlign = TextAlign.Center,
-                )
                 // The transliteration belongs to the Name: 8dp is the share
                 // card's pairing (50sp Arabic), one step from the hero's 6dp
                 // (48sp) — this 52sp page sits in the 8dp family. The Arabic
                 // line box at 1.60 leading no longer adds ~5sp of empty
                 // descent air on top of the spacer, so the pair reads as one
                 // unit while the meaning below keeps its clear step.
-                Spacer(Modifier.height(scaledGap(8.dp)))
+                //
                 // A clear step below the Arabic, set in the same displaySmall
                 // slot the share card, hero and flashcard faces use — the Name
                 // leads its transliteration at the same ratio everywhere. FitText
                 // keeps the proper noun whole: a Name split across lines reads
                 // as two words, and this page must survive a large system font
                 // the same way the hero card does.
-                FitText(
-                    text = name.transliteration,
-                    style = MaterialTheme.typography.displaySmall.copy(
-                        textAlign = TextAlign.Center,
-                    ),
-                    // The transliteration is set apart from the meaning by its
-                    // teal as well as its size — the meaning below stays in the
-                    // page's ink. Theme-aware: dark ink on light paper, pale
-                    // mint on the night page.
-                    color = if (LocalDarkTheme.current) TransliterationTealDark
-                    else TransliterationTealLight,
-                    minScale = 0.45f,
-                )
+                //
+                // The Name and its transliteration are one selectable unit —
+                // long-press copies either whole, exactly as the meaning below
+                // copies. A name worth keeping travels further than the page,
+                // and every serious reading surface answers a held finger with
+                // selection. (The flashcard faces stay swipe surfaces on
+                // purpose; the note below rides with its meaning rather than
+                // joining the selection trio.)
+                SelectionContainer {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        ArabicText(
+                            text = name.arabic,
+                            fontSize = ArabicSize.Page,
+                            // The Name wears the app's gold — as close to the hero
+                            // plates' #D4B45A as paper contrast allows at large-text
+                            // 3:1 (see NameGoldLight). Theme-aware: the warmed gold
+                            // on paper, the brighter gold on the night page. It stands
+                            // apart from the teal transliteration beneath it.
+                            color = if (LocalDarkTheme.current) NameGoldDark else NameGoldLight,
+                            textAlign = TextAlign.Center,
+                        )
+                        Spacer(Modifier.height(scaledGap(8.dp)))
+                        FitText(
+                            text = name.transliteration,
+                            style = MaterialTheme.typography.displaySmall.copy(
+                                textAlign = TextAlign.Center,
+                            ),
+                            // The transliteration is set apart from the meaning
+                            // by its teal as well as its size — the meaning below
+                            // stays in the page's ink. Theme-aware: dark ink on
+                            // light paper, pale mint on the night page.
+                            color = if (LocalDarkTheme.current) TransliterationTealDark
+                            else TransliterationTealLight,
+                            minScale = 0.45f,
+                        )
+                    }
+                }
                 Spacer(Modifier.height(scaledGap(20.dp)))
                 // Long-press copies: a meaning worth keeping travels further
-                // than the page, and every serious reading surface answers a
-                // held finger with selection. The one selectable text in the
-                // app — the flashcard faces stay swipe surfaces on purpose.
+                // than the page — alongside the Name's own selectable unit
+                // above, and every serious reading surface answers a held
+                // finger with selection. The flashcard faces stay swipe
+                // surfaces on purpose.
                 SelectionContainer {
                     Text(
                         text = name.meaning,

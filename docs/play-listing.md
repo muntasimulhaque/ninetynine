@@ -10,7 +10,7 @@ so do not add a word or a stray space.
 
 - **Application ID (package name):** `io.github.muntasimulhaque.ninetynine`
 - **Privacy policy URL:** `https://muntasimulhaque.github.io/ninetynine/privacy-policy.html`
-- **Version (this release):** versionName `1.6`, versionCode `16`
+- **Version (this release):** versionName `1.7`, versionCode `17`
 
 ---
 
@@ -57,6 +57,23 @@ Made to be read:
 
 Free and open source. May Allah make us among those who learn, memorize,
 understand and act upon His beautiful Names.
+```
+
+## What's new (version 1.7)
+
+```
+Search moves to the app bar:
+
+• Stop a scroll with an upward pull, tap the magnifier,
+and search from anywhere — no scrolling back needed.
+• Back now steps out of search one layer at a time
+instead of leaving the app.
+• The share card no longer trembles when pushed upward.
+• On a name page, long-press copies the Name itself —
+Arabic and transliteration — alongside the meaning.
+• Re-tapping Names lands at the very top, bar included.
+
+All 99 Names are unchanged.
 ```
 
 ## What's new (version 1.6)

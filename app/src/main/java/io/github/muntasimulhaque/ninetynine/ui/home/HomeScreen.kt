@@ -1,18 +1,18 @@
 package io.github.muntasimulhaque.ninetynine.ui.home
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.Crossfade
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.material.icons.outlined.Search
 import androidx.compose.foundation.LocalIndication
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -22,7 +22,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
@@ -48,13 +47,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.SolidColor
@@ -81,11 +82,9 @@ import io.github.muntasimulhaque.ninetynine.ui.theme.HeroSubtext
 import io.github.muntasimulhaque.ninetynine.ui.theme.HeroText
 import io.github.muntasimulhaque.ninetynine.ui.theme.LocalMotionScale
 import io.github.muntasimulhaque.ninetynine.ui.theme.Motion
-import io.github.muntasimulhaque.ninetynine.ui.theme.SquircleShape
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.ArabicSize
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.ArabicText
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.FitText
-import io.github.muntasimulhaque.ninetynine.ui.theme.components.ListInset
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.NameListItem
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.NameRowInset
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.TabTitle
@@ -132,8 +131,62 @@ fun HomeScreen(
     val filtered = remember(names, query) { SearchFilter.filter(names, query) }
     val dailyName = remember(names, dailyNumber) { names.firstOrNull { it.number == dailyNumber } }
 
+    // Search is a place in the bar: a magnifier swaps the running head for a
+    // field wherever the reader already is — mid-list after an upward pull,
+    // not only at the head of the content. The plate this replaces scrolled
+    // WITH the list, so from row sixty there was no path to search except
+    // scrolling all the way home.
+    //
+    // Openness survives process death (rememberSaveable) and it re-derives
+    // from a live query: returning to this tab with results showing must find
+    // the field open — a filtered list without its visible field would be a
+    // lie about where those rows came from.
+    var searchOpen by rememberSaveable { mutableStateOf(false) }
+    val focusManager = LocalFocusManager.current
+    LaunchedEffect(query) {
+        if (query.isNotEmpty()) searchOpen = true
+    }
+
+    // Back always means "step out of what you are doing", one layer per
+    // press while there are layers to step out of: with text typed, Back
+    // clears it (the ✕'s job, for a thumb still resting on the gesture);
+    // with the field empty, Back leaves search. Only past both does Back do
+    // what it has always done on a top-level tab — leave the app. So a
+    // reader mid-search can never be ejected by the gesture that everywhere
+    // else retreats, and nothing outside search changed at all.
+    BackHandler(enabled = searchOpen) {
+        if (query.isNotEmpty()) {
+            viewModel.setSearchQuery("")
+        } else {
+            searchOpen = false
+            focusManager.clearFocus()
+        }
+    }
+
     // The bar tucks itself away while reading and returns on the first upward pull.
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(rememberTopAppBarState())
+
+    // The bar must never stay tucked when the list itself has come home.
+    // Re-tapping NAMES animates item 0 back into view, but the enter-always
+    // offset survived the journey — landing at the head with no bar left the
+    // reader staring at the hero card believing they were short of the top.
+    // Arrival at item 0 (the re-tap, or a reader who flung back themselves)
+    // reveals the chrome beside it.
+    //
+    // Edge-triggered deliberately: parked AT the top, the index stays 0
+    // through the first upward push while the enter-always connection hides
+    // the bar before the list even moves — a continuous watch would snap it
+    // straight back and the bar would never tuck. Only a false→true arrival
+    // fires; who caused it (tab re-tap or a hand) is irrelevant.
+    var wasAtTop by remember { mutableStateOf(true) }
+    LaunchedEffect(listState) {
+        snapshotFlow { listState.firstVisibleItemIndex == 0 }.collect { atTop ->
+            if (atTop && !wasAtTop) {
+                scrollBehavior.state.heightOffset = 0f
+            }
+            wasAtTop = atTop
+        }
+    }
 
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
@@ -142,25 +195,76 @@ fun HomeScreen(
                 scrollBehavior = scrollBehavior,
                 colors = paperTopBarColors(),
                 title = {
-                    // The running head never leaves: search is a field at the
-                    // head of the list now, not a mode the bar has to swap
-                    // into, so there is nothing to cross between.
-                    // Home is the book's title page — with no icons left in
-                    // the bar it has the row to itself, so it runs at the
-                    // full headlineSmall where the other tabs stay quiet
-                    // (sizeScale defaults to their 0.85 register). FitText
-                    // keeps it inside the bar at every screen width and
-                    // font scale; 0.25f floor: see TabTitle — the app's own
-                    // name must survive the narrowest bar at the largest
-                    // scales.
-                    TabTitle(
-                        stringResource(R.string.app_title),
-                        minScale = 0.25f,
-                        sizeScale = 1f,
-                    )
+                    // One bar, two registers, switching as a whole: the book's
+                    // title page gives way to the search field and back again,
+                    // both cross-fading on the house QUICK fade so the two
+                    // slots read as one switch rather than two movements.
+                    //
+                    // Home is the book's title page — with a single overflow
+                    // glyph beside it (or, searching, none) its title keeps
+                    // the full headlineSmall register (sizeScale 1f) where the
+                    // other tabs run quieter heads. FitText holds it inside
+                    // the narrower space a second icon costs; 0.25f floor:
+                    // see TabTitle — the app's own name must survive the
+                    // narrowest bar at the largest scales.
+                    Crossfade(
+                        targetState = searchOpen,
+                        animationSpec = Motion.tween(Motion.QUICK),
+                        label = "homeHead",
+                    ) { open ->
+                        if (open) {
+                            HomeSearchField(
+                                query = query,
+                                onQueryChange = viewModel::setSearchQuery,
+                            )
+                        } else {
+                            TabTitle(
+                                stringResource(R.string.app_title),
+                                minScale = 0.25f,
+                                sizeScale = 1f,
+                            )
+                        }
+                    }
                 },
                 actions = {
-                    TabOverflowActions(onSettings = onSettings, onAbout = onAbout)
+                    // The two arms of the switch share the actions edge so the
+                    // magnifier's position becomes the close button's — the
+                    // thumb learns one corner of the screen.
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        AnimatedVisibility(
+                            visible = !searchOpen,
+                            enter = fadeIn(Motion.tween(Motion.QUICK)),
+                            exit = fadeOut(Motion.tween(Motion.QUICK)),
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                IconButton(onClick = { searchOpen = true }) {
+                                    Icon(
+                                        Icons.Outlined.Search,
+                                        contentDescription = stringResource(R.string.cd_search),
+                                    )
+                                }
+                                TabOverflowActions(onSettings = onSettings, onAbout = onAbout)
+                            }
+                        }
+                        AnimatedVisibility(
+                            visible = searchOpen,
+                            enter = fadeIn(Motion.tween(Motion.QUICK)),
+                            exit = fadeOut(Motion.tween(Motion.QUICK)),
+                        ) {
+                            IconButton(
+                                onClick = {
+                                    viewModel.setSearchQuery("")
+                                    searchOpen = false
+                                    focusManager.clearFocus()
+                                },
+                            ) {
+                                Icon(
+                                    Icons.Outlined.Close,
+                                    contentDescription = stringResource(R.string.cd_close_search),
+                                )
+                            }
+                        }
+                    }
                 },
             )
         },
@@ -206,12 +310,6 @@ fun HomeScreen(
                             DailyHeroCard(turningName, onClick = { onNameClick(turningName.number) })
                         }
                     }
-                }
-                item(key = "search") {
-                    SearchField(
-                        query = query,
-                        onQueryChange = viewModel::setSearchQuery,
-                    )
                 }
                 if (names.isEmpty() && namesLoaded) {
                     // The asset failed to read. Without this the screen would be
@@ -263,127 +361,74 @@ fun HomeScreen(
 }
 
 /**
- * The list's own search field — a quiet plate at the head of the content,
- * below the day's name, above the rows.
+ * The bar's search field, standing where the running head stood.
  *
- * Search used to be a mode: an icon swapped the running head for a field, the
- * keyboard rose, and Back had to walk it all back. The machinery existed
- * because search was a place you went. It is a thing you do instead now —
- * the field is simply part of the page, the way an index sits at the head of
- * a book's contents. Nothing to open, nothing to close; typing filters live,
- * and the query stays until the reader clears it.
+ * One quiet input set in the app's own ink: no plate, no chrome of its
+ * own — the bar is the field while search is open, the way a system app's
+ * toolbar simply becomes what it is doing. Typing filters the list beneath
+ * live through the shared ViewModel query; the query persists until cleared,
+ * whether by Back (one layer per press, see [HomeScreen]'s handler), by the
+ * corner ✕, or by an empty result page offering "Clear search".
  *
- * The plate, not the rule: the field is one object set in the paper's own
- * darker shade — the shelf the book rests on — so its role reads through
- * material rather than through a line. (A hairline said "divider", which is
- * furniture; a surface says "press and speak", which is the truth.) The
- * squircle is the house corner language, radius matching the row Arabic's
- * 14dp half-height, so plate and Arabic end in the same curve. Under the
- * finger or the caret it deepens one step toward the hand, the whole story
- * told in shade, no border ever drawn. A focus trap sits over it so a tap
- * that finds only its edge still opens the keyboard.
+ * The hint rides on the field only while it is empty. Set unconditionally,
+ * contentDescription would replace the field's text and a screen reader
+ * would never read the query back.
  */
 @Composable
-private fun SearchField(
+private fun HomeSearchField(
     query: String,
     onQueryChange: (String) -> Unit,
 ) {
     val focusManager = LocalFocusManager.current
-    val searchLabel = stringResource(R.string.cd_search)
-    val interaction = remember { MutableInteractionSource() }
     val focusRequester = remember { FocusRequester() }
-    // The plate deepens toward the hand: pressed or focused, one shade down.
-    // Motion.tween is the house fade, and it collapses to snap() when the
-    // animator scale is 0 — what the "remove animations" setting demands.
-    val pressed by interaction.collectIsPressedAsState()
-    val focused by interaction.collectIsFocusedAsState()
-    val plateColor by animateColorAsState(
-        targetValue = when {
-            pressed || focused -> MaterialTheme.colorScheme.surfaceContainerHighest
-            else -> MaterialTheme.colorScheme.surfaceContainerHigh
-        },
-        animationSpec = Motion.tween(Motion.QUICK),
-        label = "searchPlate",
-    )
-    Column(
-        Modifier.fillMaxWidth(),
-        // The hero card above and the first row below must not lean on this
-        // line: as an index between two kinds of content it gets its own
-        // room on both sides (the rows' 15dp is row rhythm, not sectioning).
-    ) {
-        Spacer(Modifier.height(26.dp))
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = ListInset)
-                // The plate itself: height 52dp — the minimum touch target,
-                // so the air IS the target and nothing is only decoration.
-                .heightIn(min = 52.dp)
-                .clip(SquircleShape(14.dp))
-                .background(plateColor)
-                // The tap trap lives on the same surface: taps that land on
-                // the plate but miss the text slot still summon the field.
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = null,
-                ) { focusRequester.requestFocus() }
-                .padding(horizontal = 16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            BasicTextField(
-                value = query,
-                onValueChange = onQueryChange,
-                modifier = Modifier
-                    .weight(1f)
-                    .focusRequester(focusRequester)
-                    // The label rides on the field only while it is
-                    // empty. Set unconditionally, contentDescription
-                    // would replace the field's text and a screen
-                    // reader would never read the query back.
-                    .semantics {
-                        if (query.isEmpty()) contentDescription = searchLabel
-                    },
-                interactionSource = interaction,
-                textStyle = MaterialTheme.typography.bodyLarge.copy(
-                    color = MaterialTheme.colorScheme.onSurface,
-                ),
-                cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                // Filtering is live, so the action key's only job
-                // is to dismiss the keyboard — it must not be dead.
-                keyboardActions = KeyboardActions(onSearch = { focusManager.clearFocus() }),
-                decorationBox = { inner ->
-                    Box(contentAlignment = Alignment.CenterStart) {
-                        if (query.isEmpty()) {
-                            Text(
-                                text = stringResource(R.string.search_hint),
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        }
-                        inner()
-                    }
-                },
-            )
-            // The clear button breathes in and out with the query it
-            // serves instead of blinking into existence.
-            AnimatedVisibility(
-                visible = query.isNotEmpty(),
-                enter = fadeIn(Motion.tween(Motion.QUICK)),
-                exit = fadeOut(Motion.tween(Motion.QUICK)),
-            ) {
-                IconButton(onClick = { onQueryChange("") }) {
-                    Icon(
-                        Icons.Outlined.Close,
-                        contentDescription = stringResource(R.string.cd_clear_search),
-                    )
-                }
+    val searchLabel = stringResource(R.string.cd_search)
+    // races composition on some devices; a few short retries settle it the
+    // honest way instead of a fixed sleep.
+    LaunchedEffect(Unit) {
+        repeat(4) {
+            try {
+                focusRequester.requestFocus()
+                return@LaunchedEffect
+            } catch (_: IllegalStateException) {
+                delay(50)
             }
         }
-        // Below the plate: the index turns back into the contents, and the
-        // first row opens with room rather than pressed against the field.
-        Spacer(Modifier.height(24.dp))
+    }
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        BasicTextField(
+            value = query,
+            onValueChange = onQueryChange,
+            modifier = Modifier
+                .weight(1f)
+                .focusRequester(focusRequester)
+                .semantics {
+                    if (query.isEmpty()) contentDescription = searchLabel
+                },
+            textStyle = MaterialTheme.typography.bodyLarge.copy(
+                color = MaterialTheme.colorScheme.onSurface,
+            ),
+            cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+            // Filtering is live, so the action key's only job
+            // is to dismiss the keyboard — it must not be dead.
+            keyboardActions = KeyboardActions(onSearch = { focusManager.clearFocus() }),
+            decorationBox = { inner ->
+                Box(contentAlignment = Alignment.CenterStart) {
+                    if (query.isEmpty()) {
+                        Text(
+                            text = stringResource(R.string.search_hint),
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    inner()
+                }
+            },
+        )
     }
 }
 
@@ -406,7 +451,7 @@ private fun DailyHeroCard(name: Name, onClick: () -> Unit) {
     Card(
         modifier = Modifier
             // Horizontal 20dp puts the card on the same edge as the list
-            // beneath it; 12dp is the sheet's own top air, so the plate
+            // beneath it; 12dp is the sheet's own top air, so the card
             // never hugs the app bar.
             .padding(start = 20.dp, end = 20.dp, top = 12.dp, bottom = 8.dp)
             .fillMaxWidth()
