@@ -10,7 +10,7 @@ so do not add a word or a stray space.
 
 - **Application ID (package name):** `io.github.muntasimulhaque.ninetynine`
 - **Privacy policy URL:** `https://muntasimulhaque.github.io/ninetynine/privacy-policy.html`
-- **Version (this release):** versionName `1.7`, versionCode `17`
+- **Version (this release):** versionName `1.8`, versionCode `18`
 
 ---
 
@@ -57,6 +57,22 @@ Made to be read:
 
 Free and open source. May Allah make us among those who learn, memorize,
 understand and act upon His beautiful Names.
+```
+
+## What's new (version 1.8)
+
+```
+Care where you meet the book:
+
+• The daily notification now opens into the Name's
+emerald card — the same plate as the app and widget.
+• On tablets, every screen keeps the book's page
+proportions instead of stretching edge to edge.
+• TalkBack reads the Names in an Arabic voice, and
+progress now announces itself.
+• Finish the book and the ٩٩ settles in, quietly.
+
+All 99 Names are unchanged.
 ```
 
 ## What's new (version 1.7)
