@@ -69,6 +69,7 @@ class Prefs(private val context: Context) {
         val DAILY_ENABLED = booleanPreferencesKey("daily_enabled")
         val DAILY_HOUR = intPreferencesKey("daily_hour")
         val DAILY_MINUTE = intPreferencesKey("daily_minute")
+        val NOTIFICATIONS_ASKED = booleanPreferencesKey("notifications_asked")
         val QUIZ_BEST = intPreferencesKey("quiz_best")
         val INCLUDE_LEARNED = booleanPreferencesKey("include_learned")
     }
@@ -91,8 +92,18 @@ class Prefs(private val context: Context) {
     val textScale: Flow<Float> = data
         .map { p -> p[Keys.TEXT_SCALE] ?: 1f }
 
+    /**
+     * On by default: the daily reminder is the app's rhythm, and its consent
+     * lives in the system permission dialog (MainActivity's one-time ask),
+     * not in a switch a reader has to go and find. A stored false always
+     * wins — a reader who turned the reminder off keeps it off.
+     */
     val dailyEnabled: Flow<Boolean> = data
-        .map { p -> p[Keys.DAILY_ENABLED] ?: false }
+        .map { p -> p[Keys.DAILY_ENABLED] ?: true }
+
+    /** Whether the one-time notification-permission ask has already happened. */
+    val notificationsAsked: Flow<Boolean> = data
+        .map { p -> p[Keys.NOTIFICATIONS_ASKED] ?: false }
 
     val dailyTime: Flow<Pair<Int, Int>> = data
         .map { p -> (p[Keys.DAILY_HOUR] ?: 8) to (p[Keys.DAILY_MINUTE] ?: 0) }
@@ -148,6 +159,8 @@ class Prefs(private val context: Context) {
     suspend fun setTextScale(scale: Float) = write { it[Keys.TEXT_SCALE] = scale }
 
     suspend fun setDailyEnabled(enabled: Boolean) = write { it[Keys.DAILY_ENABLED] = enabled }
+
+    suspend fun setNotificationsAsked() = write { it[Keys.NOTIFICATIONS_ASKED] = true }
 
     suspend fun setDailyTime(hour: Int, minute: Int) = write {
         it[Keys.DAILY_HOUR] = hour

@@ -182,6 +182,10 @@
     <string name="daily_notification_channel">Name of the Day</string>
     <string name="notification_title">Name of the Day</string>
     <string name="notification_tap_hint">%1$s. Tap to read the full meaning.</string>
+    <!-- The expanded plate already shows the short meaning; its summary
+         carries only the affordance, so nothing repeats over the card.
+         The full line above stays for the plain-text fallback. -->
+    <string name="notification_summary_hint">Tap to read the full meaning.</string>
 
     <!-- Settings -->
     <string name="theme_section">Theme</string>

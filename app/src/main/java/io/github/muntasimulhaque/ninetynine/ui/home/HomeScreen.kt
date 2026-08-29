@@ -89,6 +89,7 @@ import io.github.muntasimulhaque.ninetynine.ui.theme.components.ArabicText
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.FitText
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.NameListItem
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.NameRowInset
+import io.github.muntasimulhaque.ninetynine.ui.theme.components.nameRowTextInset
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.TabTitle
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.pageMeasure
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.EmptyState
@@ -278,11 +279,11 @@ fun HomeScreen(
             top = padding.calculateTopPadding(),
             bottom = padding.calculateBottomPadding() + 16.dp,
         )
-        // The rule between rows runs the row's own width now — there are no
-        // folio numbers to indent past. And wide screens keep the book's
-        // column: the list, the hero card and the thumb hold page proportions
-        // on a tablet instead of stretching edge to edge (phones never reach
-        // the cap).
+        // The rule between rows starts where the names do, not under their
+        // numbers. And wide screens keep the book's column: the list, the hero
+        // card and the thumb hold page proportions on a tablet instead of
+        // stretching edge to edge (phones never reach the cap).
+        val dividerInset = nameRowTextInset()
         Box(
             Modifier
                 .fillMaxSize()
@@ -353,7 +354,7 @@ fun HomeScreen(
                         query = query,
                     )
                     HorizontalDivider(
-                        modifier = Modifier.padding(start = NameRowInset, end = NameRowInset),
+                        modifier = Modifier.padding(start = dividerInset, end = NameRowInset),
                         thickness = 0.5.dp,
                         color = MaterialTheme.colorScheme.outlineVariant,
                     )

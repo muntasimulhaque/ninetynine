@@ -280,9 +280,15 @@ app/src/main/assets/     names.json (99 entries), intro.txt, fonts/ (+licenses).
   measured width allows (FitText shrinks it back for the second bar icon or
   a large font scale) — while Bookmarks and Memorize keep the default 0.85
   quiet running head.
-- **The list rows carry no folio numbers:** position survives where it means
-  something (detail counter, search, deep links), not as ink taxing every
-  resting row. Dividers run the row's own width (`NameRowInset` both sides).
+- **The list rows carry their folio numbers** (restored by decision after a
+  quiet-season removal): not lookup scaffolding — search already matches the
+  exact number — but the list's coordinate system, the way memorization
+  speaks ("I've memorized up to 19") and the anchor the learned ticks and
+  kept names are scattered across. A book's folio, not a badge:
+  `onSurfaceVariant` `labelLarge`, right-aligned in a measured widest-number
+  column (`folioWidth()` in NameListItem.kt) so the units digits line up down
+  the page. Dividers start where the names do (`nameRowTextInset()`), never
+  under the numbers; `NameRowInset` stays the row's outer margin.
 - **The flashcards carry no instruction lines:** "Tap the card…" and the
   swipe hint are gone — the whole front face is one plate holding one Name
   (nothing else to tap), and the drag answers the hand through the I KNOW IT
@@ -397,11 +403,28 @@ app/src/main/assets/     names.json (99 entries), intro.txt, fonts/ (+licenses).
   `fillMaxSize().wrapContentWidth(CenterHorizontally).widthIn(max = …)` —
   wrapContentWidth BEFORE widthIn, the same order rule as the heightIn
   pitfall. Phones never reach the cap.
+- **The reminder is on by default:** `dailyEnabled` defaults to true, so a
+  fresh install gets the Name each morning without finding a switch. The
+  reader's consent lives in the system dialog, not in prose: MainActivity
+  asks for POST_NOTIFICATIONS once at first launch (API 33+ only, guarded by
+  the `notifications_asked` pref, written before the dialog opens so a
+  process death mid-dialog never nags), and ONLY when the reminder is
+  actually wanted — a reader whose pref says off is never asked, so someone
+  who toggled it off keeps their off, for ever, with no dialog. Granting
+  needs no wiring (the schedule re-anchors every launch; the worker checks
+  the permission at post time); a denial writes the pref off and cancels the
+  work, so switch, scheduler and worker agree. Below API 33 there is nothing
+  to ask and the reminder just works from the first morning.
 - **The daily notification expands to the plate:** `DailyPlate` renders the
   hero-card identity (HAFS Arabic via Canvas — `DailyNameWidget.arabicBitmap`,
   internal — plus Spectral Latin) into a 16:9 bitmap for BigPictureStyle,
   falling back to the plain BigTextStyle when a render fails. Collapsed, the
-  notification is unchanged. `MainActivity.onResume` nudges the widget only
+  notification is unchanged. With the plate up, the summary is the BARE tap
+  hint (`notification_summary_hint`) — the short meaning lives in the plate,
+  and repeating it made the expanded shade read as the old text notification
+  duplicated beneath a card of itself; the BigText fallback keeps the full
+  `{title}. Tap to read the full meaning.` line, where the meaning has
+  nowhere else to be. `MainActivity.onResume` nudges the widget only
   when the local day has changed (`widgetNudgeDay`), not on every resume.
 - **`SettleOnce`** (PageParts) is the shared one-time settle: scale from
   `fromScale` on the lively spring plus a QUICK fade, played once per arrival

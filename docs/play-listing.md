@@ -10,7 +10,7 @@ so do not add a word or a stray space.
 
 - **Application ID (package name):** `io.github.muntasimulhaque.ninetynine`
 - **Privacy policy URL:** `https://muntasimulhaque.github.io/ninetynine/privacy-policy.html`
-- **Version (this release):** versionName `1.8`, versionCode `18`
+- **Version (this release):** versionName `1.9`, versionCode `19`
 
 ---
 
@@ -57,6 +57,23 @@ Made to be read:
 
 Free and open source. May Allah make us among those who learn, memorize,
 understand and act upon His beautiful Names.
+```
+
+## What's new (version 1.9)
+
+```
+A quieter morning, a clearer page:
+
+• The daily reminder now comes with the app — one
+"allow" and the Name of the Day arrives each
+morning. It stays silent, and Settings turns it
+off any time.
+• The lists carry their numbers again, so "I've
+memorized up to 19" has an anchor on the page.
+• The Name of the Day card no longer repeats
+itself when expanded.
+
+All 99 Names are unchanged.
 ```
 
 ## What's new (version 1.8)

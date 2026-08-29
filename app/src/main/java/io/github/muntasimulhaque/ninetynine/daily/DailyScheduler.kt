@@ -280,15 +280,23 @@ class NotificationWorker(context: Context, params: WorkerParameters) :
 /**
  * The expanded form: the emerald plate when it renders, the plain text when
  * it does not. Collapsed, the notification is unchanged either way — the
- * picture only appears once the reader pulls the shade down and expands it,
- * and the tap hint stays as the summary either way.
+ * picture only appears once the reader pulls the shade down and expands it.
+ *
+ * With the plate up, the summary is the bare tap hint: the plate already
+ * carries the short meaning, and repeating it made the expanded shade read
+ * as the old text notification sitting on top of a duplicate of itself. The
+ * header line above the plate (Arabic · transliteration) is the collapsed
+ * view itself, which the template always shows and nothing can remove.
+ *
+ * Without the plate the short meaning has nowhere else to be, so the
+ * fallback keeps the full line.
  */
 private fun dailyStyle(context: Context, name: Name): NotificationCompat.Style {
     val plate = DailyPlate.render(context, name)
     return if (plate != null) {
         NotificationCompat.BigPictureStyle()
             .bigPicture(plate)
-            .setSummaryText(context.getString(R.string.notification_tap_hint, name.title))
+            .setSummaryText(context.getString(R.string.notification_summary_hint))
     } else {
         NotificationCompat.BigTextStyle()
             .bigText(context.getString(R.string.notification_tap_hint, name.title))

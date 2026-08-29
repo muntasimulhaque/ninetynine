@@ -1,10 +1,14 @@
 package io.github.muntasimulhaque.ninetynine
 
+import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.fadeIn
@@ -52,6 +56,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.glance.appwidget.updateAll
@@ -67,6 +72,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import io.github.muntasimulhaque.ninetynine.daily.DailyNameWidget
 import io.github.muntasimulhaque.ninetynine.daily.DailyScheduler
+import io.github.muntasimulhaque.ninetynine.data.Prefs
 import io.github.muntasimulhaque.ninetynine.ui.NamesViewModel
 import io.github.muntasimulhaque.ninetynine.ui.about.AboutScreen
 import io.github.muntasimulhaque.ninetynine.ui.bookmarks.BookmarksScreen
@@ -83,6 +89,7 @@ import io.github.muntasimulhaque.ninetynine.ui.theme.Names99Theme
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.FitText
 import io.github.muntasimulhaque.ninetynine.util.DailyName
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.first
 
 class MainActivity : ComponentActivity() {
 
@@ -105,6 +112,19 @@ class MainActivity : ComponentActivity() {
      */
     private var widgetNudgeDay: Int = Int.MIN_VALUE
 
+    /**
+     * The one-time ask for POST_NOTIFICATIONS. Registered at construction —
+     * the contract requires that to happen before the activity is STARTED.
+     * The reminder itself is on by default (see [maybeAskForNotifications]);
+     * a denial writes the pref off, so the Settings switch, the scheduler and
+     * the worker all agree that nothing should be posted.
+     */
+    private val notificationPermission = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (!granted) onReminderPermissionDenied()
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         val splashScreen = installSplashScreen()
         // Hold the system splash until the app's first frame is committed.
@@ -125,6 +145,11 @@ class MainActivity : ComponentActivity() {
         // The running-check keeps even the seconds-wide window from cancelling
         // a worker that is mid-run at the instant the app opens.
         lifecycleScope.launch { DailyScheduler.reanchorSchedules(this@MainActivity) }
+
+        // The reminder is on by default; on 13+ its consent is the system
+        // permission dialog, so a fresh install is asked once, here. Details
+        // in [maybeAskForNotifications].
+        lifecycleScope.launch { maybeAskForNotifications() }
 
         // Process death replays the ORIGINAL launch intent (the removal below
         // never propagates to the system's ActivityRecord), so a restored
@@ -170,6 +195,46 @@ class MainActivity : ComponentActivity() {
         // a skipped refresh, never a crash.
         lifecycleScope.launch {
             runCatching { DailyNameWidget().updateAll(this@MainActivity) }
+        }
+    }
+
+    /**
+     * Asks for POST_NOTIFICATIONS once, on the first launch of a reader who
+     * wants the reminder (it is on by default). The ask only fires when all
+     * of these hold:
+     *
+     * - API 33+: below that there is no runtime permission to ask for, and
+     *   the reminder simply works — the platform's own default for every
+     *   installed app.
+     * - the permission is not already granted (via system settings or a
+     *   restore).
+     * - it has never been asked before, on any launch — the flag is written
+     *   before the dialog opens, so a process death mid-dialog never nags.
+     * - the reminder is actually wanted: a reader whose pref says off
+     *   (toggled off, or a denial from an earlier ask) is never asked.
+     *
+     * A grant needs no wiring: the schedule re-anchors on every launch and
+     * the worker re-checks the permission at post time. A denial writes the
+     * pref off and cancels the scheduled work, so the Settings switch shows
+     * the truth and no worker wakes to no-op.
+     */
+    private suspend fun maybeAskForNotifications() {
+        if (Build.VERSION.SDK_INT < 33) return
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) ==
+            PackageManager.PERMISSION_GRANTED
+        ) return
+        val prefs = Prefs(applicationContext)
+        if (prefs.notificationsAsked.first()) return
+        if (!prefs.dailyEnabled.first()) return
+        prefs.setNotificationsAsked()
+        notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+    }
+
+    /** The reader said no to the one ask: the reminder follows them to off. */
+    private fun onReminderPermissionDenied() {
+        lifecycleScope.launch {
+            Prefs(applicationContext).setDailyEnabled(false)
+            DailyScheduler.cancelNotification(applicationContext)
         }
     }
 
