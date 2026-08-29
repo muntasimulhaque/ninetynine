@@ -81,6 +81,7 @@ import io.github.muntasimulhaque.ninetynine.ui.theme.Motion
 import io.github.muntasimulhaque.ninetynine.ui.theme.LocalMotionScale
 import io.github.muntasimulhaque.ninetynine.ui.theme.Names99Theme
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.FitText
+import io.github.muntasimulhaque.ninetynine.util.DailyName
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
@@ -92,6 +93,17 @@ class MainActivity : ComponentActivity() {
 
     /** False until Compose's first composition has committed; holds the splash. */
     private var contentReady = false
+
+    /**
+     * The local day the widget last got its onResume nudge for. The nudge
+     * exists so a phone opened across midnight never shows the widget
+     * yesterday's name; within one day, re-rendering on every resume only
+     * repeated a full Glance composition on the main thread for a card that
+     * already shows today. The daily-name worker at 00:05 remains the real
+     * refresher, and process death resets this, so the first resume after a
+     * cold start always renders.
+     */
+    private var widgetNudgeDay: Int = Int.MIN_VALUE
 
     override fun onCreate(savedInstanceState: Bundle?) {
         val splashScreen = installSplashScreen()
@@ -143,10 +155,15 @@ class MainActivity : ComponentActivity() {
     /**
      * The home screen recomputes the daily name on every resume; the widget
      * only refreshes when its worker runs. Nudging it here keeps the two
-     * surfaces from showing different names after midnight.
+     * surfaces from showing different names after midnight — gated to a real
+     * day change, so an ordinary return to the app costs no render (see
+     * [widgetNudgeDay]).
      */
     override fun onResume() {
         super.onResume()
+        val today = DailyName.numberFor(System.currentTimeMillis())
+        if (today == widgetNudgeDay) return
+        widgetNudgeDay = today
         // Glance's updateAll can race its own initialisation on a cold start;
         // a throw here would kill the process the reader just opened. The
         // widget refreshes on its own worker run anyway, so a failed nudge is

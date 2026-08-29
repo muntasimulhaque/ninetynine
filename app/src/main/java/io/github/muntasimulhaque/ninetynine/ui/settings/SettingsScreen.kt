@@ -30,6 +30,8 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
@@ -91,6 +93,7 @@ import io.github.muntasimulhaque.ninetynine.ui.theme.components.ListInset
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.MixedText
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.PageRule
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.ScreenLabel
+import io.github.muntasimulhaque.ninetynine.ui.theme.components.pageMeasure
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.paperTopBarColors
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.SectionLabel
 import java.text.SimpleDateFormat
@@ -168,6 +171,11 @@ fun SettingsScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                // Wide screens keep the book's column: the settings hold page
+                // proportions instead of stretching edge to edge. Phones
+                // never reach the cap.
+                .wrapContentWidth(Alignment.CenterHorizontally)
+                .widthIn(max = pageMeasure())
                 .padding(padding)
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = ListInset),

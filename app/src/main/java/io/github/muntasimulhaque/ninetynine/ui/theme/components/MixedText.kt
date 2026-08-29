@@ -71,6 +71,9 @@ fun MixedText(
                         fontFamily = ArabicFamily,
                         fontWeight = FontWeight.Normal,
                         fontSize = ArabicSpanScale.em,
+                        // The run is Arabic: a screen reader switches to an
+                        // Arabic voice for it, as it does for ArabicText.
+                        localeList = ArabicLocale,
                     ),
                     match.range.first,
                     match.range.last + 1,

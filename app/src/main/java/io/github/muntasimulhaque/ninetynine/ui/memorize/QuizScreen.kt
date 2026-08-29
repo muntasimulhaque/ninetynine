@@ -4,7 +4,6 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
@@ -25,6 +24,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
@@ -53,7 +54,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
@@ -85,6 +85,8 @@ import io.github.muntasimulhaque.ninetynine.ui.theme.components.PageRule
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.SectionLabel
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.PageMessage
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.PageInset
+import io.github.muntasimulhaque.ninetynine.ui.theme.components.SettleOnce
+import io.github.muntasimulhaque.ninetynine.ui.theme.components.pageMeasure
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.paperTopBarColors
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.ScreenLabel
 import io.github.muntasimulhaque.ninetynine.ui.theme.rememberHaptics
@@ -301,6 +303,10 @@ fun QuizScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                // Wide screens keep the book's column: the question card and
+                // its options hold page proportions instead of stretching.
+                .wrapContentWidth(Alignment.CenterHorizontally)
+                .widthIn(max = pageMeasure())
                 .padding(padding)
                 .padding(horizontal = PageInset),
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -711,34 +717,19 @@ private fun ScoreCount(score: Int, total: Int) {
  */
 @Composable
 private fun PerfectSeal() {
-    var sealed by rememberSaveable { mutableStateOf(false) }
-    LaunchedEffect(Unit) { sealed = true }
-    val scale by animateFloatAsState(
-        targetValue = if (sealed) 1f else 0.6f,
-        animationSpec = Motion.lively(),
-        label = "sealScale",
-    )
-    val alpha by animateFloatAsState(
-        targetValue = if (sealed) 1f else 0f,
-        animationSpec = Motion.tween(Motion.QUICK),
-        label = "sealAlpha",
-    )
-    Box(
-        modifier = Modifier
-            .size(52.dp)
-            .graphicsLayer {
-                scaleX = scale
-                scaleY = scale
-                this.alpha = alpha
-            }
-            .border(1.dp, MaterialTheme.colorScheme.secondary.copy(alpha = 0.45f), CircleShape),
-        contentAlignment = Alignment.Center,
-    ) {
-        Icon(
-            painter = painterResource(R.drawable.ic_mark),
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.secondary,
-            modifier = Modifier.size(22.dp),
-        )
+    SettleOnce(fromScale = 0.6f) {
+        Box(
+            modifier = Modifier
+                .size(52.dp)
+                .border(1.dp, MaterialTheme.colorScheme.secondary.copy(alpha = 0.45f), CircleShape),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                painter = painterResource(R.drawable.ic_mark),
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.secondary,
+                modifier = Modifier.size(22.dp),
+            )
+        }
     }
 }

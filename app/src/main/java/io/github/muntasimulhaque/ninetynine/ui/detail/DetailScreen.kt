@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
@@ -396,7 +397,15 @@ private fun NamePage(
     // Single scrollable page: the controls scroll with the content, but a
     // weighted spacer pushes them to just above the system bar whenever the
     // content is shorter than the screen.
-    BoxWithConstraints(modifier.fillMaxSize()) {
+    // The page keeps the book's measure on wide screens — the Name, the
+    // meaning, the note and the footer all hold `readingMeasure`'s column,
+    // and the thumb hugs that column's edge. Phones never reach the cap.
+    BoxWithConstraints(
+        modifier
+            .fillMaxSize()
+            .wrapContentWidth(Alignment.CenterHorizontally)
+            .widthIn(max = readingMeasure())
+    ) {
         val minPageHeight = maxHeight
         // The two chevron labels share the footer row with their icons. Each
         // text is capped at half the row minus the chrome (two icons, two

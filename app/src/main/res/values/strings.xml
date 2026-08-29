@@ -30,7 +30,7 @@
          twice told the reader nothing about what they were about to place. -->
     <string name="widget_description">The day\'s name of Allah, on your home screen</string>
     <!-- Sample content for the widget picker's preview only. -->
-    <string name="widget_preview_arabic" translatable="false">الرحمن</string>
+    <string name="widget_preview_arabic" translatable="false">الرَّحْمَٰن</string>
     <string name="widget_preview_name" translatable="false">Ar-Rahmaan</string>
     <string name="widget_preview_title">The Extremely Merciful</string>
     <string name="basmala" translatable="false">بِسْمِ اللّٰهِ الرَّحْمَٰنِ الرَّحِيمِ</string>

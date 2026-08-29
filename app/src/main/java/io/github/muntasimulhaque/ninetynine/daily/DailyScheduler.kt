@@ -20,6 +20,7 @@ import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import io.github.muntasimulhaque.ninetynine.MainActivity
 import io.github.muntasimulhaque.ninetynine.R
+import io.github.muntasimulhaque.ninetynine.data.Name
 import io.github.muntasimulhaque.ninetynine.data.NamesRepository
 import io.github.muntasimulhaque.ninetynine.data.Prefs
 import io.github.muntasimulhaque.ninetynine.ui.theme.HeroContainer
@@ -257,10 +258,7 @@ class NotificationWorker(context: Context, params: WorkerParameters) :
             // wears — the shade's one line of typography, set rather than joined.
             .setContentTitle("${DailyNameWidget.systemFontSafeArabic(name.arabic)} · ${name.transliteration}")
             .setContentText(name.title)
-            .setStyle(
-                NotificationCompat.BigTextStyle()
-                    .bigText(context.getString(R.string.notification_tap_hint, name.title))
-            )
+            .setStyle(dailyStyle(context, name))
             .setContentIntent(pending)
             .setAutoCancel(true)
             // Channels only exist from API 26; on 24–25 the priority is what
@@ -276,5 +274,23 @@ class NotificationWorker(context: Context, params: WorkerParameters) :
             val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             manager.notify(1, notification)
         }.fold(onSuccess = { Result.success() }, onFailure = { Result.retry() })
+    }
+}
+
+/**
+ * The expanded form: the emerald plate when it renders, the plain text when
+ * it does not. Collapsed, the notification is unchanged either way — the
+ * picture only appears once the reader pulls the shade down and expands it,
+ * and the tap hint stays as the summary either way.
+ */
+private fun dailyStyle(context: Context, name: Name): NotificationCompat.Style {
+    val plate = DailyPlate.render(context, name)
+    return if (plate != null) {
+        NotificationCompat.BigPictureStyle()
+            .bigPicture(plate)
+            .setSummaryText(context.getString(R.string.notification_tap_hint, name.title))
+    } else {
+        NotificationCompat.BigTextStyle()
+            .bigText(context.getString(R.string.notification_tap_hint, name.title))
     }
 }

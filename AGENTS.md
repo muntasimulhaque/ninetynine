@@ -199,8 +199,8 @@ app/src/main/java/io/github/muntasimulhaque/ninetynine/
   util/                  DailyName, DeckBuilder, QuizBuilder, SearchFilter
                          (pure, unit-tested).
   daily/                 DailyNameWidget (Glance), DailyScheduler
-                         (WorkManager), TimeChangeReceiver,
-                         PackageReplacedReceiver.
+                         (WorkManager), DailyPlate (notification plate),
+                         TimeChangeReceiver, PackageReplacedReceiver.
   ui/                    NamesViewModel (shared state) + per-screen packages:
                          home, detail, memorize (Flashcards/Quiz/Learned/
                          Memorize), bookmarks, share, settings, about.
@@ -385,6 +385,28 @@ app/src/main/assets/     names.json (99 entries), intro.txt, fonts/ (+licenses).
   dimen `system_app_widget_background_radius` (24dp on Pixel images), falling
   back to 20dp when an OEM omits it; still API 31+-only and still applied
   before `clickable` (see pitfalls below).
+- **Arabic is tagged `ar` for readers:** `ArabicText` and `MixedText`'s Arabic
+  runs carry an `ar` locale span (`ArabicLocale` in ArabicText.kt), so
+  TalkBack picks an Arabic voice for the Name instead of attempting it with
+  the default English one. Keep the span on any new Arabic surface.
+- **Wide screens keep the book's column:** full-screen content sits inside a
+  centred `pageMeasure()` cap (560dp × the reading scale — Home, Bookmarks,
+  Learned, Flashcards, Quiz, Memorize, Settings; the name page at
+  `readingMeasure()`), so a tablet gets page proportions, not rows stretched
+  edge to edge, and the list thumbs hug the column. The pattern is
+  `fillMaxSize().wrapContentWidth(CenterHorizontally).widthIn(max = …)` —
+  wrapContentWidth BEFORE widthIn, the same order rule as the heightIn
+  pitfall. Phones never reach the cap.
+- **The daily notification expands to the plate:** `DailyPlate` renders the
+  hero-card identity (HAFS Arabic via Canvas — `DailyNameWidget.arabicBitmap`,
+  internal — plus Spectral Latin) into a 16:9 bitmap for BigPictureStyle,
+  falling back to the plain BigTextStyle when a render fails. Collapsed, the
+  notification is unchanged. `MainActivity.onResume` nudges the widget only
+  when the local day has changed (`widgetNudgeDay`), not on every resume.
+- **`SettleOnce`** (PageParts) is the shared one-time settle: scale from
+  `fromScale` on the lively spring plus a QUICK fade, played once per arrival
+  (saved-instance-state guarded; snap at animator scale 0). PerfectSeal uses
+  it at 0.6; the all-learned ٩٩ at the default 0.85.
 
 ## Content invariants (guarded by NamesAssetTest)
 

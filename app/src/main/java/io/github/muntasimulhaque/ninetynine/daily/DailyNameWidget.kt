@@ -297,7 +297,7 @@ class DailyNameWidget : GlanceAppWidget() {
  * marks and swashes can exceed the advance width, and the baseline sits one
  * pixel in from the top so nothing kisses the edge.
  */
-private fun arabicBitmap(
+internal fun arabicBitmap(
     typeface: Typeface,
     text: String,
     targetSp: Float,

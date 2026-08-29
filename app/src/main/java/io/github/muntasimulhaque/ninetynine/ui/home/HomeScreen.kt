@@ -23,6 +23,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
@@ -88,6 +90,7 @@ import io.github.muntasimulhaque.ninetynine.ui.theme.components.FitText
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.NameListItem
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.NameRowInset
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.TabTitle
+import io.github.muntasimulhaque.ninetynine.ui.theme.components.pageMeasure
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.EmptyState
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.LazyScrollbarThumb
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.PageMessage
@@ -276,8 +279,16 @@ fun HomeScreen(
             bottom = padding.calculateBottomPadding() + 16.dp,
         )
         // The rule between rows runs the row's own width now — there are no
-        // folio numbers to indent past.
-        Box(Modifier.fillMaxSize()) {
+        // folio numbers to indent past. And wide screens keep the book's
+        // column: the list, the hero card and the thumb hold page proportions
+        // on a tablet instead of stretching edge to edge (phones never reach
+        // the cap).
+        Box(
+            Modifier
+                .fillMaxSize()
+                .wrapContentWidth(Alignment.CenterHorizontally)
+                .widthIn(max = pageMeasure())
+        ) {
             LazyColumn(
                 state = listState,
                 contentPadding = contentPadding,

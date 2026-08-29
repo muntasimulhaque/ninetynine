@@ -87,6 +87,15 @@ android {
         // so it can never disagree with the versionName above.
         buildConfig = true
     }
+
+    // Play encodes a dependency manifest into every artifact by default. The
+    // app ships nothing it needs to advertise there — and every byte of
+    // metadata an artifact carries is metadata it leaks — so leave the block
+    // out of the APK and the AAB entirely.
+    dependenciesInfo {
+        includeInApk = false
+        includeInBundle = false
+    }
 }
 
 // AGP 9's built-in Kotlin replaces the kotlin-android plugin;

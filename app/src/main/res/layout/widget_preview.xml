@@ -4,9 +4,11 @@
   picker falls back to the launcher icon, which tells the reader nothing.
 
   A still life, not the widget itself: Glance renders the real thing, and this
-  only has to look like it. The Arabic is unvocalized on purpose — like the
-  widget, this is set in the system serif, whose mark placement on اللّٰه is
-  wrong, which is why the app's own screens use the bundled Mushaf face.
+  only has to look like it. Set in the system serif (RemoteViews text cannot
+  wear a bundled font), it shows the fully vocalized Ar-Rahmaan — whose marks
+  Noto Naskh places correctly; only the word الله misplaces them there, and
+  the preview does not carry it. The previewImage PNG beside this (what
+  pickers below Android 12 show) draws the same name in the bundled HAFS.
 
   Hero palette authority: Color.kt (HeroGold #D4B45A, HeroText #F2EDE2,
   HeroSubtext #BFD5CB, HeroContainer #1F4E42).

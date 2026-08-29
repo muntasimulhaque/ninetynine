@@ -9,6 +9,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -50,6 +52,7 @@ import io.github.muntasimulhaque.ninetynine.ui.theme.components.PageMessage
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.PageRule
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.TabTitle
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.TabOverflowActions
+import io.github.muntasimulhaque.ninetynine.ui.theme.components.pageMeasure
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.paperTopBarColors
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -107,6 +110,11 @@ fun MemorizeScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                // Wide screens keep the book's column: the count, the
+                // contents and the rows hold page proportions instead of
+                // stretching edge to edge. Phones never reach the cap.
+                .wrapContentWidth(Alignment.CenterHorizontally)
+                .widthIn(max = pageMeasure())
                 .padding(padding)
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = ListInset),
@@ -161,7 +169,10 @@ fun MemorizeScreen(
                     )
                 }
                 Spacer(Modifier.height(scaledGap(14.dp)))
-                HairlineProgress(progress = learnedCount / 99f)
+                // announceProgress = false: the big count directly above
+                // already says the number; a second "progress bar" stop for
+                // the same datum is noise to a screen reader.
+                HairlineProgress(progress = learnedCount / 99f, announceProgress = false)
                 // Text-adjacent air scales with the type, like the gap above it.
                 Spacer(Modifier.height(scaledGap(10.dp)))
                 Text(

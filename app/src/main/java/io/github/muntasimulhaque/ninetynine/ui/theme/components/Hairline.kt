@@ -22,6 +22,9 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.semantics.ProgressBarRangeInfo
+import androidx.compose.ui.semantics.progressBarRangeInfo
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import io.github.muntasimulhaque.ninetynine.ui.theme.Motion
@@ -50,6 +53,11 @@ fun HairlineProgress(
     progress: Float,
     modifier: Modifier = Modifier,
     height: Dp = 2.dp,
+    // The deck and quiz bars have no other voice announcing how far the round
+    // has run, so they keep the semantics. Memorize passes false: its big
+    // count directly above already says the number, and a second
+    // "progress bar" stop for the same datum is noise to a reader.
+    announceProgress: Boolean = true,
 ) {
     val fraction by animateFloatAsState(
         targetValue = progress.coerceIn(0f, 1f),
@@ -61,6 +69,16 @@ fun HairlineProgress(
             .fillMaxWidth()
             .height(height)
             .clip(CircleShape)
+            .then(
+                if (announceProgress) {
+                    Modifier.semantics {
+                        progressBarRangeInfo =
+                            ProgressBarRangeInfo(progress.coerceIn(0f, 1f), 0f..1f)
+                    }
+                } else {
+                    Modifier
+                }
+            )
             // `outline`, not `outlineVariant`: this track is where the bar
             // ends, so it carries meaning. With an invisible track there is
             // nothing to judge the gold fill against. outlineVariant is 1.42:1

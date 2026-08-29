@@ -5,6 +5,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.intl.LocaleList
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.TextUnit
@@ -18,6 +20,14 @@ import io.github.muntasimulhaque.ninetynine.ui.theme.LocalTextScale
  * rendering. Keeps the assets NFC-clean.
  */
 fun String.forArabicFont(): String = replace("\u0622", "\u0627\u0653")
+
+/**
+ * The text is Arabic, and says so: the locale span lets a screen reader pick
+ * an Arabic voice for the Name instead of attempting it with the device's
+ * default (usually English) one. [ArabicFamily] is explicit, so font
+ * resolution is unaffected. [MixedText]'s Arabic runs wear the same span.
+ */
+internal val ArabicLocale = LocaleList("ar")
 
 /**
  * Arabic text in the bundled mushaf typeface with generous line height for
@@ -85,6 +95,7 @@ fun ArabicText(
     Text(
         text = shaped,
         modifier = modifier,
+        style = TextStyle(localeList = ArabicLocale),
         color = color,
         fontSize = size,
         fontFamily = ArabicFamily,

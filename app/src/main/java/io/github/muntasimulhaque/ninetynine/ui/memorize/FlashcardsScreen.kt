@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -23,8 +24,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.Shuffle
+import androidx.compose.material.icons.outlined.MoreVert
+import androidx.compose.material.icons.outlined.Shuffle
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -86,6 +87,8 @@ import io.github.muntasimulhaque.ninetynine.ui.theme.components.FitText
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.HairlineProgress
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.PageMessage
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.PageInset
+import io.github.muntasimulhaque.ninetynine.ui.theme.components.SettleOnce
+import io.github.muntasimulhaque.ninetynine.ui.theme.components.pageMeasure
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.readingMeasure
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.paperTopBarColors
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.ScreenLabel
@@ -262,6 +265,11 @@ fun FlashcardsScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                // Wide screens keep the book's column: the card, the verdict
+                // row and the buttons hold page proportions instead of
+                // stretching edge to edge. Phones never reach the cap.
+                .wrapContentWidth(Alignment.CenterHorizontally)
+                .widthIn(max = pageMeasure())
                 .padding(padding)
                 .padding(horizontal = PageInset),
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -415,7 +423,7 @@ private fun DeckMenu(
     Box {
         IconButton(onClick = { open = true }) {
             Icon(
-                Icons.Filled.MoreVert,
+                Icons.Outlined.MoreVert,
                 contentDescription = stringResource(R.string.cd_more),
             )
         }
@@ -443,7 +451,7 @@ private fun DeckMenu(
                 },
                 leadingIcon = {
                     Icon(
-                        Icons.Filled.Shuffle,
+                        Icons.Outlined.Shuffle,
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -716,12 +724,16 @@ private fun AllLearnedContent(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
-        ArabicText(
-            text = "٩٩",
-            fontSize = ArabicSize.Panel,
-            color = MaterialTheme.colorScheme.secondary,
-            textAlign = TextAlign.Center,
-        )
+        // Reaching this screen IS a change of meaning — the book is finished
+        // — so the numeral settles once, the house way (SettleOnce).
+        SettleOnce {
+            ArabicText(
+                text = "٩٩",
+                fontSize = ArabicSize.Panel,
+                color = MaterialTheme.colorScheme.secondary,
+                textAlign = TextAlign.Center,
+            )
+        }
         Spacer(Modifier.height(16.dp))
         Text(
             text = stringResource(R.string.all_learned_title),

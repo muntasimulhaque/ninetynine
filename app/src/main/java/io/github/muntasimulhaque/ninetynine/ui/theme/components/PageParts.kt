@@ -1,7 +1,9 @@
 package io.github.muntasimulhaque.ninetynine.ui.theme.components
 
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -27,13 +29,16 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarColors
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
@@ -48,7 +53,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.isSpecified
 import androidx.compose.ui.unit.times
 import io.github.muntasimulhaque.ninetynine.R
+import io.github.muntasimulhaque.ninetynine.ui.theme.LocalMotionScale
 import io.github.muntasimulhaque.ninetynine.ui.theme.LocalTextScale
+import io.github.muntasimulhaque.ninetynine.ui.theme.Motion
 
 /*
  * The furniture every page is built from. Kept in one place so Memorize,
@@ -370,6 +377,18 @@ fun EmptyState(
 fun readingMeasure(): Dp = (494 * LocalTextScale.current).dp
 
 /**
+ * The widest a screen's content column may run.
+ *
+ * Where [readingMeasure] caps the prose line, this caps the whole page —
+ * lists, flashcards, quiz, settings — so a tablet gets the book's proportions
+ * instead of rows stretched edge to edge. It grows with the reading slider,
+ * like [readingMeasure], and never binds on a phone, whose screen is narrower
+ * than the cap already.
+ */
+@Composable
+fun pageMeasure(): Dp = (560 * LocalTextScale.current).dp
+
+/**
  * A gap that grows with the type it separates.
  *
  * Every space in the app was a dp constant while only the type responded to the
@@ -381,6 +400,47 @@ fun readingMeasure(): Dp = (494 * LocalTextScale.current).dp
  */
 @Composable
 fun scaledGap(base: Dp): Dp = base * LocalTextScale.current
+
+/**
+ * Content that settles into place once — and only once — as it appears: the
+ * scale rises from [fromScale] on the lively spring the toggles answer with,
+ * while alpha fades in QUICK. A rotation replays nothing (the played flag
+ * rides saved instance state), and with animations off the content is simply
+ * there — every Motion spec collapses to snap at animator scale 0.
+ *
+ * Motion only where meaning changes: this is for arrivals that ARE a change
+ * of meaning — the quiz's earned seal, the ٩٩ on the all-learned screen —
+ * never decoration on a first frame.
+ */
+@Composable
+fun SettleOnce(
+    modifier: Modifier = Modifier,
+    fromScale: Float = 0.85f,
+    content: @Composable BoxScope.() -> Unit,
+) {
+    var played by rememberSaveable { mutableStateOf(false) }
+    LaunchedEffect(Unit) { played = true }
+    val scale by animateFloatAsState(
+        targetValue = if (played) 1f else fromScale,
+        animationSpec = Motion.lively(),
+        label = "settleScale",
+    )
+    val alpha by animateFloatAsState(
+        targetValue = if (played) 1f else 0f,
+        animationSpec = Motion.tween(Motion.QUICK),
+        label = "settleAlpha",
+    )
+    Box(
+        // Graded values read in the draw phase, so the settle never
+        // recomposes its content.
+        modifier = modifier.graphicsLayer {
+            scaleX = scale
+            scaleY = scale
+            this.alpha = alpha
+        },
+        content = content,
+    )
+}
 
 /** The thinnest rule the screen can draw — separates matter, never decorates. */
 @Composable
