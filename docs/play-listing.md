@@ -10,7 +10,7 @@ so do not add a word or a stray space.
 
 - **Application ID (package name):** `io.github.muntasimulhaque.ninetynine`
 - **Privacy policy URL:** `https://muntasimulhaque.github.io/ninetynine/privacy-policy.html`
-- **Version (this release):** versionName `1.10`, versionCode `20`
+- **Version (this release):** versionName `1.11`, versionCode `21`
 
 ---
 
@@ -57,6 +57,22 @@ Made to be read:
 
 Free and open source. May Allah make us among those who learn, memorize,
 understand and act upon His beautiful Names.
+```
+
+## What's new (version 1.11)
+
+```
+The book now prints in a larger format on
+tablets:
+
+• On 7-inch and 10-inch devices, all type — the
+Names, the meanings, the bar — scales up with
+the screen, so the page reads comfortably at
+tablet distance.
+• Phones are unchanged, and your text-size
+setting keeps working exactly as before.
+
+All 99 Names are unchanged.
 ```
 
 ## What's new (version 1.10)

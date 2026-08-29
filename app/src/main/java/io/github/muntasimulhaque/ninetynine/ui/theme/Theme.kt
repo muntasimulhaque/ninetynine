@@ -43,7 +43,7 @@ val LocalDeviceFactor = staticCompositionLocalOf { 1f }
 /** [LocalDeviceFactor] from the device's smallest window width, in dp. */
 private fun deviceFactorFor(smallestWidthDp: Int): Float = when {
     smallestWidthDp >= 840 -> 1.25f // the 10-inch class
-    smallestWidthDp >= 600 -> 1.1f  // the 7-inch class
+    smallestWidthDp >= 600 -> 1.125f // the 7-inch class
     else -> 1f                      // the phone the type was set on
 }
 

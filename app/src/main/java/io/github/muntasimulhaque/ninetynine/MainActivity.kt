@@ -603,11 +603,11 @@ private fun QuietBottomBar(
                         // font scale of 2.0, against MEMORIZE's 135.0dp. At
                         // three tabs a 320dp phone gives each one 102.7dp, so
                         // the worst case is 0.66 and the 0.40 floor is never
-                        // approached. On the 7-inch class the labels start
-                        // 1.1× wider and the tab slots are 200dp; on the
-                        // 10-inch class 1.25× wider against 427dp — the room
-                        // grows faster than the ink on every device the bar
-                        // serves.
+                        // approached. On the 7-inch class the labels
+                        // start 1.125× wider and the tab slots are 200dp; on
+                        // the 10-inch class 1.25× wider against 427dp — the
+                        // room grows faster than the ink on every device the
+                        // bar serves.
                         //
                         // This is why Settings is a gear rather than a fourth
                         // tab. A fourth would cut each tab to 76.0dp, putting

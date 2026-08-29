@@ -407,7 +407,7 @@ app/src/main/assets/     names.json (99 entries), intro.txt, fonts/ (+licenses).
   pitfall. Phones never reach the cap.
 - **Wide devices set larger type — the device factor:** sp type is
   physically identical on every screen, which reads small at the distance a
-  7"/10" tablet is held. `Names99Theme` folds a factor (1.0 phone / 1.1 at
+  7"/10" tablet is held. `Names99Theme` folds a factor (1.0 phone / 1.125 at
   ≥600sw / 1.25 at ≥840sw — smallest-width, so rotation cannot change it)
   into the reading scale, so typography, Arabic, column caps and gaps all
   grow together — the same book in a larger format, proportions unchanged.
