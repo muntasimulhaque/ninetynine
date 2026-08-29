@@ -295,9 +295,11 @@ app/src/main/assets/     names.json (99 entries), intro.txt, fonts/ (+licenses).
   / STILL LEARNING overline. The fixed-height box under the card remains so
   the undo control never resizes the deck.
 - **The text-size slider previews live:** the specimen answers the bead
-  mid-drag, set at the slider's CURRENT absolute value
-  (`appTypography(sliderValue).headlineMedium`), not the theme's committed
-  scale. Commit-on-release guards DataStore, never the preview.
+  mid-drag, set at the slider's CURRENT absolute value × the device factor
+  (`appTypography(sliderValue * LocalDeviceFactor.current).headlineMedium`),
+  not the theme's committed scale — so the preview matches the page on the
+  device it is standing on. Commit-on-release guards DataStore, never the
+  preview.
 - **Flashcard drags answer the hand:** the card wears an overline label —
   I KNOW IT / STILL LEARNING — that fades in toward the commit threshold, and
   a tick haptic fires exactly once as the drag crosses it. The label composes
@@ -403,6 +405,16 @@ app/src/main/assets/     names.json (99 entries), intro.txt, fonts/ (+licenses).
   `fillMaxSize().wrapContentWidth(CenterHorizontally).widthIn(max = …)` —
   wrapContentWidth BEFORE widthIn, the same order rule as the heightIn
   pitfall. Phones never reach the cap.
+- **Wide devices set larger type — the device factor:** sp type is
+  physically identical on every screen, which reads small at the distance a
+  7"/10" tablet is held. `Names99Theme` folds a factor (1.0 phone / 1.1 at
+  ≥600sw / 1.25 at ≥840sw — smallest-width, so rotation cannot change it)
+  into the reading scale, so typography, Arabic, column caps and gaps all
+  grow together — the same book in a larger format, proportions unchanged.
+  The bottom bar's labels take the device factor but NEVER the reader's
+  slider (the clipping guarantee is about the slider, and a wide bar has
+  proportionally more room); the widget and the notification plate keep
+  their own fixed sizing — they have no screen to respond to.
 - **The reminder is on by default:** `dailyEnabled` defaults to true, so a
   fresh install gets the Name each morning without finding a switch. The
   reader's consent lives in the system dialog, not in prose: MainActivity

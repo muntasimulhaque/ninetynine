@@ -11,6 +11,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
@@ -22,6 +23,29 @@ import io.github.muntasimulhaque.ninetynine.data.ThemeMode
  * the Latin and leave the Arabic behind.
  */
 val LocalTextScale = staticCompositionLocalOf { 1f }
+
+/**
+ * The device factor: how far this device sits from the phone the type was set
+ * on. sp type is physically identical on every screen — a 16sp line is ~2.5mm
+ * on a phone and on a 10-inch tablet — which is right at hand-held phone
+ * distance and small at the distance a large tablet is held. The factor
+ * scales the whole book with the device: typography, Arabic, column caps and
+ * gaps all multiply by [LocalTextScale], which carries the reader's scale ×
+ * this factor, so a tablet prints the same book in a larger format with
+ * identical proportions. Phones sit at 1.0 and are untouched.
+ *
+ * Read from smallest-width, not window width, so the factor belongs to the
+ * device: a phone rotated to landscape keeps its factor, the way a book does
+ * not re-set its type because you turned it sideways.
+ */
+val LocalDeviceFactor = staticCompositionLocalOf { 1f }
+
+/** [LocalDeviceFactor] from the device's smallest window width, in dp. */
+private fun deviceFactorFor(smallestWidthDp: Int): Float = when {
+    smallestWidthDp >= 840 -> 1.25f // the 10-inch class
+    smallestWidthDp >= 600 -> 1.1f  // the 7-inch class
+    else -> 1f                      // the phone the type was set on
+}
 
 /**
  * Whether the theme actually renders dark — the reader's choice, not the
@@ -63,15 +87,23 @@ fun Names99Theme(
         }
     }
 
+    // One scale for the whole page: the reader's preference × the device
+    // factor. Typography, Arabic, the column caps and the gaps all multiply
+    // by it (see [LocalDeviceFactor]); the bottom bar's labels take the
+    // device factor alone, so the reader's slider still cannot move them.
+    val deviceFactor = deviceFactorFor(LocalConfiguration.current.smallestScreenWidthDp)
+    val readingScale = textScale * deviceFactor
+
     CompositionLocalProvider(
-        LocalTextScale provides textScale,
+        LocalTextScale provides readingScale,
+        LocalDeviceFactor provides deviceFactor,
         LocalDarkTheme provides darkTheme,
     ) {
         val motionScale = rememberAnimatorDurationScale()
         CompositionLocalProvider(LocalMotionScale provides motionScale) {
             MaterialTheme(
                 colorScheme = colors,
-                typography = appTypography(textScale),
+                typography = appTypography(readingScale),
                 shapes = AppShapes,
                 content = content,
             )

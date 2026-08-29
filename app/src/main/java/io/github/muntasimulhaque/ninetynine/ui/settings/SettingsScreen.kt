@@ -85,6 +85,7 @@ import io.github.muntasimulhaque.ninetynine.ui.NamesViewModel
 import io.github.muntasimulhaque.ninetynine.ui.theme.BlackColors
 import io.github.muntasimulhaque.ninetynine.ui.theme.DarkColors
 import io.github.muntasimulhaque.ninetynine.ui.theme.LightColors
+import io.github.muntasimulhaque.ninetynine.ui.theme.LocalDeviceFactor
 import io.github.muntasimulhaque.ninetynine.ui.theme.Motion
 import io.github.muntasimulhaque.ninetynine.ui.theme.appTypography
 import io.github.muntasimulhaque.ninetynine.ui.theme.rememberHaptics
@@ -210,11 +211,13 @@ fun SettingsScreen(
             Spacer(Modifier.height(16.dp))
             // The specimen itself is the preview — no box around it — and it
             // answers the bead mid-drag, not only after release: set at the
-            // slider's CURRENT value (absolute, via appTypography, not the
-            // theme's committed scale), so the reader sees exactly the size
-            // they are choosing before it is written to DataStore.
-            val previewStyle = remember(sliderValue) {
-                appTypography(sliderValue).headlineMedium
+            // slider's CURRENT value × the device factor (absolute, via
+            // appTypography, not the theme's committed scale), so the reader
+            // sees exactly the size they are choosing — at the size this
+            // device sets the book — before it is written to DataStore.
+            val deviceFactor = LocalDeviceFactor.current
+            val previewStyle = remember(sliderValue, deviceFactor) {
+                appTypography(sliderValue * deviceFactor).headlineMedium
             }
             MixedText(
                 text = stringResource(R.string.text_size_preview),

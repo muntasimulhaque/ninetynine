@@ -84,6 +84,7 @@ import io.github.muntasimulhaque.ninetynine.ui.memorize.MemorizeScreen
 import io.github.muntasimulhaque.ninetynine.ui.memorize.QuizScreen
 import io.github.muntasimulhaque.ninetynine.ui.settings.SettingsScreen
 import io.github.muntasimulhaque.ninetynine.ui.theme.Motion
+import io.github.muntasimulhaque.ninetynine.ui.theme.LocalDeviceFactor
 import io.github.muntasimulhaque.ninetynine.ui.theme.LocalMotionScale
 import io.github.muntasimulhaque.ninetynine.ui.theme.Names99Theme
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.FitText
@@ -588,17 +589,25 @@ private fun QuietBottomBar(
                             modifier = Modifier.size(22.dp),
                         )
                         Spacer(Modifier.height(4.dp))
-                        // Chrome, not reading matter: fixed at 10sp so the
-                        // in-app reading scale can't clip it. System font
-                        // scaling does still apply, so the labels fit
-                        // themselves rather than ellipsizing to "MEM…".
+                        // Chrome, not reading matter: the reader's slider
+                        // cannot move it — 10sp × the device factor only —
+                        // so it can never clip. The device factor DOES
+                        // apply: a 7-inch bar gives each tab 200dp and a
+                        // 10-inch 427dp, room enough for the wider labels,
+                        // while a phone stays at 10sp. System font scaling
+                        // does still apply, so the labels fit themselves
+                        // rather than ellipsizing to "MEM…".
                         //
                         // "BOOKMARKS" is the longest label the bar carries —
                         // 6.681 em in Spectral Medium, so 155.2dp at a system
                         // font scale of 2.0, against MEMORIZE's 135.0dp. At
                         // three tabs a 320dp phone gives each one 102.7dp, so
                         // the worst case is 0.66 and the 0.40 floor is never
-                        // approached.
+                        // approached. On the 7-inch class the labels start
+                        // 1.1× wider and the tab slots are 200dp; on the
+                        // 10-inch class 1.25× wider against 427dp — the room
+                        // grows faster than the ink on every device the bar
+                        // serves.
                         //
                         // This is why Settings is a gear rather than a fourth
                         // tab. A fourth would cut each tab to 76.0dp, putting
@@ -615,7 +624,7 @@ private fun QuietBottomBar(
                         FitText(
                             text = stringResource(item.labelRes).uppercase(),
                             style = MaterialTheme.typography.labelSmall.copy(
-                                fontSize = 10.sp,
+                                fontSize = (10 * LocalDeviceFactor.current).sp,
                                 letterSpacing = 1.2.sp,
                                 fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
                             ),
