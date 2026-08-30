@@ -96,6 +96,7 @@ import io.github.muntasimulhaque.ninetynine.ui.theme.components.NavRow
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.PageRule
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.ScreenLabel
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.pageMeasure
+import io.github.muntasimulhaque.ninetynine.ui.theme.components.barMeasure
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.paperTopBarColors
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.SectionLabel
 import java.text.SimpleDateFormat
@@ -165,6 +166,7 @@ fun SettingsScreen(
             // A pushed screen since the gear replaced the tab, so it is titled
             // and left the same way as About, Flashcards and Quiz.
             TopAppBar(
+                modifier = Modifier.barMeasure(),
                 colors = paperTopBarColors(),
                 title = { ScreenLabel(stringResource(R.string.settings)) },
                 navigationIcon = { BackButton(onBack) },

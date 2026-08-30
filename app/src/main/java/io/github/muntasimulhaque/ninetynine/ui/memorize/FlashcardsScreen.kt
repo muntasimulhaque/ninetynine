@@ -90,6 +90,7 @@ import io.github.muntasimulhaque.ninetynine.ui.theme.components.PageInset
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.SettleOnce
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.pageMeasure
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.readingMeasure
+import io.github.muntasimulhaque.ninetynine.ui.theme.components.barMeasure
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.paperTopBarColors
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.ScreenLabel
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.ScrollbarThumb
@@ -231,6 +232,7 @@ fun FlashcardsScreen(
             // the name page's — pushed-screen TITLES sit left; position
             // counters sit centre.
             CenterAlignedTopAppBar(
+                modifier = Modifier.barMeasure(),
                 colors = paperTopBarColors(),
                 title = {
                     ScreenLabel(

@@ -9,6 +9,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -346,6 +348,22 @@ fun readingMeasure(): Dp = (494 * LocalTextScale.current).dp
  */
 @Composable
 fun pageMeasure(): Dp = (560 * LocalTextScale.current).dp
+
+/**
+ * Chrome joins the book's column.
+ *
+ * The content keeps the centred [pageMeasure] cap — but the bars did not: a
+ * tablet read a title pinned to the screen's edge while its page floated
+ * centred, chrome orphaned from the content it serves. This puts any top bar
+ * (and the bottom bar's contents) inside the same centred cap, so the whole
+ * screen — running head, page, footer — shares one set of margins. It is the
+ * exact pattern the content uses (fillMaxWidth · wrapContentWidth · widthIn,
+ * in that order), so on a phone, where the cap never binds, nothing changes.
+ */
+@Composable
+fun Modifier.barMeasure(): Modifier = fillMaxWidth()
+    .wrapContentWidth(Alignment.CenterHorizontally)
+    .widthIn(max = pageMeasure())
 
 /**
  * A gap that grows with the type it separates.

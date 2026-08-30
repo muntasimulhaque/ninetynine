@@ -34,6 +34,7 @@ import io.github.muntasimulhaque.ninetynine.ui.theme.components.PageMessage
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.TabSettingsAction
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.TabTitle
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.pageMeasure
+import io.github.muntasimulhaque.ninetynine.ui.theme.components.barMeasure
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.paperTopBarColors
 
 /**
@@ -66,6 +67,7 @@ fun BookmarksScreen(
     Scaffold(
         topBar = {
             TopAppBar(
+                modifier = Modifier.barMeasure(),
                 colors = paperTopBarColors(),
                 title = {
                     TabTitle(stringResource(R.string.bookmarks))

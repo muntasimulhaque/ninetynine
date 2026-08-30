@@ -96,6 +96,7 @@ import io.github.muntasimulhaque.ninetynine.ui.theme.components.EmptyState
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.LazyScrollbarThumb
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.PageMessage
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.TabSettingsAction
+import io.github.muntasimulhaque.ninetynine.ui.theme.components.barMeasure
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.paperTopBarColors
 import io.github.muntasimulhaque.ninetynine.util.SearchFilter
 import kotlinx.coroutines.delay
@@ -195,6 +196,7 @@ fun HomeScreen(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
             TopAppBar(
+                modifier = Modifier.barMeasure(),
                 scrollBehavior = scrollBehavior,
                 colors = paperTopBarColors(),
                 title = {

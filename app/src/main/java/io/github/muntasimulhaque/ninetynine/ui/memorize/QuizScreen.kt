@@ -87,6 +87,7 @@ import io.github.muntasimulhaque.ninetynine.ui.theme.components.PageMessage
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.PageInset
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.SettleOnce
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.pageMeasure
+import io.github.muntasimulhaque.ninetynine.ui.theme.components.barMeasure
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.paperTopBarColors
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.ScreenLabel
 import io.github.muntasimulhaque.ninetynine.ui.theme.rememberHaptics
@@ -280,6 +281,7 @@ fun QuizScreen(
             // "3 of 99" — pushed-screen TITLES sit left (Settings, About);
             // position counters sit centre. One system, no drift.
             CenterAlignedTopAppBar(
+                modifier = Modifier.barMeasure(),
                 colors = paperTopBarColors(),
                 title = {
                     ScreenLabel(

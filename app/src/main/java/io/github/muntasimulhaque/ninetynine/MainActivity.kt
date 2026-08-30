@@ -88,6 +88,7 @@ import io.github.muntasimulhaque.ninetynine.ui.theme.LocalDeviceFactor
 import io.github.muntasimulhaque.ninetynine.ui.theme.LocalMotionScale
 import io.github.muntasimulhaque.ninetynine.ui.theme.Names99Theme
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.FitText
+import io.github.muntasimulhaque.ninetynine.ui.theme.components.barMeasure
 import io.github.muntasimulhaque.ninetynine.util.DailyName
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.first
@@ -518,6 +519,10 @@ private fun QuietBottomBar(
             // — that makes it meaningful non-text, which WCAG 1.4.11 holds to
             // 3:1. outlineVariant is 1.42:1 and effectively invisible.
             HorizontalDivider(
+                // Chrome joins the book's column on wide screens — the rule,
+                // like the tabs below it, runs the page's width, not the
+                // screen's. See [barMeasure].
+                modifier = Modifier.barMeasure(),
                 thickness = 0.5.dp,
                 color = MaterialTheme.colorScheme.outline,
             )
@@ -528,7 +533,7 @@ private fun QuietBottomBar(
                 // Column is measured against all the remaining space, so a
                 // heightIn here would let fillMaxHeight swallow the screen.
                 modifier = Modifier
-                    .fillMaxWidth()
+                    .barMeasure()
                     .navigationBarsPadding()
                     .selectableGroup(),
             ) {
