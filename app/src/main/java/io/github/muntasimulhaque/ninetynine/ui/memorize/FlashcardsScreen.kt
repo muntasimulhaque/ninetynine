@@ -427,7 +427,16 @@ private fun DeckMenu(
                 contentDescription = stringResource(R.string.cd_more),
             )
         }
-        DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
+        DropdownMenu(
+            expanded = open,
+            onDismissRequest = { open = false },
+            // Paper on paper: the deck menu reads as a page of the book
+            // lifted over the page — the app's own paper, no tonal lift —
+            // not the stock floating tonal card, which was the last surface
+            // in the app that didn't match the paper-on-paper system.
+            containerColor = MaterialTheme.colorScheme.background,
+            tonalElevation = 0.dp,
+        ) {
             DropdownMenuItem(
                 text = { Text(stringResource(R.string.include_learned)) },
                 onClick = {
