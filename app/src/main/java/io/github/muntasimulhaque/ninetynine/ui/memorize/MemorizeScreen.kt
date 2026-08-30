@@ -51,7 +51,7 @@ import io.github.muntasimulhaque.ninetynine.ui.theme.components.NavRow
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.PageMessage
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.PageRule
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.TabTitle
-import io.github.muntasimulhaque.ninetynine.ui.theme.components.TabOverflowActions
+import io.github.muntasimulhaque.ninetynine.ui.theme.components.TabSettingsAction
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.pageMeasure
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.paperTopBarColors
 
@@ -62,7 +62,6 @@ fun MemorizeScreen(
     onFlashcards: () -> Unit,
     onQuiz: () -> Unit,
     onSettings: () -> Unit,
-    onAbout: () -> Unit,
     onLearned: () -> Unit,
 ) {
     val learned by viewModel.learned.collectAsStateWithLifecycle()
@@ -102,7 +101,7 @@ fun MemorizeScreen(
                     TabTitle(stringResource(R.string.memorize))
                 },
                 actions = {
-                    TabOverflowActions(onSettings = onSettings, onAbout = onAbout)
+                    TabSettingsAction(onSettings = onSettings)
                 },
             )
         },

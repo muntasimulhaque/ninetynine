@@ -31,7 +31,7 @@ import io.github.muntasimulhaque.ninetynine.ui.theme.components.nameRowTextInset
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.EmptyState
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.LazyScrollbarThumb
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.PageMessage
-import io.github.muntasimulhaque.ninetynine.ui.theme.components.TabOverflowActions
+import io.github.muntasimulhaque.ninetynine.ui.theme.components.TabSettingsAction
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.TabTitle
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.pageMeasure
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.paperTopBarColors
@@ -50,7 +50,6 @@ fun BookmarksScreen(
     viewModel: NamesViewModel,
     onNameClick: (Int) -> Unit,
     onSettings: () -> Unit,
-    onAbout: () -> Unit,
     onBrowseNames: () -> Unit,
     listState: LazyListState,
 ) {
@@ -72,7 +71,7 @@ fun BookmarksScreen(
                     TabTitle(stringResource(R.string.bookmarks))
                 },
                 actions = {
-                    TabOverflowActions(onSettings = onSettings, onAbout = onAbout)
+                    TabSettingsAction(onSettings = onSettings)
                 },
             )
         },

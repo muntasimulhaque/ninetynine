@@ -61,7 +61,8 @@ action of every session, before any file is read or command run.
 `BuildConfig.VERSION_NAME`, so they can never disagree. Rule: **+0.1 on
 versionName, +1 on versionCode per release.** Sequence since the store
 restart: 0.1 … 0.9, then 1.0 / 10, then 1.1 / 11, then 1.2 / 12, then
-1.3 / 13, then 1.4 / 14, then 1.5 / 15, then 1.6 / 16, then **1.7 / 17
+1.3 / 13, then 1.4 / 14, then 1.5 / 15, then 1.6 / 16, then 1.7 / 17, then
+1.8 / 18, then 1.9 / 19, then 1.10 / 20, then 1.11 / 21, then **1.12 / 22
 (current)**.
 
 The release keystore path/credentials live in a `keystore.properties` outside
@@ -247,7 +248,7 @@ app/src/main/assets/     names.json (99 entries), intro.txt, fonts/ (+licenses).
   `meaning` does NOT (Detail/Share/flashcard back: meaning only; list rows,
   hero card, widget, notification, quiz keep the title).
 - **Shared components live in `PageParts.kt`** (BackButton, FitText,
-  ScreenLabel, SectionLabel, NavRow, PageRule, TabOverflowActions, EmptyState,
+  ScreenLabel, SectionLabel, NavRow, PageRule, TabSettingsAction, EmptyState,
   paperTopBarColors, scaledGap, readingMeasure, named insets). Reuse them.
 - **Empty screens that offer an action use `EmptyState`** (title + optional
   line + optional TextButton); `PageMessage` stays for failure cases with no
@@ -261,8 +262,8 @@ app/src/main/assets/     names.json (99 entries), intro.txt, fonts/ (+licenses).
   matches stay uncoloured — never invent a span that corresponds to nothing.
   Only Home passes a `query` to `NameListItem`; other lists stay pristine.
 - **Search lives in the bar, one entry point, everywhere:** the home bar
-  carries a magnifier beside the ONE overflow glyph (`TabOverflowActions`:
-  About, Settings, each row wearing its outlined glyph). Tapping it swaps the
+  carries a magnifier beside the ONE corner glyph (`TabSettingsAction`: a
+  plain outlined gear straight to Settings in one tap). Tapping the magnifier swaps the
   running head for a BasicTextField (Crossfade, QUICK — both slots fade as
   one switch; the magnifier's corner becomes the ✕'s) and the keyboard
   rises. This replaced the plate that scrolled with the list: from row
@@ -275,6 +276,13 @@ app/src/main/assets/     names.json (99 entries), intro.txt, fonts/ (+licenses).
   searchOpen)` in HomeScreen); never eject a reader who can still see
   evidence of their search. The ✕ clears AND closes in one tap. The query
   persists until cleared (✕, Back, or the no-results empty's "Clear search").
+- **The corner is a gear; About lives in Settings:** the overflow menu (⋮ →
+  About/Settings) was the only floating tonal surface in a paper-on-paper
+  app, and a two-row popup was ceremony where one tap would do. All three
+  tab bars now end in one outlined gear (`TabSettingsAction`) straight to
+  Settings, and About — the book's front matter — sits as the gold-chevron
+  `NavRow` at the foot of the Settings page, above the version line. Back
+  from About therefore lands on Settings, the screen it now belongs to.
 - **Tab heads differ by register:** Home passes `sizeScale = 1f` to
   `TabTitle` — the book's title page, at the full `headlineSmall` where the
   measured width allows (FitText shrinks it back for the second bar icon or

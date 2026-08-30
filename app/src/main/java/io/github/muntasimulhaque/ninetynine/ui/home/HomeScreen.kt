@@ -95,7 +95,7 @@ import io.github.muntasimulhaque.ninetynine.ui.theme.components.pageMeasure
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.EmptyState
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.LazyScrollbarThumb
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.PageMessage
-import io.github.muntasimulhaque.ninetynine.ui.theme.components.TabOverflowActions
+import io.github.muntasimulhaque.ninetynine.ui.theme.components.TabSettingsAction
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.paperTopBarColors
 import io.github.muntasimulhaque.ninetynine.util.SearchFilter
 import kotlinx.coroutines.delay
@@ -106,7 +106,6 @@ fun HomeScreen(
     viewModel: NamesViewModel,
     onNameClick: (Int) -> Unit,
     onSettings: () -> Unit,
-    onAbout: () -> Unit,
     listState: LazyListState,
 ) {
     val names by viewModel.names.collectAsStateWithLifecycle()
@@ -247,7 +246,7 @@ fun HomeScreen(
                                         contentDescription = stringResource(R.string.cd_search),
                                     )
                                 }
-                                TabOverflowActions(onSettings = onSettings, onAbout = onAbout)
+                                TabSettingsAction(onSettings = onSettings)
                             }
                         }
                         AnimatedVisibility(

@@ -14,11 +14,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.outlined.Info
-import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material.icons.outlined.Settings
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -115,65 +111,28 @@ fun paperTopBarColors(): TopAppBarColors = TopAppBarDefaults.topAppBarColors(
  * The tab bar's single quiet corner.
  *
  * Settings and About were two permanent icons on every tab bar — chrome a
- * reader meets every hour but uses weekly. One glyph now opens a small menu
- * carrying both rows (About first, then Settings, in the order the icons used
- * to read left to right). Present on ALL THREE tab screens — Names,
- * Bookmarks, Memorize — so it still reads as a fixed corner rather than
- * something one screen happens to offer; it is just one icon instead of two
- * beside each running head.
+ * reader meets every hour but uses weekly — then one glyph opening a small
+ * overflow menu carrying both rows. The menu is gone too: a popup of exactly
+ * two rows was ceremony where one tap would do, and the stock DropdownMenu
+ * was the only floating tonal surface in an app that is otherwise paper on
+ * paper. The corner now holds ONE plain outlined gear — the platform's most
+ * universally understood glyph — straight to Settings in a single tap.
  *
- * Each row wears its glyph in the outlined family the chrome already speaks
- * (MoreVert's own register): an icon anchors the eye while it scans down two
- * lines, and neither glyph is news to anyone — Info and Settings are the
- * platform's own universals, the same logic that keeps the bookmark a
- * bookmark.
+ * About, the other row the menu used to carry, sits at the foot of Settings:
+ * it is front matter a reader meets once, and one hop from the corner it
+ * always was only one tap further. Present on ALL THREE tab screens — Names,
+ * Bookmarks, Memorize — so it still reads as a fixed corner rather than
+ * something one screen happens to offer.
  */
 @Composable
-fun TabOverflowActions(
+fun TabSettingsAction(
     onSettings: () -> Unit,
-    onAbout: () -> Unit,
 ) {
-    var expanded by remember { mutableStateOf(false) }
-    Box {
-        IconButton(onClick = { expanded = true }) {
-            Icon(
-                Icons.Outlined.MoreVert,
-                contentDescription = stringResource(R.string.cd_more),
-            )
-        }
-        DropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false },
-        ) {
-            DropdownMenuItem(
-                text = { Text(stringResource(R.string.about)) },
-                leadingIcon = {
-                    Icon(
-                        Icons.Outlined.Info,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                },
-                onClick = {
-                    expanded = false
-                    onAbout()
-                },
-            )
-            DropdownMenuItem(
-                text = { Text(stringResource(R.string.settings)) },
-                leadingIcon = {
-                    Icon(
-                        Icons.Outlined.Settings,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                },
-                onClick = {
-                    expanded = false
-                    onSettings()
-                },
-            )
-        }
+    IconButton(onClick = onSettings) {
+        Icon(
+            Icons.Outlined.Settings,
+            contentDescription = stringResource(R.string.settings),
+        )
     }
 }
 

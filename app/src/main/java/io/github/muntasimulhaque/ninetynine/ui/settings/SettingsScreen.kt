@@ -92,6 +92,7 @@ import io.github.muntasimulhaque.ninetynine.ui.theme.rememberHaptics
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.BackButton
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.ListInset
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.MixedText
+import io.github.muntasimulhaque.ninetynine.ui.theme.components.NavRow
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.PageRule
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.ScreenLabel
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.pageMeasure
@@ -110,6 +111,7 @@ private const val SCALE_MAX = 1.4f
 fun SettingsScreen(
     viewModel: NamesViewModel,
     onBack: () -> Unit,
+    onAbout: () -> Unit,
 ) {
     val context = LocalContext.current
     val haptics = rememberHaptics()
@@ -323,12 +325,22 @@ fun SettingsScreen(
                 )
             }
 
-            // About used to sit here as a row. It is reached from the ⓘ in
-            // every tab bar instead: it is the book's front matter — the
-            // hadith, the source, the typefaces — which is content, and this
-            // page is configuration. Same argument that moved Settings itself
-            // out of the bottom bar and into a corner.
+            // About returned here after a year in the tab-bar corner: first
+            // as two permanent icons, then as one ⋮ opening a two-row menu —
+            // both chrome a reader meets every hour for a page they meet
+            // twice. The corner is now a plain gear straight to Settings, and
+            // About, the book's front matter (the hadith, the source, the
+            // typefaces), sits at the foot of configuration — one hop, where
+            // a reader already pausing on the app's own questions finds it.
+            // The gold chevron marks it as the page's one navigation row.
             SectionBreak()
+            NavRow(
+                title = stringResource(R.string.about),
+                onClick = onAbout,
+                titleStyle = MaterialTheme.typography.bodyLarge,
+                onClickLabel = stringResource(R.string.cd_open_about),
+            )
+
             // Compile-time constant: no PackageManager call, and no fallback
             // string to go stale one release after somebody forgets it.
             // A datum, not a heading. SectionLabel is the app's heading style, so

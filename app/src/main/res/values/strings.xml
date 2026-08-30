@@ -42,10 +42,11 @@
     <string name="settings">Settings</string>
     <string name="about">About</string>
     <string name="cd_back">Back</string>
-    <string name="cd_more">More options</string>
+    <string name="cd_more">Deck options</string>
     <!-- Spoken instead of TalkBack's bare "double-tap to activate": a row or
          card says what tapping it opens. -->
     <string name="cd_open">Open</string>
+    <string name="cd_open_about">Open About</string>
     <string name="cd_open_name">Open name page</string>
     <!-- Spoken by TalkBack as the custom action on the daily hero card, whose
          content (Arabic, a transliteration, an epithet) does not itself say

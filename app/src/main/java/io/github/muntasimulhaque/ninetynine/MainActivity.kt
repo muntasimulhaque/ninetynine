@@ -375,7 +375,6 @@ private fun App(
                         viewModel = viewModel,
                         onNameClick = { number -> navController.navigate("detail/$number") },
                         onSettings = { navController.navigate("settings") },
-                        onAbout = { navController.navigate("about") },
                         listState = namesListState,
                     )
                 }
@@ -408,7 +407,6 @@ private fun App(
                         onQuiz = { navController.navigate("quiz") },
                         onLearned = { navController.navigate("learned") },
                         onSettings = { navController.navigate("settings") },
-                        onAbout = { navController.navigate("about") },
                     )
                 }
                 // The two list tabs offer their empties the same way out: the
@@ -431,7 +429,6 @@ private fun App(
                             navController.navigate("detail/$number?scope=$SCOPE_BOOKMARKS")
                         },
                         onSettings = { navController.navigate("settings") },
-                        onAbout = { navController.navigate("about") },
                         onBrowseNames = browseNames,
                         listState = bookmarksListState,
                     )
@@ -461,6 +458,7 @@ private fun App(
                     SettingsScreen(
                         viewModel = viewModel,
                         onBack = { navController.popBackStack() },
+                        onAbout = { navController.navigate("about") },
                     )
                 }
                 composable("about") {

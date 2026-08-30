@@ -10,7 +10,7 @@ so do not add a word or a stray space.
 
 - **Application ID (package name):** `io.github.muntasimulhaque.ninetynine`
 - **Privacy policy URL:** `https://muntasimulhaque.github.io/ninetynine/privacy-policy.html`
-- **Version (this release):** versionName `1.11`, versionCode `21`
+- **Version (this release):** versionName `1.12`, versionCode `22`
 
 ---
 
@@ -57,6 +57,22 @@ Made to be read:
 
 Free and open source. May Allah make us among those who learn, memorize,
 understand and act upon His beautiful Names.
+```
+
+## What's new (version 1.12)
+
+```
+The corner of every tab is simpler:
+
+• The ⋮ menu is gone. One tap on the gear
+opens Settings directly.
+• About — the hadith, the source, the
+colophon — now sits at the foot of
+Settings, one tap after it.
+• Screen readers speak each control more
+clearly.
+
+All 99 Names are unchanged.
 ```
 
 ## What's new (version 1.11)
