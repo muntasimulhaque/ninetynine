@@ -330,6 +330,12 @@ internal fun ShareCard(name: Name, modifier: Modifier = Modifier) {
 private suspend fun shareNameImage(context: Context, bitmap: ImageBitmap, name: Name) {
     val uri = withContext(Dispatchers.IO) {
         val dir = File(context.cacheDir, "shared_images").apply { mkdirs() }
+        // One image at a time. Every share wrote a PNG that nothing ever
+        // deleted — one file per name per share, accumulating until the
+        // system cleared the cache. Any earlier file is dead by now: the
+        // chooser that held it was either completed (stream already read)
+        // or abandoned, so pruning it here is safe.
+        dir.listFiles()?.forEach { it.delete() }
         val file = File(dir, "name_${name.number}.png")
         FileOutputStream(file).use {
             bitmap.asAndroidBitmap().compress(Bitmap.CompressFormat.PNG, 100, it)
