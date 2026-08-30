@@ -10,7 +10,7 @@ so do not add a word or a stray space.
 
 - **Application ID (package name):** `io.github.muntasimulhaque.ninetynine`
 - **Privacy policy URL:** `https://muntasimulhaque.github.io/ninetynine/privacy-policy.html`
-- **Version (this release):** versionName `1.12`, versionCode `22`
+- **Version (this release):** versionName `1.13`, versionCode `23`
 
 ---
 
@@ -57,6 +57,21 @@ Made to be read:
 
 Free and open source. May Allah make us among those who learn, memorize,
 understand and act upon His beautiful Names.
+```
+
+## What's new (version 1.13)
+
+```
+This update is about tablets:
+
+• On 7" and 10" screens, the title,
+  search and the tab bar now sit inside
+  the same page margins as the content.
+  The whole screen reads as one open
+  page of the book.
+• The flashcards deck menu matches the
+  app's paper.
+• Phones are unchanged.
 ```
 
 ## What's new (version 1.12)
