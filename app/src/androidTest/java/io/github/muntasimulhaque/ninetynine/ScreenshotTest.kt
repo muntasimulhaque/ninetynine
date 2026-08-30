@@ -105,12 +105,12 @@ class ScreenshotTest {
 
     @Test
     fun homeLight() = render("home", ThemeMode.LIGHT) {
-        HomeScreen(it, {}, {}, {}, rememberLazyListState())
+        HomeScreen(it, {}, {}, rememberLazyListState())
     }
 
     @Test
     fun homeDark() = render("home-dark", ThemeMode.DARK) {
-        HomeScreen(it, {}, {}, {}, rememberLazyListState())
+        HomeScreen(it, {}, {}, rememberLazyListState())
     }
 
     @Test
@@ -125,7 +125,6 @@ class ScreenshotTest {
             onFlashcards = {},
             onQuiz = {},
             onSettings = {},
-            onAbout = {},
             onLearned = {},
         )
     }
@@ -168,7 +167,7 @@ class ScreenshotTest {
 
     @Test
     fun settings() = render("settings", ThemeMode.LIGHT) {
-        SettingsScreen(it, onBack = {})
+        SettingsScreen(it, onBack = {}, onAbout = {})
     }
 
     private fun render(
