@@ -413,6 +413,16 @@ app/src/main/assets/     names.json (99 entries), intro.txt, fonts/ (+licenses).
   `fillMaxSize().wrapContentWidth(CenterHorizontally).widthIn(max = …)` —
   wrapContentWidth BEFORE widthIn, the same order rule as the heightIn
   pitfall. Phones never reach the cap.
+- **Chrome joins the column:** every top bar (all eight call-sites) and the
+  bottom bar's divider + tabs wear `Modifier.barMeasure()` (PageParts) — the
+  same fillMaxWidth · wrapContentWidth · widthIn(max = pageMeasure()) chain —
+  so on wide screens the running head, the page and the footer share one set
+  of margins instead of chrome hugging the screen edges while the content
+  floats centred. Same cap, same order rule; on phones (and 7" portrait,
+  600dp < the cap) it never binds and nothing changes. Chosen 2026-08-30
+  over the two heavier candidates: a Material navigation rail at expanded
+  widths (branch tablet-b) and a list-detail names screen (tablet-c), both
+  built and screenshotted on the branch comparison, then set aside.
 - **Wide devices set larger type — the device factor:** sp type is
   physically identical on every screen, which reads small at the distance a
   7"/10" tablet is held. `Names99Theme` folds a factor (1.0 phone / 1.125 at
