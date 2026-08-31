@@ -1,7 +1,12 @@
 package io.github.muntasimulhaque.ninetynine.ui.memorize
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -20,7 +25,6 @@ import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
@@ -80,6 +84,7 @@ import io.github.muntasimulhaque.ninetynine.ui.theme.HeroSubtext
 import io.github.muntasimulhaque.ninetynine.ui.theme.HeroText
 import io.github.muntasimulhaque.ninetynine.ui.theme.Motion
 import io.github.muntasimulhaque.ninetynine.ui.theme.LocalMotionScale
+import io.github.muntasimulhaque.ninetynine.ui.theme.SquircleShape
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.ArabicSize
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.ArabicText
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.BackButton
@@ -92,6 +97,7 @@ import io.github.muntasimulhaque.ninetynine.ui.theme.components.pageMeasure
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.readingMeasure
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.barMeasure
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.paperTopBarColors
+import io.github.muntasimulhaque.ninetynine.ui.theme.components.scaledGap
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.ScreenLabel
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.ScrollbarThumb
 import io.github.muntasimulhaque.ninetynine.ui.theme.rememberHaptics
@@ -208,6 +214,13 @@ class FlashcardsViewModel(private val savedState: SavedStateHandle) : ViewModel(
     }
 }
 
+/**
+ * What the deck area means right now — cards in hand, everything learned,
+ * or the deck done. The change-key for its house-push switch: only a move
+ * between these meanings animates, never a loading state.
+ */
+private enum class DeckState { Cards, AllLearned, Done }
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FlashcardsScreen(
@@ -220,6 +233,11 @@ fun FlashcardsScreen(
     val learned by viewModel.learned.collectAsStateWithLifecycle()
     val learnedLoaded by viewModel.learnedLoaded.collectAsStateWithLifecycle()
     val includeLearned by viewModel.includeLearned.collectAsStateWithLifecycle()
+
+    // Read once here, above the deck-state switch: AnimatedContent's
+    // transitionSpec is not a composable context, so the motion scale has to
+    // be captured outside it (same hoist as the quiz screen).
+    val motionScale = LocalMotionScale.current
 
     LaunchedEffect(names, learned, learnedLoaded, includeLearned) {
         if (!learnedLoaded) return@LaunchedEffect
@@ -276,6 +294,12 @@ fun FlashcardsScreen(
                 .padding(horizontal = PageInset),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
+            // Loading guards stay outside the animation: no entrance of its
+            // own for a first frame, motion only where meaning changes. The
+            // deck → all-learned → done turns themselves ride the house push
+            // like every other change of state (the quiz's question → result,
+            // the daily card, pushed screens) — this was the when-block that
+            // still hard-cut.
             when {
                 // Blank paper said nothing at all when the asset failed to
                 // read. Home has explained this case since v2.6; these screens
@@ -286,128 +310,154 @@ fun FlashcardsScreen(
                 // not "everything is learned": the all-learned state is
                 // alarming, and wrong for a brand-new reader.
                 !learnedLoaded -> Unit
-                session.deck.isEmpty() -> AllLearnedContent(
-                    onReviewLearned = { viewModel.setIncludeLearned(true) },
-                    onBack = onBack,
-                )
-                session.done -> DeckDoneContent(
-                    onStartAgain = { session.restart(names, learned, includeLearned) },
-                )
-                else -> {
-                    val name = names.firstOrNull { it.number == session.deck[session.index] }
-                        ?: return@Column
-                    val scope = rememberCoroutineScope()
-                    val haptics = rememberHaptics()
-
-                    // Horizontal offset of the current card; a fresh Animatable
-                    // per card so each one starts centered.
-                    val offsetX = remember(session.deck, session.index) { Animatable(0f) }
-                    var cardWidth by remember { mutableFloatStateOf(0f) }
-                    val motionScale = LocalMotionScale.current
-
-                    fun commit(know: Boolean) {
-                        if (offsetX.isRunning && offsetX.targetValue != 0f) return
-                        scope.launch {
-                            haptics.confirm()
-                            val target = (if (know) 1.3f else -1.3f) * cardWidth
-                            // Motion.spec, not tween: with "Remove animations"
-                            // the card must not still fly off-screen.
-                            offsetX.animateTo(target, Motion.spec(motionScale, 240))
-                            // A review pass only ever adds. "Still learning" must
-                            // not quietly delete a tick the reader already earned.
-                            val marked = know && name.number !in learned
-                            if (marked) viewModel.setLearned(name.number, true)
-                            session.recordCommit(name.number, marked)
-                            session.advance()
-                        }
-                    }
-
-                    HairlineProgress(
-                        progress = (session.index + 1) / session.deck.size.toFloat(),
-                    )
-                    // The card keeps card proportions instead of stretching into
-                    // a full-height plane; it sits centred in whatever is left.
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .fillMaxWidth()
-                            .padding(vertical = 20.dp),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        SwipeFlipCard(
-                            name = name,
-                            flipped = session.flipped,
-                            onFlip = {
-                                haptics.tick()
-                                session.flip()
-                            },
-                            offsetX = offsetX,
-                            cardWidth = cardWidth,
-                            onDragCommit = ::commit,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .heightIn(max = 460.dp)
-                                .fillMaxHeight()
-                                .onSizeChanged { cardWidth = it.width.toFloat() },
+                else -> AnimatedContent(
+                    targetState = when {
+                        session.deck.isEmpty() -> DeckState.AllLearned
+                        session.done -> DeckState.Done
+                        else -> DeckState.Cards
+                    },
+                    transitionSpec = {
+                        (fadeIn(Motion.spec(motionScale, Motion.GENTLE, easing = Motion.Settle)) +
+                            slideInVertically(
+                                Motion.spec(motionScale, Motion.GENTLE, easing = Motion.Settle),
+                            ) { it / 12 })
+                            .togetherWith(fadeOut(Motion.spec(motionScale, Motion.QUICK)))
+                    },
+                    label = "deckState",
+                ) { state ->
+                    when (state) {
+                        DeckState.AllLearned -> AllLearnedContent(
+                            onReviewLearned = { viewModel.setIncludeLearned(true) },
+                            onBack = onBack,
                         )
-                    }
-                    // The way back from a mis-swipe. The row keeps a fixed
-                    // height whether the undo is present or not: the empty
-                    // placeholder is a short Text while the undo control is a
-                    // TextButton with a 48dp minimum touch target, so without
-                    // the fixed-height box the card would shrink ~30dp the
-                    // moment the undo appeared. (The swipe instructions that
-                    // once sat here are gone: the drag teaches itself — the
-                    // card wears the I KNOW IT / STILL LEARNING overline toward
-                    // the commit threshold, and the two buttons below name the
-                    // same verdicts.)
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .heightIn(min = 48.dp),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        val undoable = session.undoable
-                        if (undoable != null) {
-                            TextButton(
-                                onClick = {
-                                    session.undo()?.let { (number, wasMarked) ->
-                                        if (wasMarked) viewModel.setLearned(number, false)
-                                    }
-                                },
+                        DeckState.Done -> DeckDoneContent(
+                            onStartAgain = { session.restart(names, learned, includeLearned) },
+                        )
+                        DeckState.Cards -> Column(
+                            modifier = Modifier.fillMaxSize(),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                        ) {
+                            // The deck can empty while an outgoing copy of this
+                            // branch is still fading (a reshuffle into an
+                            // all-learned rebuild): read the card back safely so
+                            // the exit never crashes on a stale index.
+                            val cardNumber = session.deck.getOrNull(session.index)
+                                ?: return@AnimatedContent
+                            val name = names.firstOrNull { it.number == cardNumber }
+                                ?: return@AnimatedContent
+                            val scope = rememberCoroutineScope()
+                            val haptics = rememberHaptics()
+
+                            // Horizontal offset of the current card; a fresh Animatable
+                            // per card so each one starts centered.
+                            val offsetX = remember(session.deck, session.index) { Animatable(0f) }
+                            var cardWidth by remember { mutableFloatStateOf(0f) }
+
+                            fun commit(know: Boolean) {
+                                if (offsetX.isRunning && offsetX.targetValue != 0f) return
+                                scope.launch {
+                                    haptics.confirm()
+                                    val target = (if (know) 1.3f else -1.3f) * cardWidth
+                                    // Motion.spec, not tween: with "Remove animations"
+                                    // the card must not still fly off-screen.
+                                    offsetX.animateTo(target, Motion.spec(motionScale, 240))
+                                    // A review pass only ever adds. "Still learning" must
+                                    // not quietly delete a tick the reader already earned.
+                                    val marked = know && name.number !in learned
+                                    if (marked) viewModel.setLearned(name.number, true)
+                                    session.recordCommit(name.number, marked)
+                                    session.advance()
+                                }
+                            }
+
+                            HairlineProgress(
+                                progress = (session.index + 1) / session.deck.size.toFloat(),
+                            )
+                            // The card keeps card proportions instead of stretching into
+                            // a full-height plane; it sits centred in whatever is left.
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .fillMaxWidth()
+                                    .padding(vertical = 20.dp),
+                                contentAlignment = Alignment.Center,
                             ) {
-                                Text(
-                                    text = stringResource(R.string.undo_card),
-                                    style = MaterialTheme.typography.bodySmall,
+                                SwipeFlipCard(
+                                    name = name,
+                                    flipped = session.flipped,
+                                    onFlip = {
+                                        haptics.tick()
+                                        session.flip()
+                                    },
+                                    offsetX = offsetX,
+                                    cardWidth = cardWidth,
+                                    onDragCommit = ::commit,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .heightIn(max = 460.dp)
+                                        .fillMaxHeight()
+                                        .onSizeChanged { cardWidth = it.width.toFloat() },
                                 )
                             }
-                        } else {
-                            Text("", style = MaterialTheme.typography.bodySmall)
+                            // The way back from a mis-swipe. The row keeps a fixed
+                            // height whether the undo is present or not: the empty
+                            // placeholder is a short Text while the undo control is a
+                            // TextButton with a 48dp minimum touch target, so without
+                            // the fixed-height box the card would shrink ~30dp the
+                            // moment the undo appeared. (The swipe instructions that
+                            // once sat here are gone: the drag teaches itself — the
+                            // card wears the I KNOW IT / STILL LEARNING overline toward
+                            // the commit threshold, and the two buttons below name the
+                            // same verdicts.)
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .heightIn(min = 48.dp),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                val undoable = session.undoable
+                                if (undoable != null) {
+                                    TextButton(
+                                        onClick = {
+                                            session.undo()?.let { (number, wasMarked) ->
+                                                if (wasMarked) viewModel.setLearned(number, false)
+                                            }
+                                        },
+                                    ) {
+                                        Text(
+                                            text = stringResource(R.string.undo_card),
+                                            style = MaterialTheme.typography.bodySmall,
+                                        )
+                                    }
+                                } else {
+                                    Text("", style = MaterialTheme.typography.bodySmall)
+                                }
+                            }
+                            Spacer(Modifier.height(12.dp))
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            ) {
+                                OutlinedButton(
+                                    onClick = { commit(false) },
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .heightIn(min = 52.dp),
+                                ) {
+                                    Text(stringResource(R.string.still_learning))
+                                }
+                                Button(
+                                    onClick = { commit(true) },
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .heightIn(min = 52.dp),
+                                ) {
+                                    Text(stringResource(R.string.i_know_it))
+                                }
+                            }
+                            Spacer(Modifier.height(24.dp))
                         }
                     }
-                    Spacer(Modifier.height(12.dp))
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    ) {
-                        OutlinedButton(
-                            onClick = { commit(false) },
-                            modifier = Modifier
-                                .weight(1f)
-                                .heightIn(min = 52.dp),
-                        ) {
-                            Text(stringResource(R.string.still_learning))
-                        }
-                        Button(
-                            onClick = { commit(true) },
-                            modifier = Modifier
-                                .weight(1f)
-                                .heightIn(min = 52.dp),
-                        ) {
-                            Text(stringResource(R.string.i_know_it))
-                        }
-                    }
-                    Spacer(Modifier.height(24.dp))
                 }
             }
         }
@@ -485,7 +535,7 @@ private fun OptionCheck(checked: Boolean) {
             .border(
                 width = 1.5.dp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                shape = RoundedCornerShape(4.dp),
+                shape = SquircleShape(4.dp),
             ),
         contentAlignment = Alignment.Center,
     ) {
@@ -631,7 +681,7 @@ private fun SwipeFlipCard(
                             color = HeroGold,
                             textAlign = TextAlign.Center,
                         )
-                        Spacer(Modifier.height(8.dp))
+                        Spacer(Modifier.height(scaledGap(8.dp)))
                         FitText(
                             text = name.transliteration,
                             style = MaterialTheme.typography.displaySmall,

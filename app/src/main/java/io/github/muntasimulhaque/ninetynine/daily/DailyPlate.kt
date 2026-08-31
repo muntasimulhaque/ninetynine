@@ -16,6 +16,7 @@ import io.github.muntasimulhaque.ninetynine.ui.theme.HeroContainer
 import io.github.muntasimulhaque.ninetynine.ui.theme.HeroGold
 import io.github.muntasimulhaque.ninetynine.ui.theme.HeroSubtext
 import io.github.muntasimulhaque.ninetynine.ui.theme.HeroText
+import io.github.muntasimulhaque.ninetynine.ui.theme.components.ArabicSize
 
 /**
  * The expanded daily notification wears the same plate as the hero card, the
@@ -24,6 +25,12 @@ import io.github.muntasimulhaque.ninetynine.ui.theme.HeroText
  * text stack — via the same [arabicBitmap] fit the widget uses, the
  * transliteration in Spectral Light, and the epithet in Spectral Medium
  * Italic beneath, over the "NAME OF THE DAY" overline the hero card wears.
+ *
+ * The stack mirrors [DailyHeroCard] measure for measure, at fixed dp (the
+ * plate is a 3px/dp design space and does not ride scaledGap's reading
+ * scale): the 11sp tracked overline, 14dp to the Arabic, 6dp to the name,
+ * 2dp to the epithet — titleMedium's 16sp on its 24sp line, up to three
+ * lines, ellipsized, exactly as the hero sets it.
  *
  * Drawn in a fixed 16:9 design space at 3px per dp; the system scales the
  * picture to the notification's picture slot. The stack is centred like the
@@ -54,13 +61,15 @@ internal object DailyPlate {
         // The Name, stepped down until its whole line box — HAFS runs tall —
         // fits the plate: the widget's own fit logic, reused verbatim. The
         // height share leaves room for the overline above and the
-        // transliteration and epithet below even in their worst case.
+        // transliteration and epithet below even in their worst case: with
+        // the epithet at titleMedium's 24sp lines the whole stack tops out
+        // at ~556px, so the Name never pushes it past the 24px margins.
         val arabic = arabicBitmap(
             typeface = hafs,
             text = name.arabic,
             targetSp = 48f,
             maxWidthPx = WIDTH - PAD * 2,
-            maxHeightPx = HEIGHT * 0.40f,
+            maxHeightPx = HEIGHT * 0.30f,
             pxPerSp = PX_PER_SP,
             color = HeroGold.toArgb(),
         ) ?: return@runCatching null
@@ -95,28 +104,34 @@ internal object DailyPlate {
         }
         val nameBox = namePaint.fontMetrics.let { it.bottom - it.top }
 
-        // Epithet — up to two lines, centred, ellipsized like the hero card.
+        // Epithet — up to three lines, centred, ellipsized like the hero
+        // card. titleMedium is 16sp on a 24sp line: the 24sp line box is
+        // pinned here through StaticLayout's font pitch — Spectral's own is
+        // 1.522em, so 74px at 48px — by adding −2px between lines
+        // (setLineSpacing(add, mult) scales the font's pitch, not the size).
         val titleLayout = StaticLayout.Builder.obtain(
             name.title,
             0,
             name.title.length,
             TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
                 typeface = mediumItalic
-                textSize = 14f * PX_PER_SP
+                textSize = 16f * PX_PER_SP
                 color = HeroSubtext.toArgb()
             },
             (WIDTH - PAD * 2).toInt(),
         )
             .setAlignment(Layout.Alignment.ALIGN_CENTER)
-            .setLineSpacing(0f, 1.25f)
-            .setMaxLines(2)
+            .setLineSpacing(-2f, 1f)
+            .setMaxLines(3)
             .setEllipsize(TextUtils.TruncateAt.END)
             .setIncludePad(false)
             .build()
 
-        val gapOverlineToArabic = 12f * PX_PER_SP
+        // Hero-card gaps: 14dp overline→Arabic, 6dp Arabic→name, 2dp
+        // name→epithet (HomeScreen DailyHeroCard's three Spacers).
+        val gapOverlineToArabic = 14f * PX_PER_SP
         val gapArabicToName = 6f * PX_PER_SP
-        val gapNameToTitle = 6f * PX_PER_SP
+        val gapNameToTitle = 2f * PX_PER_SP
         val stack = overlineBox + gapOverlineToArabic + arabic.height +
             gapArabicToName + nameBox + gapNameToTitle + titleLayout.height
 

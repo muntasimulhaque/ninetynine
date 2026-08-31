@@ -30,6 +30,7 @@ import io.github.muntasimulhaque.ninetynine.ui.theme.components.NameRowInset
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.nameRowTextInset
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.EmptyState
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.LazyScrollbarThumb
+import io.github.muntasimulhaque.ninetynine.ui.theme.components.LocalBottomBarOverlay
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.PageMessage
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.ScreenLabel
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.pageMeasure
@@ -87,7 +88,9 @@ fun LearnedScreen(
                 state = listState,
                 contentPadding = PaddingValues(
                     top = padding.calculateTopPadding(),
-                    bottom = padding.calculateBottomPadding() + 16.dp,
+                    // Floating bar: the last rows must clear the plate.
+                    bottom = padding.calculateBottomPadding() +
+                        if (LocalBottomBarOverlay.current) 116.dp else 16.dp,
                 ),
                 modifier = Modifier.fillMaxSize(),
             ) {

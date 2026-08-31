@@ -56,6 +56,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.style.TextAlign
@@ -85,6 +87,7 @@ import io.github.muntasimulhaque.ninetynine.ui.theme.components.ReadingInset
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.readingMeasure
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.scaledGap
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.ScreenLabel
+import io.github.muntasimulhaque.ninetynine.ui.theme.components.SectionLabel
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.ScrollbarThumb
 import io.github.muntasimulhaque.ninetynine.ui.theme.rememberHaptics
 import kotlin.math.absoluteValue
@@ -310,12 +313,18 @@ private fun LearnedAction(learned: Boolean, number: Int, onToggle: () -> Unit) {
     }
 
     val state = stringResource(if (learned) R.string.learned else R.string.not_learned)
+    // A toggle, not a button that happens to carry state text: Role.Switch
+    // gives TalkBack a toggle action and a checked/unchecked reading, matching
+    // how the deck menu's checkbox row already behaves.
     IconButton(
         onClick = {
             haptics.confirm()
             onToggle()
         },
-        modifier = Modifier.semantics { stateDescription = state },
+        modifier = Modifier.semantics {
+            stateDescription = state
+            role = Role.Switch
+        },
     ) {
         Icon(
             imageVector = if (learned) Icons.Filled.CheckCircle else Icons.Outlined.CheckCircle,
@@ -371,7 +380,10 @@ private fun BookmarkAction(bookmarked: Boolean, number: Int, onToggle: () -> Uni
             haptics.confirm()
             onToggle()
         },
-        modifier = Modifier.semantics { stateDescription = state },
+        modifier = Modifier.semantics {
+            stateDescription = state
+            role = Role.Switch
+        },
     ) {
         Icon(
             imageVector = if (bookmarked) Icons.Filled.Bookmark else Icons.Filled.BookmarkBorder,
@@ -503,12 +515,11 @@ private fun NamePage(
                         modifier = Modifier.widthIn(max = readingMeasure()),
                         horizontalAlignment = Alignment.Start,
                     ) {
-                        Text(
-                            text = stringResource(R.string.note_label).uppercase(),
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.secondary,
-                        )
-                        Spacer(Modifier.height(8.dp))
+                        // SectionLabel, not a bare Text: the identical styling,
+                        // plus the heading semantics every other overline
+                        // carries — heading navigation anchors on the note too.
+                        SectionLabel(stringResource(R.string.note_label))
+                        Spacer(Modifier.height(scaledGap(8.dp)))
                         MixedText(
                             text = name.note,
                             style = MaterialTheme.typography.bodyMedium,

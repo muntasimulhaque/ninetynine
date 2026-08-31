@@ -46,6 +46,7 @@ import io.github.muntasimulhaque.ninetynine.ui.theme.LocalMotionScale
 import io.github.muntasimulhaque.ninetynine.ui.theme.Motion
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.HairlineProgress
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.ListInset
+import io.github.muntasimulhaque.ninetynine.ui.theme.components.LocalBottomBarOverlay
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.scaledGap
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.NavRow
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.PageMessage
@@ -210,7 +211,8 @@ fun MemorizeScreen(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-            Spacer(Modifier.height(24.dp))
+            // Floating bar: the NavRows must clear the plate.
+            Spacer(Modifier.height(24.dp + if (LocalBottomBarOverlay.current) 100.dp else 0.dp))
         }
     }
 }

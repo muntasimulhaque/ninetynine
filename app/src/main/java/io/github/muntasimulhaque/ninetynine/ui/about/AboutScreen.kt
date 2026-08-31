@@ -253,7 +253,7 @@ private fun Colophon(context: Context) {
     PageRule(Modifier.fillMaxWidth())
     Spacer(Modifier.height(26.dp))
     SectionLabel(stringResource(R.string.about_source_label), Modifier.fillMaxWidth())
-    Spacer(Modifier.height(14.dp))
+    Spacer(Modifier.height(scaledGap(14.dp)))
     Text(
         text = stringResource(R.string.about_attribution),
         style = MaterialTheme.typography.bodyMedium,
@@ -261,7 +261,7 @@ private fun Colophon(context: Context) {
         textAlign = TextAlign.Start,
         modifier = Modifier.fillMaxWidth(),
     )
-    Spacer(Modifier.height(22.dp))
+    Spacer(Modifier.height(scaledGap(22.dp)))
 
     PageRule(Modifier.fillMaxWidth())
     LinkRow(R.string.source_pdf) { context.openUrl(SOURCE_PDF_URL) }
@@ -273,7 +273,7 @@ private fun Colophon(context: Context) {
 
     Spacer(Modifier.height(34.dp))
     SectionLabel(stringResource(R.string.about_typefaces_label), Modifier.fillMaxWidth())
-    Spacer(Modifier.height(14.dp))
+    Spacer(Modifier.height(scaledGap(14.dp)))
     Text(
         text = stringResource(R.string.about_fonts),
         style = MaterialTheme.typography.bodySmall,
@@ -288,7 +288,7 @@ private fun Colophon(context: Context) {
     // almost nobody needs.
     Spacer(Modifier.height(34.dp))
     SectionLabel(stringResource(R.string.about_contact_label), Modifier.fillMaxWidth())
-    Spacer(Modifier.height(14.dp))
+    Spacer(Modifier.height(scaledGap(14.dp)))
     PageRule(Modifier.fillMaxWidth())
     LinkRow(R.string.send_feedback) { context.sendFeedback() }
     PageRule(Modifier.fillMaxWidth())

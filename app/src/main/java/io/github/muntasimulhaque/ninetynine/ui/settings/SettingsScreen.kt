@@ -248,6 +248,9 @@ fun SettingsScreen(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
+                    // 52dp today from the Switch's own height; pinned so a
+                    // future padding change can't silently drop the target.
+                    .heightIn(min = 48.dp)
                     .toggleable(
                         value = dailyEnabled,
                         role = Role.Switch,
@@ -484,6 +487,11 @@ private fun ThemeOption(
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            // selectable() is a foundation modifier — it applies no M3
+            // minimum-target size, and the row's height is computed from its
+            // text: at the reader slider's 0.85 floor it computes to ~44dp.
+            // No-op at the default scale; a guarantee everywhere below it.
+            .heightIn(min = 48.dp)
             .selectable(
                 selected = selected,
                 onClick = { onSelect(mode) },
@@ -566,7 +574,8 @@ private fun HairlineSlider(
     onValueChangeFinished: () -> Unit,
 ) {
     val gold = MaterialTheme.colorScheme.secondary
-    val track = MaterialTheme.colorScheme.outlineVariant
+    // Same ruling as HairlineProgress: a meaningful hairline carries `outline` (3:1), not `outlineVariant` (1.42:1).
+    val track = MaterialTheme.colorScheme.outline
     val fraction = ((value - SCALE_MIN) / (SCALE_MAX - SCALE_MIN)).coerceIn(0f, 1f)
     val label = stringResource(R.string.text_size)
     val percent = stringResource(R.string.percent, (value * 100).roundToInt())

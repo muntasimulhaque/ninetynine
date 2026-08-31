@@ -89,6 +89,7 @@ import io.github.muntasimulhaque.ninetynine.ui.theme.components.SettleOnce
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.pageMeasure
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.barMeasure
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.paperTopBarColors
+import io.github.muntasimulhaque.ninetynine.ui.theme.components.scaledGap
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.ScreenLabel
 import io.github.muntasimulhaque.ninetynine.ui.theme.rememberHaptics
 import io.github.muntasimulhaque.ninetynine.util.QuizBuilder
@@ -261,6 +262,10 @@ fun QuizScreen(
     val learned by viewModel.learned.collectAsStateWithLifecycle()
     val learnedLoaded by viewModel.learnedLoaded.collectAsStateWithLifecycle()
     val quizBest by viewModel.quizBest.collectAsStateWithLifecycle()
+    // Hoisted: the result turn's transitionSpec builds from it (a
+    // transitionSpec is not a composable context), exactly like the
+    // question-turn's own spec further down.
+    val motionScale = LocalMotionScale.current
 
     LaunchedEffect(names, learned, learnedLoaded) {
         if (!learnedLoaded) return@LaunchedEffect
@@ -313,28 +318,44 @@ fun QuizScreen(
                 .padding(horizontal = PageInset),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
+            // The question → result turn rides the house push like every other
+            // change of state (question→question turns below, daily card,
+            // pushed screens) — the one when-block that used to hard-cut.
+            // Loading guards stay outside the animation: no entrance of its
+            // own for a first frame, motion only where meaning changes.
             when {
-                // Until DataStore delivers, an empty question list is "not
-                // built yet", not a load failure: the names-unavailable
-                // message is alarming, and it told a first-day reader to
-                // reinstall for no reason.
                 !learnedLoaded -> Unit
-                quiz.questions.isEmpty() ->
-                    if (namesLoaded) PageMessage(stringResource(R.string.names_unavailable))
-                quiz.finished -> QuizResultContent(
-                    score = quiz.score,
-                    total = quiz.questions.size,
-                    best = quizBest,
-                    isNewBest = quiz.bestBefore >= 0 && quiz.score > quiz.bestBefore,
-                    missed = quiz.missed.mapNotNull { n -> names.firstOrNull { it.number == n } },
-                    onRestart = { quiz.restart(names, learned) },
-                    onNameClick = onNameClick,
-                    onBack = onBack,
-                )
-                else -> QuizQuestionContent(
-                    quiz = quiz,
-                    names = names,
-                )
+                quiz.questions.isEmpty() && namesLoaded ->
+                    PageMessage(stringResource(R.string.names_unavailable))
+                else -> AnimatedContent(
+                    targetState = quiz.finished,
+                    transitionSpec = {
+                        (fadeIn(Motion.spec(motionScale, Motion.GENTLE, easing = Motion.Settle)) +
+                            slideInVertically(
+                                Motion.spec(motionScale, Motion.GENTLE, easing = Motion.Settle),
+                            ) { it / 12 })
+                            .togetherWith(fadeOut(Motion.spec(motionScale, Motion.QUICK)))
+                    },
+                    label = "quizResult",
+                ) { finished ->
+                    if (finished) {
+                        QuizResultContent(
+                            score = quiz.score,
+                            total = quiz.questions.size,
+                            best = quizBest,
+                            isNewBest = quiz.bestBefore >= 0 && quiz.score > quiz.bestBefore,
+                            missed = quiz.missed.mapNotNull { n -> names.firstOrNull { it.number == n } },
+                            onRestart = { quiz.restart(names, learned) },
+                            onNameClick = onNameClick,
+                            onBack = onBack,
+                        )
+                    } else {
+                        QuizQuestionContent(
+                            quiz = quiz,
+                            names = names,
+                        )
+                    }
+                }
             }
         }
     }
@@ -406,7 +427,7 @@ private fun QuizQuestionContent(
                                         color = HeroGold,
                                         textAlign = TextAlign.Center,
                                     )
-                                    Spacer(Modifier.height(6.dp))
+                                    Spacer(Modifier.height(scaledGap(6.dp)))
                                     FitText(
                                         text = turnName.transliteration,
                                         style = MaterialTheme.typography.displaySmall,

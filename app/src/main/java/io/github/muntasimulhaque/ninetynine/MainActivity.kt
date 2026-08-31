@@ -15,6 +15,10 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -25,6 +29,8 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.selection.selectable
@@ -36,11 +42,11 @@ import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.outlined.Bookmark
 import androidx.compose.material.icons.outlined.School
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.rememberCoroutineScope
@@ -50,12 +56,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -83,12 +89,16 @@ import io.github.muntasimulhaque.ninetynine.ui.memorize.LearnedScreen
 import io.github.muntasimulhaque.ninetynine.ui.memorize.MemorizeScreen
 import io.github.muntasimulhaque.ninetynine.ui.memorize.QuizScreen
 import io.github.muntasimulhaque.ninetynine.ui.settings.SettingsScreen
-import io.github.muntasimulhaque.ninetynine.ui.theme.Motion
-import io.github.muntasimulhaque.ninetynine.ui.theme.LocalDeviceFactor
+import io.github.muntasimulhaque.ninetynine.ui.theme.LocalDarkTheme
 import io.github.muntasimulhaque.ninetynine.ui.theme.LocalMotionScale
+import io.github.muntasimulhaque.ninetynine.ui.theme.Motion
 import io.github.muntasimulhaque.ninetynine.ui.theme.Names99Theme
+import io.github.muntasimulhaque.ninetynine.ui.theme.SquircleShape
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.FitText
+import io.github.muntasimulhaque.ninetynine.ui.theme.components.LocalBottomBarOverlay
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.barMeasure
+import io.github.muntasimulhaque.ninetynine.ui.theme.components.pageMeasure
+import io.github.muntasimulhaque.ninetynine.ui.theme.components.tabLabelStyle
 import io.github.muntasimulhaque.ninetynine.util.DailyName
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.first
@@ -274,6 +284,10 @@ private const val SCOPE_BOOKMARKS = "bookmarks"
 private const val ROUTE_FLASHCARDS = "flashcards"
 private const val ROUTE_QUIZ = "quiz"
 
+/** Bottom-bar vessel under review: true = floating squircle, shadow, scroll-under
+ *  scrim (variant B); false = flat bordered squircle in a surface band (variant C). */
+private const val BAR_VARIANT_FLOATING = true
+
 private data class TopLevelRoute(
     val route: String,
     val labelRes: Int,
@@ -353,12 +367,12 @@ private fun App(
             }
         }
 
-        Column(Modifier.fillMaxSize()) {
+        Box(Modifier.fillMaxSize()) {
             val motionScale = LocalMotionScale.current
             NavHost(
                 navController = navController,
                 startDestination = "names",
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.fillMaxSize(),
                 // Pushed screens rise gently into place; pops sink away.
                 enterTransition = {
                     fadeIn(Motion.spec(motionScale, Motion.GENTLE, easing = Motion.Settle)) +
@@ -466,22 +480,25 @@ private fun App(
                     AboutScreen(onBack = { navController.popBackStack() })
                 }
             }
-            AnimatedVisibility(
-                visible = showBottomBar,
-                enter = fadeIn(Motion.tween(Motion.QUICK)) + slideInVertically(Motion.tween(Motion.GENTLE)) { it },
-                exit = fadeOut(Motion.tween(Motion.QUICK)) + slideOutVertically(Motion.tween(Motion.GENTLE)) { it },
-            ) {
-                QuietBottomBar(
-                navController = navController,
-                currentRoute = currentRoute,
-                listStateFor = { route ->
-                    when (route) {
-                        "names" -> namesListState
-                        "bookmarks" -> bookmarksListState
-                        else -> null
-                    }
-                },
-            )
+            CompositionLocalProvider(LocalBottomBarOverlay provides BAR_VARIANT_FLOATING) {
+                AnimatedVisibility(
+                    visible = showBottomBar,
+                    modifier = Modifier.align(Alignment.BottomCenter),
+                    enter = fadeIn(Motion.tween(Motion.QUICK)) + slideInVertically(Motion.tween(Motion.GENTLE)) { it },
+                    exit = fadeOut(Motion.tween(Motion.QUICK)) + slideOutVertically(Motion.tween(Motion.GENTLE)) { it },
+                ) {
+                    QuietBottomBar(
+                        navController = navController,
+                        currentRoute = currentRoute,
+                        listStateFor = { route ->
+                            when (route) {
+                                "names" -> namesListState
+                                "bookmarks" -> bookmarksListState
+                                else -> null
+                            }
+                        },
+                    )
+                }
             }
         }
     }
@@ -501,8 +518,10 @@ private fun tabFadeOut(motionScale: Float):
 }
 
 /**
- * A bespoke, quiet bottom bar: no pill indicator, no tonal blocks — just a
- * hairline rule and three small-caps labels, selection carried by color.
+ * The bottom bar's vessel switch: the three tabs themselves ([BottomBarTabs])
+ * are shared verbatim between the two vessels, while [BAR_VARIANT_FLOATING]
+ * picks the plate around them — [FlatBar]'s opaque band or [FloatingBar]'s
+ * floating, scroll-under plate.
  */
 @Composable
 private fun QuietBottomBar(
@@ -510,133 +529,233 @@ private fun QuietBottomBar(
     currentRoute: String?,
     listStateFor: (String) -> LazyListState?,
 ) {
-    val scope = rememberCoroutineScope()
-    val motionScale = LocalMotionScale.current
+    if (BAR_VARIANT_FLOATING) {
+        FloatingBar { BottomBarTabs(navController, currentRoute, listStateFor) }
+    } else {
+        FlatBar { BottomBarTabs(navController, currentRoute, listStateFor) }
+    }
+}
+
+/**
+ * Variant C — the flat bar: today's silhouette, an opaque surface band running
+ * to the screen's bottom edge, with a bordered squircle plate where the hairline
+ * divider used to sit. The [navigationBarsPadding] lives on the trailing
+ * [Spacer] — never inside the squircle — so the band still paints the gesture
+ * strip in the app's own surface colour.
+ */
+@Composable
+private fun FlatBar(content: @Composable () -> Unit) {
     Surface(color = MaterialTheme.colorScheme.surface) {
         Column {
-            // `outline`, not `outlineVariant`. The bar's surface is 1.06:1
-            // against the page, so this rule is the only thing separating them
-            // — that makes it meaningful non-text, which WCAG 1.4.11 holds to
-            // 3:1. outlineVariant is 1.42:1 and effectively invisible.
-            HorizontalDivider(
-                // Chrome joins the book's column on wide screens — the rule,
-                // like the tabs below it, runs the page's width, not the
-                // screen's. See [barMeasure].
-                modifier = Modifier.barMeasure(),
-                thickness = 0.5.dp,
-                color = MaterialTheme.colorScheme.outline,
-            )
-            Row(
-                // The bar takes its height from the tabs rather than fixing it,
-                // so a large font grows the bar instead of clipping the labels.
-                // The minimum lives on each tab: an unweighted child of a
-                // Column is measured against all the remaining space, so a
-                // heightIn here would let fillMaxHeight swallow the screen.
-                modifier = Modifier
-                    .barMeasure()
-                    .navigationBarsPadding()
-                    .selectableGroup(),
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .padding(top = 6.dp)
+                    .wrapContentWidth(Alignment.CenterHorizontally)
+                    .widthIn(max = pageMeasure()),
             ) {
-                topLevelRoutes.forEach { item ->
-                    val selected = currentRoute == item.route
-                    val tint by animateColorAsState(
-                        targetValue = if (selected) MaterialTheme.colorScheme.primary
-                        else MaterialTheme.colorScheme.onSurfaceVariant,
-                        animationSpec = Motion.tween(Motion.QUICK),
-                        label = "tabTint",
-                    )
-                    Column(
-                        modifier = Modifier
-                            .weight(1f)
-                            .heightIn(min = 60.dp)
-                            .selectable(
-                                selected = selected,
-                                role = Role.Tab,
-                                onClick = {
-                                    // Already here: go back to the top of the
-                                    // list instead of navigating nowhere.
-                                    // restoreState would otherwise restore the
-                                    // scroll position, so re-tapping did
-                                    // literally nothing. Snapped instantly at
-                                    // animator scale 0, like every Motion.*
-                                    // animation in the app.
-                                    val here = listStateFor(item.route)
-                                    if (selected && here != null) {
-                                        scope.launch {
-                                            if (motionScale == 0f) here.scrollToItem(0)
-                                            else here.animateScrollToItem(0)
-                                        }
-                                        return@selectable
-                                    }
-                                    navController.navigate(item.route) {
-                                        popUpTo(navController.graph.findStartDestination().id) {
-                                            saveState = true
-                                        }
-                                        launchSingleTop = true
-                                        restoreState = true
-                                    }
-                                },
-                            ),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = androidx.compose.foundation.layout.Arrangement.Center,
-                    ) {
-                        Icon(
-                            // Shape carries selection beside colour and weight:
-                            // the chosen tab's glyph fills, the resting ones
-                            // stand open — Google's own bar grammar, still no
-                            // pill and no motion. Greyscale screens and the
-                            // ~8% who cannot trust hue get a third channel.
-                            if (selected) item.icon else item.iconResting,
-                            contentDescription = null,
-                            tint = tint,
-                            modifier = Modifier.size(22.dp),
-                        )
-                        Spacer(Modifier.height(4.dp))
-                        // Chrome, not reading matter: the reader's slider
-                        // cannot move it — 10sp × the device factor only —
-                        // so it can never clip. The device factor DOES
-                        // apply: a 7-inch bar gives each tab 200dp and a
-                        // 10-inch 427dp, room enough for the wider labels,
-                        // while a phone stays at 10sp. System font scaling
-                        // does still apply, so the labels fit themselves
-                        // rather than ellipsizing to "MEM…".
-                        //
-                        // "BOOKMARKS" is the longest label the bar carries —
-                        // 6.681 em in Spectral Medium, so 155.2dp at a system
-                        // font scale of 2.0, against MEMORIZE's 135.0dp. At
-                        // three tabs a 320dp phone gives each one 102.7dp, so
-                        // the worst case is 0.66 and the 0.40 floor is never
-                        // approached. On the 7-inch class the labels
-                        // start 1.125× wider and the tab slots are 200dp; on
-                        // the 10-inch class 1.25× wider against 427dp — the
-                        // room grows faster than the ink on every device the
-                        // bar serves.
-                        //
-                        // This is why Settings is a gear rather than a fourth
-                        // tab. A fourth would cut each tab to 76.0dp, putting
-                        // BOOKMARKS at 0.49 — 9.8sp rendered, *smaller* than
-                        // the 10sp base, so a reader who doubled their system
-                        // font would gain nothing at all from having done so.
-                        // Selection is carried by weight as well as colour.
-                        // Colour alone failed WCAG 1.4.1: primary against
-                        // onSurfaceVariant is 1.22:1 in light and 1.20:1 in
-                        // dark — the two differ almost purely in hue, so a
-                        // deuteranope or protanope (~8% of men), a greyscale
-                        // screen or a high-contrast mode could not tell which
-                        // tab was active at all.
-                        FitText(
-                            text = stringResource(item.labelRes).uppercase(),
-                            style = MaterialTheme.typography.labelSmall.copy(
-                                fontSize = (10 * LocalDeviceFactor.current).sp,
-                                letterSpacing = 1.2.sp,
-                                fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
-                            ),
-                            color = tint,
-                            modifier = Modifier.padding(horizontal = 2.dp),
-                            minScale = 0.40f,
-                        )
-                    }
+                Surface(
+                    shape = SquircleShape(26.dp),
+                    color = MaterialTheme.colorScheme.surfaceContainer,
+                    border = BorderStroke(0.5.dp, MaterialTheme.colorScheme.outline),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 14.dp),
+                ) {
+                    content()
                 }
+            }
+            // Gesture-strip band, as today: surface to the screen's bottom
+            // edge, so the system handle sits on the app's paper.
+            Spacer(Modifier.navigationBarsPadding().height(2.dp))
+        }
+    }
+}
+
+/**
+ * Variant B — the floating bar: no band at all. A scrim fades the list's last
+ * rows into the paper as they pass beneath the plate, which floats on a shadow
+ * above a transparent gesture strip. Dark mode adds a hairline border — the
+ * shadow is invisible against near-black surfaces, so [SquircleShape]'s
+ * outlineVariant edge is what holds the plate off the page.
+ */
+@Composable
+private fun FloatingBar(content: @Composable () -> Unit) {
+    val dark = LocalDarkTheme.current
+    Column(Modifier.fillMaxWidth()) {
+        // Scroll-under scrim: rows fade into the paper as they pass beneath
+        // the plate. Full width even though the plate is inset — acceptable
+        // for the experiment; the margins fade with the rows rather than
+        // reading as a band.
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .height(72.dp)
+                .background(
+                    Brush.verticalGradient(
+                        0f to MaterialTheme.colorScheme.surface.copy(alpha = 0f),
+                        1f to MaterialTheme.colorScheme.surface,
+                    ),
+                ),
+        )
+        Box(
+            // fillMaxWidth, then padding, then wrapContentWidth, then the cap —
+            // barMeasure()'s own order. The squircle spans the padded width,
+            // the cap binds only on wide screens, and the 14dp margins are the
+            // plate's float (a Box paints nothing of its own).
+            Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 14.dp)
+                .padding(bottom = 12.dp)
+                .wrapContentWidth(Alignment.CenterHorizontally)
+                .widthIn(max = pageMeasure()),
+        ) {
+            val plateModifier = if (dark) {
+                Modifier.border(
+                    0.5.dp,
+                    MaterialTheme.colorScheme.outlineVariant,
+                    SquircleShape(26.dp),
+                )
+            } else {
+                Modifier
+            }
+            Surface(
+                shape = SquircleShape(26.dp),
+                color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                shadowElevation = 6.dp,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .then(plateModifier),
+            ) {
+                content()
+            }
+        }
+        // Transparent gesture strip: the plate floats above it and nothing
+        // draws here, so the system handle sits on the page itself.
+        Spacer(Modifier.navigationBarsPadding().height(2.dp))
+    }
+}
+
+/**
+ * The three tabs, shared verbatim between the two vessels. The Row's own
+ * modifier is the group semantics plus the padding the vessels agree on;
+ * [barMeasure] keeps the page's column cap so screens may keep sizing against
+ * the bar — the vessel above it owns the inset, the plate and the
+ * gesture-strip spacing.
+ */
+@Composable
+private fun BottomBarTabs(
+    navController: NavHostController,
+    currentRoute: String?,
+    listStateFor: (String) -> LazyListState?,
+) {
+    val scope = rememberCoroutineScope()
+    val motionScale = LocalMotionScale.current
+    Row(
+        // The bar takes its height from the tabs rather than fixing it, so a
+        // large font grows the bar instead of clipping the labels. The
+        // minimum lives on each tab: an unweighted child of a Column is
+        // measured against all the remaining space, so a heightIn here would
+        // let fillMaxHeight swallow the screen.
+        modifier = Modifier
+            .barMeasure()
+            .padding(vertical = 6.dp, horizontal = 8.dp)
+            .selectableGroup(),
+    ) {
+        topLevelRoutes.forEach { item ->
+            val selected = currentRoute == item.route
+            val tint by animateColorAsState(
+                targetValue = if (selected) MaterialTheme.colorScheme.primary
+                else MaterialTheme.colorScheme.onSurfaceVariant,
+                animationSpec = Motion.tween(Motion.QUICK),
+                label = "tabTint",
+            )
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .heightIn(min = 60.dp)
+                    .selectable(
+                        selected = selected,
+                        role = Role.Tab,
+                        onClick = {
+                            // Already here: go back to the top of the
+                            // list instead of navigating nowhere.
+                            // restoreState would otherwise restore the
+                            // scroll position, so re-tapping did
+                            // literally nothing. Snapped instantly at
+                            // animator scale 0, like every Motion.*
+                            // animation in the app.
+                            val here = listStateFor(item.route)
+                            if (selected && here != null) {
+                                scope.launch {
+                                    if (motionScale == 0f) here.scrollToItem(0)
+                                    else here.animateScrollToItem(0)
+                                }
+                                return@selectable
+                            }
+                            navController.navigate(item.route) {
+                                popUpTo(navController.graph.findStartDestination().id) {
+                                    saveState = true
+                                }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
+                        },
+                    ),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = androidx.compose.foundation.layout.Arrangement.Center,
+            ) {
+                Icon(
+                    // Shape carries selection beside colour and weight:
+                    // the chosen tab's glyph fills, the resting ones
+                    // stand open — Google's own bar grammar, still no
+                    // pill and no motion. Greyscale screens and the
+                    // ~8% who cannot trust hue get a third channel.
+                    if (selected) item.icon else item.iconResting,
+                    contentDescription = null,
+                    tint = tint,
+                    modifier = Modifier.size(22.dp),
+                )
+                Spacer(Modifier.height(4.dp))
+                // Chrome, not reading matter: the reader's slider
+                // cannot move it — 10sp × the device factor only —
+                // so it can never clip. The device factor DOES
+                // apply: a 7-inch bar gives each tab 200dp and a
+                // 10-inch 427dp, room enough for the wider labels,
+                // while a phone stays at 10sp. System font scaling
+                // does still apply, so the labels fit themselves
+                // rather than ellipsizing to "MEM…".
+                //
+                // "BOOKMARKS" is the longest label the bar carries —
+                // 6.681 em in Spectral Medium, so 155.2dp at a system
+                // font scale of 2.0, against MEMORIZE's 135.0dp. At
+                // three tabs a 320dp phone gives each one 102.7dp, so
+                // the worst case is 0.66 and the 0.40 floor is never
+                // approached. On the 7-inch class the labels
+                // start 1.125× wider and the tab slots are 200dp; on
+                // the 10-inch class 1.25× wider against 427dp — the
+                // room grows faster than the ink on every device the
+                // bar serves.
+                //
+                // This is why Settings is a gear rather than a fourth
+                // tab. A fourth would cut each tab to 76.0dp, putting
+                // BOOKMARKS at 0.49 — 9.8sp rendered, *smaller* than
+                // the 10sp base, so a reader who doubled their system
+                // font would gain nothing at all from having done so.
+                // Selection is carried by weight as well as colour.
+                // Colour alone failed WCAG 1.4.1: primary against
+                // onSurfaceVariant is 1.22:1 in light and 1.20:1 in
+                // dark — the two differ almost purely in hue, so a
+                // deuteranope or protanope (~8% of men), a greyscale
+                // screen or a high-contrast mode could not tell which
+                // tab was active at all.
+                FitText(
+                    text = stringResource(item.labelRes).uppercase(),
+                    style = tabLabelStyle().copy(fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium),
+                    color = tint,
+                    modifier = Modifier.padding(horizontal = 2.dp),
+                    minScale = 0.40f,
+                )
             }
         }
     }

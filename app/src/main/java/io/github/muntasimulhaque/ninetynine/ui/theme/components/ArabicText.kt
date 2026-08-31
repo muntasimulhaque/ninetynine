@@ -64,11 +64,17 @@ object ArabicSize {
     /** Pairs `displaySmall` on the hero, quiz and flashcard faces. */
     val Panel = 48.sp
 
+    /** The widget's roomy bucket — XTALL. */
+    val Widget = 38.sp
+
     /** Pairs `titleMedium` in the names list, restoring a display-like ratio. */
     val Row = 30.sp
 
     /** Pairs `titleLarge` — the basmala and other set-apart lines. */
     val Line = 30.sp
+
+    /** The widget's smallest bucket — Arabic-only. */
+    val Compact = 18.sp
 
     /** Pairs `labelMedium` — the share card's small basmala. */
     val Caption = 15.sp

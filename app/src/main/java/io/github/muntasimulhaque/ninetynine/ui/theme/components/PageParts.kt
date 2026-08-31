@@ -33,6 +33,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -46,11 +47,14 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.isSpecified
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.times
 import io.github.muntasimulhaque.ninetynine.R
+import io.github.muntasimulhaque.ninetynine.ui.theme.LocalDeviceFactor
 import io.github.muntasimulhaque.ninetynine.ui.theme.LocalMotionScale
 import io.github.muntasimulhaque.ninetynine.ui.theme.LocalTextScale
 import io.github.muntasimulhaque.ninetynine.ui.theme.Motion
@@ -68,6 +72,10 @@ import io.github.muntasimulhaque.ninetynine.ui.theme.Motion
 val ListInset = 20.dp
 val PageInset = 24.dp
 val ReadingInset = 28.dp
+
+/** True while the bottom bar floats OVER content (scroll-under); screens grow
+ *  their bottom content padding so the last rows clear the plate. */
+val LocalBottomBarOverlay = staticCompositionLocalOf { false }
 
 /** Small caps in gold, widely tracked — the app's only kind of heading label. */
 @Composable
@@ -183,6 +191,15 @@ fun TabTitle(
 
 private const val RunningHeadScale = 0.85f
 
+/** The bottom bar's tab label: the ramp's labelSmall at the device factor only —
+ *  chrome never follows the reader's text-size slider (the clipping guarantee). */
+@Composable
+fun tabLabelStyle(): TextStyle =
+    MaterialTheme.typography.labelSmall.copy(
+        fontSize = (10 * LocalDeviceFactor.current).sp,
+        letterSpacing = 1.2.sp,
+    )
+
 /** The way back, identical on every pushed screen. */
 @Composable
 fun BackButton(onBack: () -> Unit) {
@@ -244,7 +261,17 @@ fun FitText(
             }
             candidate
         }
-        Text(text = text, style = fitted, color = color, maxLines = 1, softWrap = false)
+        // Ellipsis over clip: at every size that fits, this never renders;
+        // past the minScale floor it degrades to a truncated label instead of
+        // a mid-glyph cut. Insurance for pathological scale combinations.
+        Text(
+            text = text,
+            style = fitted,
+            color = color,
+            maxLines = 1,
+            softWrap = false,
+            overflow = TextOverflow.Ellipsis,
+        )
     }
 }
 

@@ -4,8 +4,8 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Paint
+import android.graphics.Path
 import android.graphics.Typeface
-import android.os.Build
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
@@ -24,7 +24,6 @@ import androidx.glance.action.clickable
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.GlanceAppWidgetReceiver
 import androidx.glance.appwidget.SizeMode
-import androidx.glance.appwidget.cornerRadius
 import androidx.glance.appwidget.provideContent
 import androidx.glance.background
 import androidx.glance.layout.Alignment
@@ -48,8 +47,14 @@ import io.github.muntasimulhaque.ninetynine.ui.theme.HeroContainer
 import io.github.muntasimulhaque.ninetynine.ui.theme.HeroGold
 import io.github.muntasimulhaque.ninetynine.ui.theme.HeroSubtext
 import io.github.muntasimulhaque.ninetynine.ui.theme.HeroText
+import io.github.muntasimulhaque.ninetynine.ui.theme.components.ArabicSize
 import io.github.muntasimulhaque.ninetynine.util.DailyName
+import kotlin.math.PI
 import kotlin.math.ceil
+import kotlin.math.cos
+import kotlin.math.min
+import kotlin.math.pow
+import kotlin.math.sin
 
 class DailyNameWidget : GlanceAppWidget() {
 
@@ -100,10 +105,10 @@ class DailyNameWidget : GlanceAppWidget() {
         val name = names.firstOrNull { it.number == DailyName.numberFor(System.currentTimeMillis()) }
         // Ask the device what radius ITS widgets round to, so this plate's
         // corners agree with the system's on every launcher. Falls back to
-        // 20dp when an OEM does not publish the dimen.
-        val corner = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            systemCornerRadius(context)
-        } else null
+        // 20dp when an OEM does not publish the dimen. Used on every API
+        // level: the plate draws its own squircle at this radius, so even
+        // pre-12 home screens get corners for the first time.
+        val plateRadius = systemCornerRadius(context)
         // The app's own Arabic typeface, loaded once per render. Glance's Text
         // cannot wear a bundled font — RemoteViews text draws with system
         // fonts — so the Arabic is set in HAFS by drawing it into a bitmap
@@ -113,6 +118,18 @@ class DailyNameWidget : GlanceAppWidget() {
         // system-serif path so a widget always renders.
         val hafs = runCatching {
             ResourcesCompat.getFont(context, R.font.kfgqpc_hafs_uthmanic)
+        }.getOrNull()
+        // The Latin faces, loaded the same once-per-render way: the
+        // transliteration in Spectral Light, the title in Spectral Medium
+        // Italic — the faces the hero, share and notification plates wear.
+        // Null only if the resource read fails, which should never happen:
+        // the TTFs ship in the APK. Each null keeps that line on the old
+        // system-serif Text path so a widget always renders.
+        val light = runCatching {
+            ResourcesCompat.getFont(context, R.font.spectral_light)
+        }.getOrNull()
+        val mediumItalic = runCatching {
+            ResourcesCompat.getFont(context, R.font.spectral_mediumitalic)
         }.getOrNull()
         // Always call provideContent, even when name is null. Without this, a
         // transient load failure (empty list from NamesRepository) would skip
@@ -136,14 +153,21 @@ class DailyNameWidget : GlanceAppWidget() {
             // the Arabic grows with the system setting exactly as the Latin
             // sp sizes below it do.
             val density = context.resources.displayMetrics.density
+            // The squircle plate below is drawn at the widget's real pixel
+            // size in this same density.
             // fontScale reads 0 on a few misbehaved builds; a zero scale
             // would render the Name at zero size. 1.0 is the honest floor.
             val fontScale = context.resources.configuration.fontScale
                 .takeIf { it > 0f } ?: 1f
 
-            // Latin falls back to the system serif — close kin of Spectral,
-            // and the accepted cost of RemoteViews. The Arabic does NOT fall
-            // back: the Name must wear its own script everywhere it appears.
+            // The Latin lines are set in the app's own Spectral faces — Light
+            // for the transliteration, Medium Italic for the title — painted
+            // into bitmaps like the Arabic, since RemoteViews text cannot
+            // wear a bundled font. Only when a face fails to load does that
+            // line fall back to the system serif — close kin of Spectral, and
+            // the accepted cost of RemoteViews. The Arabic does NOT fall back
+            // to a system approximation: the Name must wear its own script
+            // everywhere it appears.
             val serif = FontFamily("serif")
             // One identity on every home screen: the emerald-and-gold of the
             // hero and share cards, deliberately NOT day/night switched. Bound
@@ -155,12 +179,12 @@ class DailyNameWidget : GlanceAppWidget() {
             val subtextColor = ColorProvider(HeroSubtext)
 
             val arabicTargetSp = when {
-                roomy -> 38f
+                roomy -> ArabicSize.Widget.value
                 // TALL and MEDIUM share one "small display" size (the app's
                 // list rows are set at the same 30sp); only XTALL steps up.
-                showTitle -> 30f
-                showTransliteration -> 30f
-                else -> 18f
+                showTitle -> ArabicSize.Row.value
+                showTransliteration -> ArabicSize.Row.value
+                else -> ArabicSize.Compact.value
             }
             // The share of the content box the Arabic line may occupy — the
             // rest belongs to the transliteration and title lines below it.
@@ -178,17 +202,51 @@ class DailyNameWidget : GlanceAppWidget() {
             // bare emerald is the widget's edge on the home screen, exactly as
             // it was before the frame was added.
             //
-            // cornerRadius is applied ONLY on API 31+ (Android 12+): on older
-            // Android its no-op path breaks the clickable modifier that follows
-            // it, so the widget rendered but never answered a tap (verified on
-            // an Android 8.1 device/emulator). On API < 31 the corners stay
-            // square; on 31+ they round through the system — at THIS device's
-            // own system radius, not a hardcoded guess. The order matters —
-            // cornerRadius must precede clickable, which is how API 31+ shipped.
+            // The plate is drawn HERE, as its own bitmap, not delegated to a
+            // corner-radius modifier: the emerald is painted into an ARGB_8888
+            // bitmap the size of the widget's real pixel surface, through a
+            // Path sampled from the same superellipse math as the app's
+            // SquircleShape (exponent n = 4, SAMPLES_PER_CORNER = 48), so the
+            // corners curve off in one continuous tangent-continuous sweep —
+            // the shape Samsung and Pixel plates wear — at THIS device's own
+            // system radius. systemCornerRadius is read on every API level
+            // now: below 12 it still returns the 20dp fallback, so for the
+            // first time the pre-12 plate has corners at all (cornerRadius
+            // must never be applied there — its no-op path breaks the
+            // clickable modifier that follows it, verified on Android 8.1;
+            // here no such modifier sits between shape and clickable, because
+            // the shape IS the background).
+            //
+            // The launcher still clips the whole widget with its own circular
+            // mask at the same radius, which simply cuts nothing away — the
+            // squircle sits just inside the circle — while launchers that
+            // ignore the preferred radius see the old look, never a worse
+            // one. The bitmap is built in this composition worker lambda,
+            // since only LocalSize knows the real surface here; nothing is
+            // cached across renders because responsive sizes change it. A
+            // zero-size or failed allocation falls back to the flat
+            // ColorProvider background — a square plate always beats no
+            // plate.
+            val plateBitmap = runCatching {
+                squirclePlateBitmap(
+                    // DpSize's width/height are Dp; .value times the density
+                    // is the real pixel surface. ceil so the plate never
+                    // under-covers the node by a fraction of a pixel.
+                    widthPx = ceil(size.width.value * density).toInt().coerceAtLeast(1),
+                    heightPx = ceil(size.height.value * density).toInt().coerceAtLeast(1),
+                    radiusPx = plateRadius.value * density,
+                    argbColor = HeroContainer.toArgb(),
+                )
+            }.getOrNull()
             val plate = GlanceModifier
                 .fillMaxSize()
-                .background(background)
-                .let { m -> if (corner != null) m.cornerRadius(corner) else m }
+                .let { m ->
+                    if (plateBitmap != null) {
+                        m.background(ImageProvider(plateBitmap))
+                    } else {
+                        m.background(background)
+                    }
+                }
                 .padding(horizontal = 16.dp, vertical = 8.dp)
                 .clickable(
                     actionStartActivity<MainActivity>(
@@ -242,35 +300,98 @@ class DailyNameWidget : GlanceAppWidget() {
                         )
                     }
                     if (showTransliteration) {
-                        Text(
-                            text = name.transliteration,
-                            maxLines = 1,
-                            style = TextStyle(
-                                color = textColor,
-                                fontSize = if (roomy) 18.sp else 16.sp,
-                                fontFamily = serif,
-                                textAlign = TextAlign.Center
-                            ),
-                            // The hero card pairs Arabic and transliteration
-                            // at 6dp when there is room; 4dp when not.
-                            modifier = GlanceModifier.padding(top = if (roomy) 6.dp else 4.dp)
-                        )
+                        // Same pxPerSp as the Arabic so the line still grows
+                        // with the system font scale, exactly as the sp Text
+                        // it replaces did. The height cap mirrors the line box
+                        // that Text produced, so the plate's layout does not
+                        // change noticeably.
+                        val translitSp = if (roomy) 18f else 16f
+                        val translitBitmap = light?.let {
+                            latinBitmap(
+                                typeface = it,
+                                text = name.transliteration,
+                                targetSp = translitSp,
+                                maxWidthPx = maxWidthPx,
+                                maxHeightPx = 26f * density * fontScale,
+                                pxPerSp = density * fontScale,
+                                color = HeroText.toArgb(),
+                                italic = false,
+                            )
+                        }
+                        if (translitBitmap != null) {
+                            Image(
+                                provider = ImageProvider(translitBitmap),
+                                // Decorative: the Arabic bitmap above already
+                                // announces the name's Latin form, so this
+                                // stays silent to avoid a double read.
+                                contentDescription = null,
+                                modifier = GlanceModifier
+                                    // The hero card pairs Arabic and
+                                    // transliteration at 6dp when there is
+                                    // room; 4dp when not.
+                                    .padding(top = if (roomy) 6.dp else 4.dp)
+                                    .width((translitBitmap.width / density).dp)
+                                    .height((translitBitmap.height / density).dp),
+                                contentScale = ContentScale.FillBounds,
+                            )
+                        } else {
+                            Text(
+                                text = name.transliteration,
+                                maxLines = 1,
+                                style = TextStyle(
+                                    color = textColor,
+                                    fontSize = translitSp.sp,
+                                    fontFamily = serif,
+                                    textAlign = TextAlign.Center
+                                ),
+                                // The hero card pairs Arabic and transliteration
+                                // at 6dp when there is room; 4dp when not.
+                                modifier = GlanceModifier.padding(top = if (roomy) 6.dp else 4.dp)
+                            )
+                        }
                     }
                     if (showTitle) {
-                        Text(
-                            text = name.title,
-                            // Two lines fit the TALL bucket with a 30sp Arabic;
-                            // only the tallest bucket may wrap to three.
-                            maxLines = if (roomy) 3 else 2,
-                            style = TextStyle(
-                                color = subtextColor,
-                                fontSize = if (roomy) 14.sp else 12.sp,
-                                fontStyle = FontStyle.Italic,
-                                fontFamily = serif,
-                                textAlign = TextAlign.Center
-                            ),
-                            modifier = GlanceModifier.padding(top = 4.dp)
-                        )
+                        val titleSp = if (roomy) 14f else 12f
+                        val titleBitmap = mediumItalic?.let {
+                            latinBitmap(
+                                typeface = it,
+                                text = name.title,
+                                targetSp = titleSp,
+                                maxWidthPx = maxWidthPx,
+                                maxHeightPx = 40f * density * fontScale,
+                                pxPerSp = density * fontScale,
+                                color = HeroSubtext.toArgb(),
+                                italic = true,
+                            )
+                        }
+                        if (titleBitmap != null) {
+                            Image(
+                                provider = ImageProvider(titleBitmap),
+                                // Decorative; the Arabic bitmap above carries
+                                // the day's name for screen readers.
+                                contentDescription = null,
+                                modifier = GlanceModifier
+                                    .padding(top = 4.dp)
+                                    .width((titleBitmap.width / density).dp)
+                                    .height((titleBitmap.height / density).dp),
+                                contentScale = ContentScale.FillBounds,
+                            )
+                        } else {
+                            Text(
+                                text = name.title,
+                                // Two lines fit the TALL bucket with a 30sp Arabic;
+                                // only the tallest bucket may wrap to three.
+                                maxLines = if (roomy) 3 else 2,
+                                style = TextStyle(
+                                    color = subtextColor,
+                                    fontSize = titleSp.sp,
+                                    fontStyle = FontStyle.Italic,
+                                    fontFamily = serif,
+                                    textAlign = TextAlign.Center
+                                ),
+                                modifier = GlanceModifier.padding(top = 4.dp)
+                            )
+                        }
                     }
                 }
                 // When name is null the widget shows an empty emerald plate
@@ -330,6 +451,181 @@ internal fun arabicBitmap(
     return null
 }
 
+/**
+ * Renders one line of [text] in [typeface] onto a transparent bitmap — the
+ * Latin twin of [arabicBitmap]. RemoteViews text cannot wear a bundled font,
+ * and the widget's transliteration and title belong to the same Spectral
+ * faces the hero, share and notification plates wear, so they are rasterized
+ * here exactly as the Arabic is in HAFS. The size steps down from [targetSp]
+ * by 0.95× per pass (the notification plate's name fit; DailyPlate.kt) until
+ * the line fits the given bounds, never below the 0.45× floor that fit
+ * logic's own.
+ *
+ * Returns null when even the floor size cannot fit — long titles that used to
+ * wrap into two lines keep the wrapping system-serif Text path for exactly
+ * that case, so the plate's layout never changes to admit the bitmap. Shape,
+ * slack and baseline placement match [arabicBitmap]: a few pixels of pad each
+ * side because swashes can exceed the advance width, and the baseline one
+ * pixel in from the top so nothing kisses the edge. [italic] only matters for
+ * an upright face — the bundled Spectral Medium Italic is already oblique,
+ * and Typeface.create with ITALIC hands it back unchanged.
+ */
+private fun latinBitmap(
+    typeface: Typeface,
+    text: String,
+    targetSp: Float,
+    maxWidthPx: Float,
+    maxHeightPx: Float,
+    pxPerSp: Float,
+    color: Int,
+    italic: Boolean,
+): Bitmap? {
+    val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        this.typeface = if (italic) Typeface.create(typeface, Typeface.ITALIC) else typeface
+        this.color = color
+        textAlign = Paint.Align.CENTER
+    }
+    var sizeSp = targetSp
+    val floorSp = targetSp * 0.45f
+    while (sizeSp >= floorSp) {
+        paint.textSize = sizeSp * pxPerSp
+        val width = paint.measureText(text)
+        val metrics = paint.fontMetrics
+        val height = metrics.bottom - metrics.top
+        if (width <= maxWidthPx && height <= maxHeightPx) {
+            val w = ceil(width + 8f).toInt().coerceAtLeast(1)
+            val h = ceil(height + 2f).toInt().coerceAtLeast(1)
+            val bitmap = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
+            val canvas = Canvas(bitmap)
+            canvas.drawText(text, w / 2f, -metrics.top + 1f, paint)
+            return bitmap
+        }
+        sizeSp *= 0.95f
+    }
+    return null
+}
+
+/**
+ * Paints [argbColor] into a [widthPx] × [heightPx] bitmap whose corners round
+ * off as a squircle — the same superellipse the app's SquircleShape clips the
+ * app's own surfaces with (exponent n = 4, sampled at [SAMPLES_PER_CORNER]
+ * points per corner rather than fitted with beziers, so the geometry is
+ * exact). The widget's RemoteViews has no Compose shape engine, so the shape
+ * is rasterized here and served as the plate's background image; the corners
+ * match the system plates Samsung and Pixel launchers wear, and the launcher's
+ * own circular mask clips nothing away because the superellipse sits just
+ * inside the circle of the same radius.
+ *
+ * [radiusPx] is the corner radius in pixels — this device's system radius.
+ * A zero or negative size returns null (the caller falls back to the flat
+ * ColorProvider background), while an oversized radius only bends the corner
+ * geometry back toward the rectangle, never to a missing plate.
+ */
+private fun squirclePlateBitmap(
+    widthPx: Int,
+    heightPx: Int,
+    radiusPx: Float,
+    argbColor: Int,
+): Bitmap? {
+    if (widthPx <= 0 || heightPx <= 0) return null
+    val w = widthPx.toFloat()
+    val h = heightPx.toFloat()
+    val r = radiusPx.coerceIn(0f, min(w, h) / 2f)
+    val n = 4f
+    // Platform type: cannot be null; an allocation failure throws, which the
+    // caller's runCatching turns into the flat-color fallback.
+    val bitmap = Bitmap.createBitmap(widthPx, heightPx, Bitmap.Config.ARGB_8888)
+    val canvas = Canvas(bitmap)
+    if (r <= 0f) {
+        canvas.drawColor(argbColor)
+        return bitmap
+    }
+
+    val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = argbColor }
+    val path = Path()
+
+    // Walk the outline clockwise exactly as SquircleShape.createOutline does:
+    // a straight edge, a superellipse corner, a straight edge, a corner, and
+    // so on. Each corner is sampled from its start seam to its end seam; the
+    // superellipse is tangent to the edges at both seams, so there is no kink
+    // anywhere on the plate's edge.
+    path.moveTo(r, 0f)
+    path.lineTo(w - r, 0f)
+    topRight(path, w, r, n)          // (w - r, 0) -> (w, r)
+    path.lineTo(w, h - r)
+    bottomRight(path, w, h, r, n)    // (w, h - r) -> (w - r, h)
+    path.lineTo(r, h)
+    bottomLeft(path, h, r, n)        // (r, h) -> (0, h - r)
+    path.lineTo(0f, r)
+    topLeft(path, r, n)              // (0, r) -> (r, 0)
+    path.close()
+
+    canvas.drawPath(path, paint)
+    return bitmap
+}
+
+/** Sub-pixel at every radius the app uses; cheap to pay once per render. */
+private const val SAMPLES_PER_CORNER = 48
+
+/**
+ * The four corner walkers below are SquircleShape's sampled superellipse,
+ * ported one-to-one onto an android.graphics.Path — the widget's RemoteViews
+ * cannot wear a Compose shape, so the geometry is repeated rather than
+ * shared. Direction and formula both matter: each loop runs from the corner's
+ * start seam to its end seam so the arc lands exactly where the straight
+ * edges already reached, and cos/sin are clamped to [0, 1] because at the
+ * seam theta = π/2 the float32 π/2 rounds a hair above the true value — a
+ * tiny negative cos() to a fractional power is NaN, which would poison the
+ * whole path and blank the plate.
+ */
+private fun topLeft(path: Path, r: Float, n: Float) {
+    val halfPi = (PI / 2).toFloat()
+    val quad = 2f / n
+    // Apex at (0, 0): the arc runs (0, r) -> (r, 0).
+    for (i in 0..SAMPLES_PER_CORNER) {
+        val theta = i.toFloat() / SAMPLES_PER_CORNER * halfPi
+        val xs = r * cos(theta).coerceIn(0f, 1f).pow(quad)
+        val ys = r * sin(theta).coerceIn(0f, 1f).pow(quad)
+        path.lineTo(r - xs, r - ys)
+    }
+}
+
+private fun topRight(path: Path, w: Float, r: Float, n: Float) {
+    val halfPi = (PI / 2).toFloat()
+    val quad = 2f / n
+    // Apex at (w, 0), travelling from the top seam to the right seam.
+    for (i in 0..SAMPLES_PER_CORNER) {
+        val theta = (1f - i.toFloat() / SAMPLES_PER_CORNER) * halfPi
+        val xs = r * cos(theta).coerceIn(0f, 1f).pow(quad)
+        val ys = r * sin(theta).coerceIn(0f, 1f).pow(quad)
+        path.lineTo(w - r + xs, r - ys)
+    }
+}
+
+private fun bottomRight(path: Path, w: Float, h: Float, r: Float, n: Float) {
+    val halfPi = (PI / 2).toFloat()
+    val quad = 2f / n
+    // Apex at (w, h), from the right seam to the bottom seam.
+    for (i in 0..SAMPLES_PER_CORNER) {
+        val theta = i.toFloat() / SAMPLES_PER_CORNER * halfPi
+        val xs = r * cos(theta).coerceIn(0f, 1f).pow(quad)
+        val ys = r * sin(theta).coerceIn(0f, 1f).pow(quad)
+        path.lineTo(w - r + xs, h - r + ys)
+    }
+}
+
+private fun bottomLeft(path: Path, h: Float, r: Float, n: Float) {
+    val halfPi = (PI / 2).toFloat()
+    val quad = 2f / n
+    // Apex at (0, h), from the bottom seam to the left seam.
+    for (i in 0..SAMPLES_PER_CORNER) {
+        val theta = (1f - i.toFloat() / SAMPLES_PER_CORNER) * halfPi
+        val xs = r * cos(theta).coerceIn(0f, 1f).pow(quad)
+        val ys = r * sin(theta).coerceIn(0f, 1f).pow(quad)
+        path.lineTo(r - xs, h - r + ys)
+    }
+}
+
 class DailyNameWidgetReceiver : GlanceAppWidgetReceiver() {
     override val glanceAppWidget: GlanceAppWidget = DailyNameWidget()
 }
@@ -339,7 +635,10 @@ class DailyNameWidgetReceiver : GlanceAppWidgetReceiver() {
  * publishes so widgets can match the launcher's rounding (`16dp` on Pixel,
  * other values elsewhere). Read by name — the dimen is hidden, and OEM builds
  * may not carry it — with a fallback to the 20dp the widget has always used.
- * getDimension returns px; convert once here so callers stay in dp.
+ * Called on every API level: the widget's squircle plate is painted at this
+ * radius everywhere, so below 12 the 20dp fallback is what gives the plate
+ * its corners at all. getDimension returns px; convert once here so callers
+ * stay in dp.
  */
 private fun systemCornerRadius(context: Context): Dp = runCatching {
     val id = context.resources.getIdentifier(

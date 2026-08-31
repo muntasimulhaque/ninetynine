@@ -1,6 +1,6 @@
 package io.github.muntasimulhaque.ninetynine.ui.home
 
-import androidx.activity.compose.BackHandler
+import androidx.activity.compose.PredictiveBackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
@@ -22,6 +22,8 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentWidth
@@ -64,8 +66,6 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
@@ -87,6 +87,7 @@ import io.github.muntasimulhaque.ninetynine.ui.theme.Motion
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.ArabicSize
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.ArabicText
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.FitText
+import io.github.muntasimulhaque.ninetynine.ui.theme.components.LocalBottomBarOverlay
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.NameListItem
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.NameRowInset
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.nameRowTextInset
@@ -98,7 +99,9 @@ import io.github.muntasimulhaque.ninetynine.ui.theme.components.PageMessage
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.TabSettingsAction
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.barMeasure
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.paperTopBarColors
+import io.github.muntasimulhaque.ninetynine.ui.theme.components.scaledGap
 import io.github.muntasimulhaque.ninetynine.util.SearchFilter
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -158,12 +161,27 @@ fun HomeScreen(
     // what it has always done on a top-level tab — leave the app. So a
     // reader mid-search can never be ejected by the gesture that everywhere
     // else retreats, and nothing outside search changed at all.
-    BackHandler(enabled = searchOpen) {
-        if (query.isNotEmpty()) {
-            viewModel.setSearchQuery("")
-        } else {
-            searchOpen = false
-            focusManager.clearFocus()
+    //
+    // PredictiveBackHandler, not BackHandler: while search is open the
+    // system's back-to-home preview animates alongside the unwind, instead
+    // of being suppressed until the gesture commits.
+    if (searchOpen) {
+        PredictiveBackHandler { events ->
+            // The unwinding work happens on the gesture's COMMIT (the flow
+            // completes); a release before commit cancels the collection and
+            // search stays exactly as it was. Progress events are unused —
+            // search has no preview of its own to morph.
+            try {
+                events.collect { }
+                if (query.isNotEmpty()) {
+                    viewModel.setSearchQuery("")
+                } else {
+                    searchOpen = false
+                    focusManager.clearFocus()
+                }
+            } catch (e: CancellationException) {
+                // Gesture released before commit.
+            }
         }
     }
 
@@ -278,7 +296,10 @@ fun HomeScreen(
             start = 0.dp,
             end = 0.dp,
             top = padding.calculateTopPadding(),
-            bottom = padding.calculateBottomPadding() + 16.dp,
+            // Clears the floating plate plus its margins; the scrim needs none
+            // for the list itself.
+            bottom = padding.calculateBottomPadding() +
+                if (LocalBottomBarOverlay.current) 116.dp else 16.dp,
         )
         // The rule between rows starts where the names do, not under their
         // numbers. And wide screens keep the book's column: the list, the hero
@@ -288,6 +309,10 @@ fun HomeScreen(
         Box(
             Modifier
                 .fillMaxSize()
+                // The keyboard rises for the bar's search field; without this
+                // the last result rows sit behind the IME. Edge-to-edge is
+                // enabled app-wide, so the inset must be consumed here.
+                .imePadding()
                 .wrapContentWidth(Alignment.CenterHorizontally)
                 .widthIn(max = pageMeasure())
         ) {
@@ -383,8 +408,9 @@ fun HomeScreen(
  * whether by Back (one layer per press, see [HomeScreen]'s handler), by the
  * corner ✕, or by an empty result page offering "Clear search".
  *
- * The hint rides on the field only while it is empty. Set unconditionally,
- * contentDescription would replace the field's text and a screen reader
+ * The hint rides on the field only while it is empty, and serves as its
+ * accessible label in that state — no separate contentDescription: set
+ * unconditionally it would replace the field's text, and a screen reader
  * would never read the query back.
  */
 @Composable
@@ -394,7 +420,6 @@ private fun HomeSearchField(
 ) {
     val focusManager = LocalFocusManager.current
     val focusRequester = remember { FocusRequester() }
-    val searchLabel = stringResource(R.string.cd_search)
     // races composition on some devices; a few short retries settle it the
     // honest way instead of a fixed sleep.
     LaunchedEffect(Unit) {
@@ -416,10 +441,12 @@ private fun HomeSearchField(
             onValueChange = onQueryChange,
             modifier = Modifier
                 .weight(1f)
-                .focusRequester(focusRequester)
-                .semantics {
-                    if (query.isEmpty()) contentDescription = searchLabel
-                },
+                // The field's own box is one text line (~24dp); without this
+                // the app's only search entry point offers a sub-48dp target
+                // to fingers and TalkBack alike. The bar slot is already tall —
+                // this hands that height to the control.
+                .heightIn(min = 48.dp)
+                .focusRequester(focusRequester),
             textStyle = MaterialTheme.typography.bodyLarge.copy(
                 color = MaterialTheme.colorScheme.onSurface,
             ),
@@ -493,7 +520,7 @@ private fun DailyHeroCard(name: Name, onClick: () -> Unit) {
                 color = HeroGold,
                 textAlign = TextAlign.Center,
             )
-            Spacer(Modifier.height(14.dp))
+            Spacer(Modifier.height(scaledGap(14.dp)))
             ArabicText(
                 text = name.arabic,
                 fontSize = ArabicSize.Panel,
