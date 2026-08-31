@@ -1,5 +1,35 @@
 # AGENTS.md
 
+> **HAND-OFF NOTE (delete when done — see last line).**
+> Branch `ui-refresh` is pushed at `a30920b` ("UI refresh: bar variants,
+> widget squircle, Latin light face, V-batch fixes"). The FULL verification
+> suite (`:app:testDebugUnitTest :app:lintDebug :app:assembleDebug`) is
+> verified GREEN locally on that commit: 75/75 unit tests, 0 lint errors,
+> APK assembled. Do not re-do the audit or the implementation.
+>
+> REMAINING WORK, in order (per the Release hand-off section below):
+> 1. Trigger `screenshots.yml` on the `ui-refresh` branch
+>    (`gh workflow run screenshots.yml -R muntasimulhaque/ninetynine
+>    --ref ui-refresh`) and await the green run
+>    (`gh run list --workflow screenshots.yml --ref ui-refresh`).
+>    The bottom bar currently builds as **variant B** (floating squircle,
+>    `BAR_VARIANT_FLOATING = true` in MainActivity.kt); variant C is behind
+>    the same flag. If the owner wants to compare both, flip the flag,
+>    commit, re-run the workflow, and let them pick; otherwise screenshot B.
+> 2. Download the three artifacts into the repo's hand-off destination:
+>    `gh run download <run-id> -R muntasimulhaque/ninetynine -n
+>    store-screenshots-phone -D docs/screenshots/phone` (likewise
+>    `store-screenshots-tablet7` → `docs/screenshots/tablet7` and
+>    `store-screenshots-tablet10` → `docs/screenshots/tablet10`).
+> 3. Version bump **1.14 / 24** in `app/build.gradle.kts` (and the version
+>    field in `docs/play-listing.md`), write the ≤500-char "What's new"
+>    notes into `docs/play-listing.md`, commit, and merge `ui-refresh`
+>    into `main` (push to main = Play release candidate; verify CI green
+>    with the full 40-char SHA via `gh`).
+>
+> Once ALL remaining work is done, the finishing harness MUST delete this
+> hand-off note in the same change.
+
 Guidance for AI coding agents working in this repository: what the app is,
 the conventions it holds (many hard-won), and the traps that bite. Detailed
 private notes live outside the repo; this file is safe to read and
