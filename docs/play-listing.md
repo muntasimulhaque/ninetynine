@@ -10,7 +10,7 @@ so do not add a word or a stray space.
 
 - **Application ID (package name):** `io.github.muntasimulhaque.ninetynine`
 - **Privacy policy URL:** `https://muntasimulhaque.github.io/ninetynine/privacy-policy.html`
-- **Version (this release):** versionName `1.16`, versionCode `26`
+- **Version (this release):** versionName `1.17`, versionCode `27`
 
 ---
 
@@ -57,6 +57,22 @@ Made to be read:
 
 Free and open source. May Allah make us among those who learn, memorize,
 understand and act upon His beautiful Names.
+```
+
+## What's new (version 1.17)
+
+```
+The page now ends the way it reads:
+
+• The bottom of every list clears the
+  tab bar — the 99th Name is fully
+  visible when you scroll to the end.
+• The bar rests the same way in every
+  theme: a soft shadow in dark and
+  true-black, and no more thin outline.
+• Search, flashcards, quiz and the
+  widget are unchanged, as are all 99
+  Names.
 ```
 
 ## What's new (version 1.16)

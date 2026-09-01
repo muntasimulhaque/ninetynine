@@ -73,9 +73,13 @@ val ListInset = 20.dp
 val PageInset = 24.dp
 val ReadingInset = 28.dp
 
-/** True while the bottom bar floats OVER content (scroll-under); screens grow
- *  their bottom content padding so the last rows clear the plate. */
-val LocalBottomBarOverlay = staticCompositionLocalOf { false }
+/** The floating bottom bar's total occupied height (plate + margins + the
+ *  system gesture strip) while it floats OVER content (scroll-under); 0dp when
+ *  the bar is hidden. Screens grow their bottom content padding by this so the
+ *  last rows clear the plate — measured in MainActivity, never a constant: the
+ *  bar's height follows the system font scale and the strip follows the
+ *  device's navigation mode (24dp gesture, 48dp three-button). */
+val LocalBottomBarOverlay = staticCompositionLocalOf { 0.dp }
 
 /** Small caps in gold, widely tracked — the app's only kind of heading label. */
 @Composable

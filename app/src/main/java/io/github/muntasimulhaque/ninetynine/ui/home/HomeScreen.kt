@@ -296,10 +296,11 @@ fun HomeScreen(
             start = 0.dp,
             end = 0.dp,
             top = padding.calculateTopPadding(),
-            // Clears the floating plate plus its margins; the scrim needs none
-            // for the list itself.
+            // Clears the floating plate plus its margins — the bar's measured
+            // height (it follows font scale and the device's navigation mode)
+            // plus a little air; the scrim needs none for the list itself.
             bottom = padding.calculateBottomPadding() +
-                if (LocalBottomBarOverlay.current) 116.dp else 16.dp,
+                LocalBottomBarOverlay.current + 16.dp,
         )
         // The rule between rows starts where the names do, not under their
         // numbers. And wide screens keep the book's column: the list, the hero

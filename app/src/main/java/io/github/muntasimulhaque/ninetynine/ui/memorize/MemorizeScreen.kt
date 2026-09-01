@@ -211,8 +211,9 @@ fun MemorizeScreen(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-            // Floating bar: the NavRows must clear the plate.
-            Spacer(Modifier.height(24.dp + if (LocalBottomBarOverlay.current) 100.dp else 0.dp))
+            // Floating bar: the NavRows must clear the plate — the bar's
+            // measured height plus a little air.
+            Spacer(Modifier.height(24.dp + LocalBottomBarOverlay.current))
         }
     }
 }

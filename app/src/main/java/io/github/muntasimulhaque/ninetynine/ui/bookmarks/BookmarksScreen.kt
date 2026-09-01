@@ -94,9 +94,10 @@ fun BookmarksScreen(
                 state = listState,
                 contentPadding = PaddingValues(
                     top = padding.calculateTopPadding(),
-                    // Floating bar: the last rows must clear the plate.
+                    // Floating bar: the last rows must clear the plate — the
+                    // bar's measured height plus a little air.
                     bottom = padding.calculateBottomPadding() +
-                        if (LocalBottomBarOverlay.current) 116.dp else 16.dp,
+                        LocalBottomBarOverlay.current + 16.dp,
                 ),
                 modifier = Modifier.fillMaxSize(),
             ) {

@@ -56,6 +56,14 @@ private fun deviceFactorFor(smallestWidthDp: Int): Float = when {
  */
 val LocalDarkTheme = staticCompositionLocalOf { false }
 
+/**
+ * Whether the reader chose the AMOLED Black theme specifically. DARK and BLACK
+ * both render dark ([LocalDarkTheme]), but BLACK's true-black page gives a
+ * shadow nothing to darken, so a plate that lifts by tone — the bottom bar —
+ * takes one container rung more there to read at the same perceived height.
+ */
+val LocalPureBlackTheme = staticCompositionLocalOf { false }
+
 @Composable
 fun Names99Theme(
     themeMode: ThemeMode = ThemeMode.SYSTEM,
@@ -98,6 +106,7 @@ fun Names99Theme(
         LocalTextScale provides readingScale,
         LocalDeviceFactor provides deviceFactor,
         LocalDarkTheme provides darkTheme,
+        LocalPureBlackTheme provides (themeMode == ThemeMode.BLACK),
     ) {
         val motionScale = rememberAnimatorDurationScale()
         CompositionLocalProvider(LocalMotionScale provides motionScale) {

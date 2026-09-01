@@ -16,7 +16,6 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -49,6 +48,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -58,6 +58,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Outline
 import androidx.compose.ui.graphics.Shape
@@ -100,6 +102,7 @@ import io.github.muntasimulhaque.ninetynine.ui.memorize.QuizScreen
 import io.github.muntasimulhaque.ninetynine.ui.settings.SettingsScreen
 import io.github.muntasimulhaque.ninetynine.ui.theme.LocalDarkTheme
 import io.github.muntasimulhaque.ninetynine.ui.theme.LocalMotionScale
+import io.github.muntasimulhaque.ninetynine.ui.theme.LocalPureBlackTheme
 import io.github.muntasimulhaque.ninetynine.ui.theme.Motion
 import io.github.muntasimulhaque.ninetynine.ui.theme.Names99Theme
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.FitText
@@ -330,6 +333,17 @@ private fun App(
         val currentRoute = backStackEntry?.destination?.route
         val showBottomBar = currentRoute in topLevelRoutes.map { it.route }
 
+        // The floating bar overlays the lists (scroll-under), so the screens
+        // grow their bottom content padding by the bar's occupied height —
+        // measured, not guessed: the bar's own height follows the system font
+        // scale and the gesture strip follows the device's navigation mode
+        // (24dp gesture, 48dp three-button), so no constant fits every
+        // device. The bar reports its laid-out size from below; a pushed
+        // screen hides the bar and the clearance collapses to zero.
+        val density = LocalDensity.current
+        var bottomBarHeightPx by remember { mutableIntStateOf(0) }
+        val bottomBarClearance = with(density) { bottomBarHeightPx.toDp() }
+
         // Re-tapping the tab you are already on returns to the top of its list.
         // Scroll to name 80 and the only way back to the daily card used to be
         // to fling through 79 rows; there is no fast-scroller, by an earlier
@@ -373,136 +387,142 @@ private fun App(
 
         Box(Modifier.fillMaxSize()) {
             val motionScale = LocalMotionScale.current
-            NavHost(
-                navController = navController,
-                startDestination = "names",
-                modifier = Modifier.fillMaxSize(),
-                // Pushed screens rise gently into place; pops sink away.
-                enterTransition = {
-                    fadeIn(Motion.spec(motionScale, Motion.GENTLE, easing = Motion.Settle)) +
-                        slideInVertically(Motion.spec(motionScale, Motion.GENTLE, easing = Motion.Settle)) { it / 24 }
-                },
-                exitTransition = { fadeOut(Motion.spec(motionScale, Motion.QUICK)) },
-                popEnterTransition = { fadeIn(Motion.spec(motionScale, Motion.GENTLE)) },
-                popExitTransition = {
-                    fadeOut(Motion.spec(motionScale, Motion.GENTLE)) +
-                        slideOutVertically(Motion.spec(motionScale, Motion.GENTLE, easing = Motion.Settle)) { it / 24 }
-                },
+            // The provider MUST reach the screens: scoped to the bar alone it
+            // tells them nothing, and the last rows then sit behind the plate
+            // (shipped that way once — 1.15/1.16 hid name 99 behind the bar).
+            CompositionLocalProvider(
+                LocalBottomBarOverlay provides if (showBottomBar) bottomBarClearance else 0.dp,
             ) {
-                composable("names", enterTransition = tabFade(motionScale), exitTransition = tabFadeOut(motionScale)) {
-                    HomeScreen(
-                        viewModel = viewModel,
-                        onNameClick = { number -> navController.navigate("detail/$number") },
-                        onSettings = { navController.navigate("settings") },
-                        listState = namesListState,
-                    )
-                }
-                // The scope says which list the reader arrived from, and so
-                // which list the chevrons walk. Optional, so every existing
-                // entry point — the names list, the widget, the notification —
-                // keeps landing on all 99 without saying anything.
-                composable(
-                    "detail/{number}?scope={scope}",
-                    arguments = listOf(
-                        navArgument("number") { type = NavType.IntType },
-                        navArgument("scope") {
-                            type = NavType.StringType
-                            defaultValue = SCOPE_ALL
-                        },
-                    ),
-                ) { entry ->
-                    DetailScreen(
-                        viewModel = viewModel,
-                        startNumber = entry.arguments?.getInt("number") ?: 1,
-                        bookmarksOnly =
-                            entry.arguments?.getString("scope") == SCOPE_BOOKMARKS,
-                        onBack = { navController.popBackStack() },
-                    )
-                }
-                composable("memorize", enterTransition = tabFade(motionScale), exitTransition = tabFadeOut(motionScale)) {
-                    MemorizeScreen(
-                        viewModel = viewModel,
-                        onFlashcards = { navController.navigate("flashcards") },
-                        onQuiz = { navController.navigate("quiz") },
-                        onLearned = { navController.navigate("learned") },
-                        onSettings = { navController.navigate("settings") },
-                    )
-                }
-                // The two list tabs offer their empties the same way out: the
-                // names list, where a bookmark or a learned tick begins.
-                val browseNames: () -> Unit = {
-                    navController.navigate("names") {
-                        popUpTo(navController.graph.findStartDestination().id) {
-                            saveState = true
+                NavHost(
+                    navController = navController,
+                    startDestination = "names",
+                    modifier = Modifier.fillMaxSize(),
+                    // Pushed screens rise gently into place; pops sink away.
+                    enterTransition = {
+                        fadeIn(Motion.spec(motionScale, Motion.GENTLE, easing = Motion.Settle)) +
+                            slideInVertically(Motion.spec(motionScale, Motion.GENTLE, easing = Motion.Settle)) { it / 24 }
+                    },
+                    exitTransition = { fadeOut(Motion.spec(motionScale, Motion.QUICK)) },
+                    popEnterTransition = { fadeIn(Motion.spec(motionScale, Motion.GENTLE)) },
+                    popExitTransition = {
+                        fadeOut(Motion.spec(motionScale, Motion.GENTLE)) +
+                            slideOutVertically(Motion.spec(motionScale, Motion.GENTLE, easing = Motion.Settle)) { it / 24 }
+                    },
+                ) {
+                    composable("names", enterTransition = tabFade(motionScale), exitTransition = tabFadeOut(motionScale)) {
+                        HomeScreen(
+                            viewModel = viewModel,
+                            onNameClick = { number -> navController.navigate("detail/$number") },
+                            onSettings = { navController.navigate("settings") },
+                            listState = namesListState,
+                        )
+                    }
+                    // The scope says which list the reader arrived from, and so
+                    // which list the chevrons walk. Optional, so every existing
+                    // entry point — the names list, the widget, the notification —
+                    // keeps landing on all 99 without saying anything.
+                    composable(
+                        "detail/{number}?scope={scope}",
+                        arguments = listOf(
+                            navArgument("number") { type = NavType.IntType },
+                            navArgument("scope") {
+                                type = NavType.StringType
+                                defaultValue = SCOPE_ALL
+                            },
+                        ),
+                    ) { entry ->
+                        DetailScreen(
+                            viewModel = viewModel,
+                            startNumber = entry.arguments?.getInt("number") ?: 1,
+                            bookmarksOnly =
+                                entry.arguments?.getString("scope") == SCOPE_BOOKMARKS,
+                            onBack = { navController.popBackStack() },
+                        )
+                    }
+                    composable("memorize", enterTransition = tabFade(motionScale), exitTransition = tabFadeOut(motionScale)) {
+                        MemorizeScreen(
+                            viewModel = viewModel,
+                            onFlashcards = { navController.navigate("flashcards") },
+                            onQuiz = { navController.navigate("quiz") },
+                            onLearned = { navController.navigate("learned") },
+                            onSettings = { navController.navigate("settings") },
+                        )
+                    }
+                    // The two list tabs offer their empties the same way out: the
+                    // names list, where a bookmark or a learned tick begins.
+                    val browseNames: () -> Unit = {
+                        navController.navigate("names") {
+                            popUpTo(navController.graph.findStartDestination().id) {
+                                saveState = true
+                            }
+                            launchSingleTop = true
+                            restoreState = true
                         }
-                        launchSingleTop = true
-                        restoreState = true
+                    }
+                    composable("bookmarks", enterTransition = tabFade(motionScale), exitTransition = tabFadeOut(motionScale)) {
+                        BookmarksScreen(
+                            viewModel = viewModel,
+                            // Paged within the kept names, not across all 99: the
+                            // chevrons should walk the list you are looking at.
+                            onNameClick = { number ->
+                                navController.navigate("detail/$number?scope=$SCOPE_BOOKMARKS")
+                            },
+                            onSettings = { navController.navigate("settings") },
+                            onBrowseNames = browseNames,
+                            listState = bookmarksListState,
+                        )
+                    }
+                    composable("flashcards") {
+                        FlashcardsScreen(
+                            viewModel = viewModel,
+                            onBack = { navController.popBackStack() },
+                        )
+                    }
+                    composable("learned") {
+                        LearnedScreen(
+                            viewModel = viewModel,
+                            onNameClick = { number -> navController.navigate("detail/$number") },
+                            onBrowseNames = browseNames,
+                            onBack = { navController.popBackStack() },
+                        )
+                    }
+                    composable("quiz") {
+                        QuizScreen(
+                            viewModel = viewModel,
+                            onNameClick = { number -> navController.navigate("detail/$number") },
+                            onBack = { navController.popBackStack() },
+                        )
+                    }
+                    composable("settings") {
+                        SettingsScreen(
+                            viewModel = viewModel,
+                            onBack = { navController.popBackStack() },
+                            onAbout = { navController.navigate("about") },
+                        )
+                    }
+                    composable("about") {
+                        AboutScreen(onBack = { navController.popBackStack() })
                     }
                 }
-                composable("bookmarks", enterTransition = tabFade(motionScale), exitTransition = tabFadeOut(motionScale)) {
-                    BookmarksScreen(
-                        viewModel = viewModel,
-                        // Paged within the kept names, not across all 99: the
-                        // chevrons should walk the list you are looking at.
-                        onNameClick = { number ->
-                            navController.navigate("detail/$number?scope=$SCOPE_BOOKMARKS")
-                        },
-                        onSettings = { navController.navigate("settings") },
-                        onBrowseNames = browseNames,
-                        listState = bookmarksListState,
-                    )
-                }
-                composable("flashcards") {
-                    FlashcardsScreen(
-                        viewModel = viewModel,
-                        onBack = { navController.popBackStack() },
-                    )
-                }
-                composable("learned") {
-                    LearnedScreen(
-                        viewModel = viewModel,
-                        onNameClick = { number -> navController.navigate("detail/$number") },
-                        onBrowseNames = browseNames,
-                        onBack = { navController.popBackStack() },
-                    )
-                }
-                composable("quiz") {
-                    QuizScreen(
-                        viewModel = viewModel,
-                        onNameClick = { number -> navController.navigate("detail/$number") },
-                        onBack = { navController.popBackStack() },
-                    )
-                }
-                composable("settings") {
-                    SettingsScreen(
-                        viewModel = viewModel,
-                        onBack = { navController.popBackStack() },
-                        onAbout = { navController.navigate("about") },
-                    )
-                }
-                composable("about") {
-                    AboutScreen(onBack = { navController.popBackStack() })
-                }
             }
-            CompositionLocalProvider(LocalBottomBarOverlay provides true) {
-                AnimatedVisibility(
-                    visible = showBottomBar,
-                    modifier = Modifier.align(Alignment.BottomCenter),
-                    enter = fadeIn(Motion.tween(Motion.QUICK)) + slideInVertically(Motion.tween(Motion.GENTLE)) { it },
-                    exit = fadeOut(Motion.tween(Motion.QUICK)) + slideOutVertically(Motion.tween(Motion.GENTLE)) { it },
-                ) {
-                    QuietBottomBar(
-                        navController = navController,
-                        currentRoute = currentRoute,
-                        listStateFor = { route ->
-                            when (route) {
-                                "names" -> namesListState
-                                "bookmarks" -> bookmarksListState
-                                else -> null
-                            }
-                        },
-                    )
-                }
+            AnimatedVisibility(
+                visible = showBottomBar,
+                modifier = Modifier.align(Alignment.BottomCenter),
+                enter = fadeIn(Motion.tween(Motion.QUICK)) + slideInVertically(Motion.tween(Motion.GENTLE)) { it },
+                exit = fadeOut(Motion.tween(Motion.QUICK)) + slideOutVertically(Motion.tween(Motion.GENTLE)) { it },
+            ) {
+                QuietBottomBar(
+                    navController = navController,
+                    currentRoute = currentRoute,
+                    modifier = Modifier.onSizeChanged { bottomBarHeightPx = it.height },
+                    listStateFor = { route ->
+                        when (route) {
+                            "names" -> namesListState
+                            "bookmarks" -> bookmarksListState
+                            else -> null
+                        }
+                    },
+                )
             }
         }
     }
@@ -532,8 +552,9 @@ private fun QuietBottomBar(
     navController: NavHostController,
     currentRoute: String?,
     listStateFor: (String) -> LazyListState?,
+    modifier: Modifier = Modifier,
 ) {
-    FloatingBar { BottomBarTabs(navController, currentRoute, listStateFor) }
+    FloatingBar(modifier = modifier) { BottomBarTabs(navController, currentRoute, listStateFor) }
 }
 
 /**
@@ -545,12 +566,18 @@ private fun QuietBottomBar(
  * radius is always half the bar's height — semicircular ends, exactly the
  * Uber/Galaxy register) rather than the superellipse [SquircleShape] the
  * cards wear, whose flatter corners read as a rounded rectangle on a wide
- * short plate. Dark/AMOLED: the halo is invisible against near-black, so the
- * outlineVariant hairline edge is what holds the plate off the page.
+ * short plate. One construction in every theme — a paper plate lifted by a
+ * soft halo, no borders anywhere (the hero plates' own symmetry) — with only
+ * the colours changing: light keeps the page's own paper; dark lifts the
+ * plate a container rung above the page, because a shadow is black paint and
+ * on near-black paper the tone is what reads; BLACK takes one rung more, its
+ * true-black page leaving the halo (drawn there too, harmlessly) nothing to
+ * darken.
  */
 @Composable
-private fun FloatingBar(content: @Composable () -> Unit) {
+private fun FloatingBar(modifier: Modifier = Modifier, content: @Composable () -> Unit) {
     val dark = LocalDarkTheme.current
+    val pureBlack = LocalPureBlackTheme.current
     // Capsule/pill, Uber's register — and this is the part the earlier attempts
     // got wrong: a capsule is CIRCULAR arcs (radius = half the short side), not
     // a superellipse. SquircleShape (n=4) even at max radius keeps its ends
@@ -561,25 +588,32 @@ private fun FloatingBar(content: @Composable () -> Unit) {
     // NOT a card — cards keep the smooth squircle, the pill is a capsule by
     // definition.
     val plateShape = RoundedCornerShape(50)
-    val plateModifier = if (dark) {
-        Modifier.border(
-            0.5.dp,
-            MaterialTheme.colorScheme.outlineVariant,
-            plateShape,
-        )
-    } else {
-        // The Uber halo: not shadowElevation (directional, smudgy on paper)
-        // but the plate's own outline, blurred — see [softHalo]. Softer and a
-        // touch stronger than a Material elevation so it reads as a floating
-        // sheet, the way Uber's does.
-        Modifier.softHalo(
-            shape = plateShape,
-            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.14f),
-            radius = 28.dp,
-            offsetY = 8.dp,
-        )
+    // The plate's paper, per theme: the page's own in light; a container rung
+    // above it in dark — a shadow is black paint, so on near-black paper the
+    // tone is what lifts the plate (Material's own dark-elevation grammar).
+    // BLACK's true-black page takes one rung more to read at the same
+    // perceived height. No theme draws a border: light never had one, and the
+    // dark hairline it once wore was the old stand-in for exactly this lift.
+    val plateColor = when {
+        pureBlack -> MaterialTheme.colorScheme.surfaceContainerHigh
+        dark -> MaterialTheme.colorScheme.surfaceContainer
+        else -> MaterialTheme.colorScheme.background
     }
-    Column(Modifier.fillMaxWidth()) {
+    // The Uber halo: not shadowElevation (directional, smudgy on paper)
+    // but the plate's own outline, blurred — see [softHalo]. Softer and a
+    // touch stronger than a Material elevation so it reads as a floating
+    // sheet, the way Uber's does. The ink is the theme's own shadow colour:
+    // the near-black surface ink in light, plain black in dark (at a higher
+    // alpha, since it must darken an already-dark page); on BLACK it falls
+    // invisible and the elevated tone above carries the plate alone.
+    val plateModifier = Modifier.softHalo(
+        shape = plateShape,
+        color = if (dark) Color.Black.copy(alpha = 0.35f)
+        else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.14f),
+        radius = 28.dp,
+        offsetY = 8.dp,
+    )
+    Column(modifier.fillMaxWidth()) {
         Box(
             // fillMaxWidth, then padding, then wrapContentWidth, then the cap —
             // barMeasure()'s own order. The squircle spans the padded width,
@@ -594,7 +628,7 @@ private fun FloatingBar(content: @Composable () -> Unit) {
         ) {
             Surface(
                 shape = plateShape,
-                color = MaterialTheme.colorScheme.background,
+                color = plateColor,
                 modifier = Modifier
                     .fillMaxWidth()
                     .then(plateModifier),
@@ -615,8 +649,9 @@ private fun FloatingBar(content: @Composable () -> Unit) {
  * thing that made the old bar's shadow look heavy. Instead the plate's own
  * [shape] outline is drawn into a [android.graphics.Paint] whose
  * [BlurMaskFilter] spreads it outward evenly, so the plate appears to lift off
- * the page rather than cast a hard shadow. The light theme only: on dark/AMOLED
- * a halo is invisible, so [FloatingBar] hands the job to a hairline border.
+ * the page rather than cast a hard shadow. Drawn in every theme: near-black
+ * surface ink in light, black in dark — where on the AMOLED Black page it
+ * falls invisible and the elevated plate tone carries the lift alone.
  */
 private fun Modifier.softHalo(
     shape: Shape,
