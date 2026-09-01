@@ -63,7 +63,7 @@ versionName, +1 on versionCode per release.** Sequence since the store
 restart: 0.1 … 0.9, then 1.0 / 10, then 1.1 / 11, then 1.2 / 12, then
 1.3 / 13, then 1.4 / 14, then 1.5 / 15, then 1.6 / 16, then 1.7 / 17, then
 1.8 / 18, then 1.9 / 19, then 1.10 / 20, then 1.11 / 21, then 1.12 / 22, then
-1.13 / 23, then **1.14 / 24 (current)**.
+1.13 / 23, then 1.14 / 24, then 1.15 / 25, then **1.16 / 26 (current)**.
 
 The release keystore path/credentials live in a `keystore.properties` outside
 the repo (Google Play Signing Key folder). When absent (CI, fresh clone) the
@@ -342,7 +342,10 @@ app/src/main/assets/     names.json (99 entries), intro.txt, fonts/ (+licenses).
   dragging would make them a fast-scroller (rejected decision).
 - **Bottom bar:** the SELECTED tab's glyph fills; resting tabs wear outlined
   variants (`TopLevelRoute.iconResting`) — a third selection channel beside
-  tint and label weight. Don't collapse back to one filled icon.
+  tint and label weight. Don't collapse back to one filled icon. A tap's press
+  highlight clips to the bar's own capsule register
+  (`RoundedCornerShape(50)` before `selectable`) — never a hard-cornered
+  rectangle inside the pill plate.
 - **Splash is held until first frame:**
   `setKeepOnScreenCondition { !contentReady }`, released by a `SideEffect`
   after the first composition commits — without it a slow device flashes bare

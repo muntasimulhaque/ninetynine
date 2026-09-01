@@ -56,6 +56,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Outline
@@ -685,7 +686,7 @@ private fun BottomBarTabs(
         // let fillMaxHeight swallow the screen.
         modifier = Modifier
             .barMeasure()
-            .padding(vertical = 6.dp, horizontal = 8.dp)
+            .padding(vertical = 4.dp, horizontal = 6.dp)
             .selectableGroup(),
     ) {
         topLevelRoutes.forEach { item ->
@@ -699,7 +700,13 @@ private fun BottomBarTabs(
             Column(
                 modifier = Modifier
                     .weight(1f)
-                    .heightIn(min = 60.dp)
+                    .heightIn(min = 54.dp)
+                    // A tap's highlight wears the bar's own capsule register:
+                    // the selectable's ripple is bounded to the tab's
+                    // rectangle, and this clip crops it to a stadium before it
+                    // flashes — nothing on a tab reaches the corners, so the
+                    // clip costs no content. Same 50% corner as the plate.
+                    .clip(RoundedCornerShape(50))
                     .selectable(
                         selected = selected,
                         role = Role.Tab,
@@ -740,23 +747,23 @@ private fun BottomBarTabs(
                     if (selected) item.icon else item.iconResting,
                     contentDescription = null,
                     tint = tint,
-                    modifier = Modifier.size(22.dp),
+                    modifier = Modifier.size(20.dp),
                 )
-                Spacer(Modifier.height(4.dp))
+                Spacer(Modifier.height(3.dp))
                 // Chrome, not reading matter: the reader's slider
-                // cannot move it — 10sp × the device factor only —
+                // cannot move it — 9sp × the device factor only —
                 // so it can never clip. The device factor DOES
                 // apply: a 7-inch bar gives each tab 200dp and a
                 // 10-inch 427dp, room enough for the wider labels,
-                // while a phone stays at 10sp. System font scaling
+                // while a phone stays at 9sp. System font scaling
                 // does still apply, so the labels fit themselves
                 // rather than ellipsizing to "MEM…".
                 //
                 // "BOOKMARKS" is the longest label the bar carries —
-                // 6.681 em in Spectral Medium, so 155.2dp at a system
-                // font scale of 2.0, against MEMORIZE's 135.0dp. At
+                // 6.681 em in Spectral Medium, so 141.9dp at a system
+                // font scale of 2.0, against MEMORIZE's 121.5dp. At
                 // three tabs a 320dp phone gives each one 102.7dp, so
-                // the worst case is 0.66 and the 0.40 floor is never
+                // the worst case is 0.72 and the 0.40 floor is never
                 // approached. On the 7-inch class the labels
                 // start 1.125× wider and the tab slots are 200dp; on
                 // the 10-inch class 1.25× wider against 427dp — the
@@ -765,8 +772,8 @@ private fun BottomBarTabs(
                 //
                 // This is why Settings is a gear rather than a fourth
                 // tab. A fourth would cut each tab to 76.0dp, putting
-                // BOOKMARKS at 0.49 — 9.8sp rendered, *smaller* than
-                // the 10sp base, so a reader who doubled their system
+                // BOOKMARKS at 0.54 — 9.6sp rendered, no larger than
+                // the 9sp base, so a reader who doubled their system
                 // font would gain nothing at all from having done so.
                 // Selection is carried by weight as well as colour.
                 // Colour alone failed WCAG 1.4.1: primary against

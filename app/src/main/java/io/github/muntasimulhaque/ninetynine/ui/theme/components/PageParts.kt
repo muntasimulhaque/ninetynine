@@ -196,7 +196,7 @@ private const val RunningHeadScale = 0.85f
 @Composable
 fun tabLabelStyle(): TextStyle =
     MaterialTheme.typography.labelSmall.copy(
-        fontSize = (10 * LocalDeviceFactor.current).sp,
+        fontSize = (9 * LocalDeviceFactor.current).sp,
         letterSpacing = 1.2.sp,
     )
 

@@ -10,7 +10,7 @@ so do not add a word or a stray space.
 
 - **Application ID (package name):** `io.github.muntasimulhaque.ninetynine`
 - **Privacy policy URL:** `https://muntasimulhaque.github.io/ninetynine/privacy-policy.html`
-- **Version (this release):** versionName `1.15`, versionCode `25`
+- **Version (this release):** versionName `1.16`, versionCode `26`
 
 ---
 
@@ -57,6 +57,22 @@ Made to be read:
 
 Free and open source. May Allah make us among those who learn, memorize,
 understand and act upon His beautiful Names.
+```
+
+## What's new (version 1.16)
+
+```
+A tidier fit at the foot of the page:
+
+• The tab bar — its pill, icons and
+  labels — is a little smaller, so it
+  sits quietly under the book.
+• Tapping a tab now answers with a
+  capsule highlight, matching the pill
+  bar itself.
+• Search, flashcards, quiz and the
+  widget are unchanged, as are all 99
+  Names.
 ```
 
 ## What's new (version 1.15)
