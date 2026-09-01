@@ -28,7 +28,7 @@ Based on the lecture of Sheikh Ibn Uthaymeen (Rahimahullah), as presented in *"T
 - **Share** — turn any name into a beautifully rendered card (Arabic, transliteration, meaning) and share it as an image — or as plain text, for captions and notes.
 - **Memorize** — flashcards with a flip animation and an "I know it / Still learning" loop, a ten-question quiz with a remembered best score, and a quiet progress count (no streaks, no gamification).
 - **Daily** — a "Name of the Day" that rotates deterministically through all 99, shown on the home screen, as an optional notification at a time you choose, and as a resizable home-screen widget in the app's emerald-and-gold livery, its Name set in the bundled Mushaf typeface.
-- **Considered** — warm paper light theme, dark, and true-black AMOLED; adjustable text size; quiet haptics; bundled KFGQPC Uthmanic Script HAFS (Arabic) and Spectral (Latin) typefaces; predictive back; edge-to-edge.
+- **Considered** — warm paper light theme, dark, and true-black AMOLED; adjustable text size; quiet haptics; a tab bar that floats as a soft pill with a gentle shadow; bundled KFGQPC Uthmanic Script HAFS (Arabic) and Spectral (Latin) typefaces; predictive back; edge-to-edge.
 - **Pure** — no ads, no analytics, no tracking, and **no INTERNET permission**, so the app cannot open a network connection at all. The only permission it declares for itself is notifications, and only if you turn the daily name on; the remaining manifest permissions come from Android's WorkManager library, which schedules the daily reminder. See [PRIVACY.md](PRIVACY.md).
 
 ## Found a mistake in the content?

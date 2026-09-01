@@ -119,18 +119,6 @@ class DailyNameWidget : GlanceAppWidget() {
         val hafs = runCatching {
             ResourcesCompat.getFont(context, R.font.kfgqpc_hafs_uthmanic)
         }.getOrNull()
-        // The Latin faces, loaded the same once-per-render way: the
-        // transliteration in Spectral Light, the title in Spectral Medium
-        // Italic — the faces the hero, share and notification plates wear.
-        // Null only if the resource read fails, which should never happen:
-        // the TTFs ship in the APK. Each null keeps that line on the old
-        // system-serif Text path so a widget always renders.
-        val light = runCatching {
-            ResourcesCompat.getFont(context, R.font.spectral_light)
-        }.getOrNull()
-        val mediumItalic = runCatching {
-            ResourcesCompat.getFont(context, R.font.spectral_mediumitalic)
-        }.getOrNull()
         // Always call provideContent, even when name is null. Without this, a
         // transient load failure (empty list from NamesRepository) would skip
         // the render entirely, and the Glance SessionWorker would consider the
@@ -160,14 +148,9 @@ class DailyNameWidget : GlanceAppWidget() {
             val fontScale = context.resources.configuration.fontScale
                 .takeIf { it > 0f } ?: 1f
 
-            // The Latin lines are set in the app's own Spectral faces — Light
-            // for the transliteration, Medium Italic for the title — painted
-            // into bitmaps like the Arabic, since RemoteViews text cannot
-            // wear a bundled font. Only when a face fails to load does that
-            // line fall back to the system serif — close kin of Spectral, and
-            // the accepted cost of RemoteViews. The Arabic does NOT fall back
-            // to a system approximation: the Name must wear its own script
-            // everywhere it appears.
+            // Latin falls back to the system serif — close kin of Spectral,
+            // and the accepted cost of RemoteViews. The Arabic does NOT fall
+            // back: the Name must wear its own script everywhere it appears.
             val serif = FontFamily("serif")
             // One identity on every home screen: the emerald-and-gold of the
             // hero and share cards, deliberately NOT day/night switched. Bound
@@ -300,98 +283,35 @@ class DailyNameWidget : GlanceAppWidget() {
                         )
                     }
                     if (showTransliteration) {
-                        // Same pxPerSp as the Arabic so the line still grows
-                        // with the system font scale, exactly as the sp Text
-                        // it replaces did. The height cap mirrors the line box
-                        // that Text produced, so the plate's layout does not
-                        // change noticeably.
-                        val translitSp = if (roomy) 18f else 16f
-                        val translitBitmap = light?.let {
-                            latinBitmap(
-                                typeface = it,
-                                text = name.transliteration,
-                                targetSp = translitSp,
-                                maxWidthPx = maxWidthPx,
-                                maxHeightPx = 26f * density * fontScale,
-                                pxPerSp = density * fontScale,
-                                color = HeroText.toArgb(),
-                                italic = false,
-                            )
-                        }
-                        if (translitBitmap != null) {
-                            Image(
-                                provider = ImageProvider(translitBitmap),
-                                // Decorative: the Arabic bitmap above already
-                                // announces the name's Latin form, so this
-                                // stays silent to avoid a double read.
-                                contentDescription = null,
-                                modifier = GlanceModifier
-                                    // The hero card pairs Arabic and
-                                    // transliteration at 6dp when there is
-                                    // room; 4dp when not.
-                                    .padding(top = if (roomy) 6.dp else 4.dp)
-                                    .width((translitBitmap.width / density).dp)
-                                    .height((translitBitmap.height / density).dp),
-                                contentScale = ContentScale.FillBounds,
-                            )
-                        } else {
-                            Text(
-                                text = name.transliteration,
-                                maxLines = 1,
-                                style = TextStyle(
-                                    color = textColor,
-                                    fontSize = translitSp.sp,
-                                    fontFamily = serif,
-                                    textAlign = TextAlign.Center
-                                ),
-                                // The hero card pairs Arabic and transliteration
-                                // at 6dp when there is room; 4dp when not.
-                                modifier = GlanceModifier.padding(top = if (roomy) 6.dp else 4.dp)
-                            )
-                        }
+                        Text(
+                            text = name.transliteration,
+                            maxLines = 1,
+                            style = TextStyle(
+                                color = textColor,
+                                fontSize = if (roomy) 18.sp else 16.sp,
+                                fontFamily = serif,
+                                textAlign = TextAlign.Center
+                            ),
+                            // The hero card pairs Arabic and transliteration
+                            // at 6dp when there is room; 4dp when not.
+                            modifier = GlanceModifier.padding(top = if (roomy) 6.dp else 4.dp)
+                        )
                     }
                     if (showTitle) {
-                        val titleSp = if (roomy) 14f else 12f
-                        val titleBitmap = mediumItalic?.let {
-                            latinBitmap(
-                                typeface = it,
-                                text = name.title,
-                                targetSp = titleSp,
-                                maxWidthPx = maxWidthPx,
-                                maxHeightPx = 40f * density * fontScale,
-                                pxPerSp = density * fontScale,
-                                color = HeroSubtext.toArgb(),
-                                italic = true,
-                            )
-                        }
-                        if (titleBitmap != null) {
-                            Image(
-                                provider = ImageProvider(titleBitmap),
-                                // Decorative; the Arabic bitmap above carries
-                                // the day's name for screen readers.
-                                contentDescription = null,
-                                modifier = GlanceModifier
-                                    .padding(top = 4.dp)
-                                    .width((titleBitmap.width / density).dp)
-                                    .height((titleBitmap.height / density).dp),
-                                contentScale = ContentScale.FillBounds,
-                            )
-                        } else {
-                            Text(
-                                text = name.title,
-                                // Two lines fit the TALL bucket with a 30sp Arabic;
-                                // only the tallest bucket may wrap to three.
-                                maxLines = if (roomy) 3 else 2,
-                                style = TextStyle(
-                                    color = subtextColor,
-                                    fontSize = titleSp.sp,
-                                    fontStyle = FontStyle.Italic,
-                                    fontFamily = serif,
-                                    textAlign = TextAlign.Center
-                                ),
-                                modifier = GlanceModifier.padding(top = 4.dp)
-                            )
-                        }
+                        Text(
+                            text = name.title,
+                            // Two lines fit the TALL bucket with a 30sp Arabic;
+                            // only the tallest bucket may wrap to three.
+                            maxLines = if (roomy) 3 else 2,
+                            style = TextStyle(
+                                color = subtextColor,
+                                fontSize = if (roomy) 14.sp else 12.sp,
+                                fontStyle = FontStyle.Italic,
+                                fontFamily = serif,
+                                textAlign = TextAlign.Center
+                            ),
+                            modifier = GlanceModifier.padding(top = 4.dp)
+                        )
                     }
                 }
                 // When name is null the widget shows an empty emerald plate
@@ -447,60 +367,6 @@ internal fun arabicBitmap(
             return bitmap
         }
         sizeSp -= maxOf(1f, sizeSp * 0.08f)
-    }
-    return null
-}
-
-/**
- * Renders one line of [text] in [typeface] onto a transparent bitmap — the
- * Latin twin of [arabicBitmap]. RemoteViews text cannot wear a bundled font,
- * and the widget's transliteration and title belong to the same Spectral
- * faces the hero, share and notification plates wear, so they are rasterized
- * here exactly as the Arabic is in HAFS. The size steps down from [targetSp]
- * by 0.95× per pass (the notification plate's name fit; DailyPlate.kt) until
- * the line fits the given bounds, never below the 0.45× floor that fit
- * logic's own.
- *
- * Returns null when even the floor size cannot fit — long titles that used to
- * wrap into two lines keep the wrapping system-serif Text path for exactly
- * that case, so the plate's layout never changes to admit the bitmap. Shape,
- * slack and baseline placement match [arabicBitmap]: a few pixels of pad each
- * side because swashes can exceed the advance width, and the baseline one
- * pixel in from the top so nothing kisses the edge. [italic] only matters for
- * an upright face — the bundled Spectral Medium Italic is already oblique,
- * and Typeface.create with ITALIC hands it back unchanged.
- */
-private fun latinBitmap(
-    typeface: Typeface,
-    text: String,
-    targetSp: Float,
-    maxWidthPx: Float,
-    maxHeightPx: Float,
-    pxPerSp: Float,
-    color: Int,
-    italic: Boolean,
-): Bitmap? {
-    val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        this.typeface = if (italic) Typeface.create(typeface, Typeface.ITALIC) else typeface
-        this.color = color
-        textAlign = Paint.Align.CENTER
-    }
-    var sizeSp = targetSp
-    val floorSp = targetSp * 0.45f
-    while (sizeSp >= floorSp) {
-        paint.textSize = sizeSp * pxPerSp
-        val width = paint.measureText(text)
-        val metrics = paint.fontMetrics
-        val height = metrics.bottom - metrics.top
-        if (width <= maxWidthPx && height <= maxHeightPx) {
-            val w = ceil(width + 8f).toInt().coerceAtLeast(1)
-            val h = ceil(height + 2f).toInt().coerceAtLeast(1)
-            val bitmap = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
-            val canvas = Canvas(bitmap)
-            canvas.drawText(text, w / 2f, -metrics.top + 1f, paint)
-            return bitmap
-        }
-        sizeSp *= 0.95f
     }
     return null
 }

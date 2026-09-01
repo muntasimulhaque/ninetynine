@@ -10,7 +10,7 @@ so do not add a word or a stray space.
 
 - **Application ID (package name):** `io.github.muntasimulhaque.ninetynine`
 - **Privacy policy URL:** `https://muntasimulhaque.github.io/ninetynine/privacy-policy.html`
-- **Version (this release):** versionName `1.14`, versionCode `24`
+- **Version (this release):** versionName `1.15`, versionCode `25`
 
 ---
 
@@ -57,6 +57,22 @@ Made to be read:
 
 Free and open source. May Allah make us among those who learn, memorize,
 understand and act upon His beautiful Names.
+```
+
+## What's new (version 1.15)
+
+```
+The tab bar now floats as a smooth
+pill:
+
+• The bar lifts off the page as a capsule
+  — same colour as the paper, a soft
+  shadow, rounded ends.
+• The quiz options and the deck menu
+  match the book's own corners.
+• The home-screen widget reads again
+  in the app's own typefaces.
+• All 99 Names are unchanged.
 ```
 
 ## What's new (version 1.14)

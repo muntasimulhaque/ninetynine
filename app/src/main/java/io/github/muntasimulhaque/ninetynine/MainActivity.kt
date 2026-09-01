@@ -3,6 +3,7 @@ package io.github.muntasimulhaque.ninetynine
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.BlurMaskFilter
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -15,8 +16,6 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -32,6 +31,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
@@ -56,11 +56,19 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Outline
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.asAndroidPath
+import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
+import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
@@ -93,7 +101,6 @@ import io.github.muntasimulhaque.ninetynine.ui.theme.LocalDarkTheme
 import io.github.muntasimulhaque.ninetynine.ui.theme.LocalMotionScale
 import io.github.muntasimulhaque.ninetynine.ui.theme.Motion
 import io.github.muntasimulhaque.ninetynine.ui.theme.Names99Theme
-import io.github.muntasimulhaque.ninetynine.ui.theme.SquircleShape
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.FitText
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.LocalBottomBarOverlay
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.barMeasure
@@ -283,10 +290,6 @@ private const val SCOPE_BOOKMARKS = "bookmarks"
 /** The routes a launcher shortcut may name in its [MainActivity.EXTRA_START_ROUTE]. */
 private const val ROUTE_FLASHCARDS = "flashcards"
 private const val ROUTE_QUIZ = "quiz"
-
-/** Bottom-bar vessel under review: true = floating squircle, shadow, scroll-under
- *  scrim (variant B); false = flat bordered squircle in a surface band (variant C). */
-private const val BAR_VARIANT_FLOATING = true
 
 private data class TopLevelRoute(
     val route: String,
@@ -480,7 +483,7 @@ private fun App(
                     AboutScreen(onBack = { navController.popBackStack() })
                 }
             }
-            CompositionLocalProvider(LocalBottomBarOverlay provides BAR_VARIANT_FLOATING) {
+            CompositionLocalProvider(LocalBottomBarOverlay provides true) {
                 AnimatedVisibility(
                     visible = showBottomBar,
                     modifier = Modifier.align(Alignment.BottomCenter),
@@ -518,10 +521,10 @@ private fun tabFadeOut(motionScale: Float):
 }
 
 /**
- * The bottom bar's vessel switch: the three tabs themselves ([BottomBarTabs])
- * are shared verbatim between the two vessels, while [BAR_VARIANT_FLOATING]
- * picks the plate around them — [FlatBar]'s opaque band or [FloatingBar]'s
- * floating, scroll-under plate.
+ * The bottom bar's vessel: the three tabs themselves ([BottomBarTabs]) inside
+ * the floating, scroll-under plate — [FloatingBar]'s capsule, halo and
+ * transparent gesture strip. The flat variant that once lived beside it was
+ * discarded when the floating capsule was chosen (see plan-of-record).
  */
 @Composable
 private fun QuietBottomBar(
@@ -529,75 +532,53 @@ private fun QuietBottomBar(
     currentRoute: String?,
     listStateFor: (String) -> LazyListState?,
 ) {
-    if (BAR_VARIANT_FLOATING) {
-        FloatingBar { BottomBarTabs(navController, currentRoute, listStateFor) }
-    } else {
-        FlatBar { BottomBarTabs(navController, currentRoute, listStateFor) }
-    }
+    FloatingBar { BottomBarTabs(navController, currentRoute, listStateFor) }
 }
 
 /**
- * Variant C — the flat bar: today's silhouette, an opaque surface band running
- * to the screen's bottom edge, with a bordered squircle plate where the hairline
- * divider used to sit. The [navigationBarsPadding] lives on the trailing
- * [Spacer] — never inside the squircle — so the band still paints the gesture
- * strip in the app's own surface colour.
- */
-@Composable
-private fun FlatBar(content: @Composable () -> Unit) {
-    Surface(color = MaterialTheme.colorScheme.surface) {
-        Column {
-            Box(
-                Modifier
-                    .fillMaxWidth()
-                    .padding(top = 6.dp)
-                    .wrapContentWidth(Alignment.CenterHorizontally)
-                    .widthIn(max = pageMeasure()),
-            ) {
-                Surface(
-                    shape = SquircleShape(26.dp),
-                    color = MaterialTheme.colorScheme.surfaceContainer,
-                    border = BorderStroke(0.5.dp, MaterialTheme.colorScheme.outline),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 14.dp),
-                ) {
-                    content()
-                }
-            }
-            // Gesture-strip band, as today: surface to the screen's bottom
-            // edge, so the system handle sits on the app's paper.
-            Spacer(Modifier.navigationBarsPadding().height(2.dp))
-        }
-    }
-}
-
-/**
- * Variant B — the floating bar: no band at all. A scrim fades the list's last
- * rows into the paper as they pass beneath the plate, which floats on a shadow
- * above a transparent gesture strip. Dark mode adds a hairline border — the
- * shadow is invisible against near-black surfaces, so [SquircleShape]'s
- * outlineVariant edge is what holds the plate off the page.
+ * Variant B — the floating bar: no band at all. The plate lifts off the page
+ * and floats on a soft halo above a transparent gesture strip; the list's rows
+ * pass beneath it, hidden by the plate rather than faded by a scrim. The plate
+ * wears the page's own paper colour — a floating sheet, not a separate band —
+ * and its ends are true capsule/pill arcs ([RoundedCornerShape] at 50%, so the
+ * radius is always half the bar's height — semicircular ends, exactly the
+ * Uber/Galaxy register) rather than the superellipse [SquircleShape] the
+ * cards wear, whose flatter corners read as a rounded rectangle on a wide
+ * short plate. Dark/AMOLED: the halo is invisible against near-black, so the
+ * outlineVariant hairline edge is what holds the plate off the page.
  */
 @Composable
 private fun FloatingBar(content: @Composable () -> Unit) {
     val dark = LocalDarkTheme.current
-    Column(Modifier.fillMaxWidth()) {
-        // Scroll-under scrim: rows fade into the paper as they pass beneath
-        // the plate. Full width even though the plate is inset — acceptable
-        // for the experiment; the margins fade with the rows rather than
-        // reading as a band.
-        Box(
-            Modifier
-                .fillMaxWidth()
-                .height(72.dp)
-                .background(
-                    Brush.verticalGradient(
-                        0f to MaterialTheme.colorScheme.surface.copy(alpha = 0f),
-                        1f to MaterialTheme.colorScheme.surface,
-                    ),
-                ),
+    // Capsule/pill, Uber's register — and this is the part the earlier attempts
+    // got wrong: a capsule is CIRCULAR arcs (radius = half the short side), not
+    // a superellipse. SquircleShape (n=4) even at max radius keeps its ends
+    // flatter than a semicircle, so a wide plate still reads rounded-rt. A
+    // percent corner size of 50% resolves to half the plate's height (the
+    // short side), which makes the two ends meet in a true semicircle: a
+    // stadium. RoundedCornerShape is correct here precisely because the bar is
+    // NOT a card — cards keep the smooth squircle, the pill is a capsule by
+    // definition.
+    val plateShape = RoundedCornerShape(50)
+    val plateModifier = if (dark) {
+        Modifier.border(
+            0.5.dp,
+            MaterialTheme.colorScheme.outlineVariant,
+            plateShape,
         )
+    } else {
+        // The Uber halo: not shadowElevation (directional, smudgy on paper)
+        // but the plate's own outline, blurred — see [softHalo]. Softer and a
+        // touch stronger than a Material elevation so it reads as a floating
+        // sheet, the way Uber's does.
+        Modifier.softHalo(
+            shape = plateShape,
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.14f),
+            radius = 28.dp,
+            offsetY = 8.dp,
+        )
+    }
+    Column(Modifier.fillMaxWidth()) {
         Box(
             // fillMaxWidth, then padding, then wrapContentWidth, then the cap —
             // barMeasure()'s own order. The squircle spans the padded width,
@@ -610,19 +591,9 @@ private fun FloatingBar(content: @Composable () -> Unit) {
                 .wrapContentWidth(Alignment.CenterHorizontally)
                 .widthIn(max = pageMeasure()),
         ) {
-            val plateModifier = if (dark) {
-                Modifier.border(
-                    0.5.dp,
-                    MaterialTheme.colorScheme.outlineVariant,
-                    SquircleShape(26.dp),
-                )
-            } else {
-                Modifier
-            }
             Surface(
-                shape = SquircleShape(26.dp),
-                color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                shadowElevation = 6.dp,
+                shape = plateShape,
+                color = MaterialTheme.colorScheme.background,
                 modifier = Modifier
                     .fillMaxWidth()
                     .then(plateModifier),
@@ -633,6 +604,61 @@ private fun FloatingBar(content: @Composable () -> Unit) {
         // Transparent gesture strip: the plate floats above it and nothing
         // draws here, so the system handle sits on the page itself.
         Spacer(Modifier.navigationBarsPadding().height(2.dp))
+    }
+}
+
+/**
+ * A soft, even halo — the shadow a floating plate wears on paper. Not
+ * [androidx.compose.material3.Surface]'s shadowElevation, which is directional
+ * (it lights from above) and reads smudgy on a flat page; that is the very
+ * thing that made the old bar's shadow look heavy. Instead the plate's own
+ * [shape] outline is drawn into a [android.graphics.Paint] whose
+ * [BlurMaskFilter] spreads it outward evenly, so the plate appears to lift off
+ * the page rather than cast a hard shadow. The light theme only: on dark/AMOLED
+ * a halo is invisible, so [FloatingBar] hands the job to a hairline border.
+ */
+private fun Modifier.softHalo(
+    shape: Shape,
+    color: Color,
+    radius: Dp,
+    offsetY: Dp,
+): Modifier = drawBehind {
+    // The outline lives on the shape at the node's own size. Both outline
+    // kinds the app's shapes produce are handled: Generic (SquircleShape's
+    // sampled path) is drawn as a path, and Rounded (RoundedCornerShape's
+    // capsule) is drawn as a round rect with its own resolved corner radius —
+    // never a boxy fallback. Drawing into the node's own canvas keeps exact,
+    // cache-friendly geometry with no extra allocation.
+    val outline = shape.createOutline(size, layoutDirection, this)
+    val blurRadius = radius.toPx()
+    val shift = offsetY.toPx()
+    val paint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
+        this.color = color.toArgb()
+        maskFilter = BlurMaskFilter(blurRadius, BlurMaskFilter.Blur.NORMAL)
+    }
+    drawIntoCanvas { canvas ->
+        val native = canvas.nativeCanvas
+        native.save()
+        native.translate(0f, shift)
+        when (outline) {
+            is Outline.Generic -> native.drawPath(outline.path.asAndroidPath(), paint)
+            is Outline.Rounded -> {
+                // The outline's RoundRect is already in px (createOutline gets
+                // the size in px), so its corner radius needs no conversion. A
+                // capsule's four corners share one radius; the packed value on
+                // the top-left corner is as good as any.
+                val rr = outline.roundRect
+                val radius = rr.topLeftCornerRadius
+                native.drawRoundRect(
+                    android.graphics.RectF(rr.left, rr.top, rr.right, rr.bottom),
+                    radius.x,
+                    radius.y,
+                    paint,
+                )
+            }
+            else -> Unit
+        }
+        native.restore()
     }
 }
 

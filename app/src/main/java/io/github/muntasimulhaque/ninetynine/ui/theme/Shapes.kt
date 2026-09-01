@@ -12,6 +12,11 @@ import androidx.compose.ui.unit.dp
  * corner next to a system widget. The squircle ramps the bend up gradually, so
  * the edge flows into the corner with no seam. The radii are unchanged — only
  * the curve between them is smoother.
+ *
+ * (The bottom bar is the one exception: a wide, short plate in a squircle
+ * reads as a rounded rectangle, while the bar's register is a true capsule —
+ * see FloatingBar in MainActivity, which takes its shape explicitly rather
+ * than from this map.)
  */
 val AppShapes = Shapes(
     medium = SquircleShape(20.dp),
