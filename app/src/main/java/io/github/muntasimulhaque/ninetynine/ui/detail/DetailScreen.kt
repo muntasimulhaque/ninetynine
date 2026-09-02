@@ -547,10 +547,27 @@ private fun DetailNavPlate(
                         // Al-Mu'akhkhir) shrink a little instead of losing
                         // their tail. TextButton's own primary carries the
                         // colour, as the bare Text did before.
+                        // weight(1f, fill = false) on each FitText keeps the
+                        // pair symmetric about the Row's measurement order: a
+                        // weighted child is measured after the fixed ones, so
+                        // the text is fitted to the space LEFT AFTER its own
+                        // chevron. Without it the NEXT button's FitText was
+                        // measured first, saw the whole slot, declined to
+                        // shrink — and the chevron then overflowed the slot and
+                        // was cut off at any decent font scale, while the
+                        // PREVIOUS button (icon first) always fitted.
                         FitText(
                             text = previousLabel,
                             style = MaterialTheme.typography.titleSmall,
                             color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.weight(1f, fill = false),
+                            // The centre keep-acts crowd the end slots at large
+                            // system font scales, so the longest transliteration
+                            // needs more headroom than the 0.55 default: 0.4
+                            // keeps the worst case at the same effective size
+                            // the bottom bar's labels guarantee (~9sp at a
+                            // 2.0 scale). A Divine Name never loses its tail.
+                            minScale = 0.4f,
                         )
                     }
                 }
@@ -579,6 +596,8 @@ private fun DetailNavPlate(
                             text = nextLabel,
                             style = MaterialTheme.typography.titleSmall,
                             color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.weight(1f, fill = false),
+                            minScale = 0.4f,
                         )
                         Icon(
                             Icons.AutoMirrored.Filled.KeyboardArrowRight,

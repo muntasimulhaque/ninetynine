@@ -548,6 +548,8 @@ eight places (#28, #32, #44, #48, #80, #87, #94, #95).
   (inside screenshots.yml, all three legs red). The canonical suite does not
   compile it: after any screen-signature change, run that task locally
   before pushing. This shipped once (1.18).
+- **`ScrollState.animateScrollTo` kills the app when the animation actually runs.** It is declared `Unit` but its compiled dex passes its `$completion` straight through to `animateScrollBy` (declared `Float`), so when the scroll suspends ≥1 frame and completes, the caller's resumption receives a Float where a Unit was promised — `ClassCastException: Float cannot be cast to kotlin.Unit` (shipped 1.19: re-tapping Memorize or Settings on the bottom bar crashed the app on some devices; repro'd on API 27, invisible where the animation completed inline). Call the Float-typed pair instead — `scrollTo` (jump) / `animateScrollBy` (animated) — so the declared type matches what actually lands. The lazy/pager equivalents (`scrollToItem`, `animateScrollToItem`, `scrollToPage`, `animateScrollToPage`) are proper state machines and safe.
+- **`FitText` beside a fixed sibling in a `Row` must be measured LAST.** Row measures children left to right against the width that remains: a `FitText` placed BEFORE the sibling sees the full row width, declines to shrink, and the sibling then overflows the slot (shipped 1.19: the detail plate's next-name label never shrank and cut its chevron off, while the previous button — icon first — always fitted). Give such a `FitText` `Modifier.weight(1f, fill = false)` so the fixed children are measured first. The same pattern appears in the share wordmark (seal + spacer before it) — already correct, keep it that way.
 - **Modifier order matters:** `heightIn(max=X)` BEFORE `fillMaxHeight()`, or
   the cap is ignored; never pair `heightIn` on a Column child with
   `fillMaxHeight` on its children (expands to full screen, blanks the app).
@@ -634,6 +636,11 @@ eight places (#28, #32, #44, #48, #80, #87, #94, #95).
 - Counters always render Western digits via `%1$s` on purpose (`%d` follows
   device locale; ar/ur bidi reversed the pairs). Guarded by CounterFormatTest.
 - WorkManager notification timing drifts a few minutes (system batching).
+- At a 2.0 system font scale the detail plate's neighbour labels degrade to
+  ellipsis ("Al…") — the keep-act labels swell with the system scale and
+  crowd the end slots below even the 0.4 floor. Reader-range scales (default
+  through the slider's 1.4) always render the name whole; the truncation is
+  FitText's documented pathological-scale insurance, accepted 1.20.
 - Local debug APKs sign with the machine keystore; CI artifacts with CI's —
   installing one over the other fails
   INSTALL_FAILED_UPDATE_INCOMPATIBLE and uninstalling wipes DataStore

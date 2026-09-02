@@ -26,6 +26,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -632,9 +633,23 @@ private fun BottomBarTabs(
                                     if (here != null) {
                                         if (motionScale == 0f) here.scrollToItem(0)
                                         else here.animateScrollToItem(0)
-                                    } else {
-                                        if (motionScale == 0f) scrollHere?.scrollTo(0)
-                                        else scrollHere?.animateScrollTo(0)
+                                    } else if (scrollHere != null) {
+                                        // Both calls are Float-typed, and that is
+                                        // the point: a suspend callee's declared
+                                        // result is what lands on this lambda's
+                                        // resumption, and the resumption is cast
+                                        // to the declared type of the call.
+                                        // animateScrollTo is declared Unit but
+                                        // delegates to animateScrollBy passing its
+                                        // own completion straight through, so a
+                                        // real animation delivers a Float to a
+                                        // Unit-expecting frame — ClassCastException,
+                                        // app killed (shipped 1.19: re-tapping
+                                        // Memorize or Settings here crashed on
+                                        // some devices). The Float-typed pair
+                                        // cannot mismatch.
+                                        if (motionScale == 0f) scrollHere.scrollTo(0)
+                                        else scrollHere.animateScrollBy((0 - scrollHere.value).toFloat())
                                     }
                                 }
                                 return@selectable
