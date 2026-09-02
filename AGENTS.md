@@ -515,6 +515,13 @@ eight places (#28, #32, #44, #48, #80, #87, #94, #95).
   it only searches tracked files so build output can't pollute a sweep.
 - **After removing a Text/composable block, re-grep unused imports** — the
   project holds a zero-warning standard.
+- **Changing a screen's signature breaks `ScreenshotTest`** — the
+  instrumentation source renders HomeScreen, DetailScreen, MemorizeScreen,
+  SettingsScreen et al. DIRECTLY, so an argument removed from a screen is a
+  compile error CI only reaches at `:app:compileDebugAndroidTestKotlin`
+  (inside screenshots.yml, all three legs red). The canonical suite does not
+  compile it: after any screen-signature change, run that task locally
+  before pushing. This shipped once (1.18).
 - **Modifier order matters:** `heightIn(max=X)` BEFORE `fillMaxHeight()`, or
   the cap is ignored; never pair `heightIn` on a Column child with
   `fillMaxHeight` on its children (expands to full screen, blanks the app).
