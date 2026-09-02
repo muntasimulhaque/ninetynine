@@ -32,6 +32,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
@@ -112,6 +113,10 @@ private const val SCALE_MAX = 1.4f
 fun SettingsScreen(
     viewModel: NamesViewModel,
     onAbout: () -> Unit,
+    // Hoisted by App() so the bottom bar's re-tap can scroll this tab to
+    // its top, like every other tab. Defaulted so preview/test call sites
+    // keep their own state.
+    scrollState: ScrollState = rememberScrollState(),
 ) {
     val context = LocalContext.current
     val haptics = rememberHaptics()
@@ -181,7 +186,7 @@ fun SettingsScreen(
                 .wrapContentWidth(Alignment.CenterHorizontally)
                 .widthIn(max = pageMeasure())
                 .padding(padding)
-                .verticalScroll(rememberScrollState())
+                .verticalScroll(scrollState)
                 .padding(horizontal = ListInset),
         ) {
             Spacer(Modifier.height(10.dp))

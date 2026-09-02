@@ -18,6 +18,7 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -28,6 +29,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.material.icons.Icons
@@ -337,12 +339,19 @@ private fun App(
         var bottomBarHeightPx by remember { mutableIntStateOf(0) }
         val bottomBarClearance = with(density) { bottomBarHeightPx.toDp() }
 
-        // Re-tapping the tab you are already on returns to the top of its list.
-        // Scroll to name 80 and the only way back to the daily card used to be
-        // to fling through 79 rows; there is no fast-scroller, by an earlier
-        // and correct decision. Hoisted here so the bar can reach them.
+        // Re-tapping the tab you are already on returns to the top of its
+        // list. Scroll to name 80 and the only way back to the daily card
+        // used to be to fling through 79 rows; there is no fast-scroller, by
+        // an earlier and correct decision. The contract is one contract, so
+        // every tab answers it: the two lazy lists hoist their LazyListState,
+        // and the two scroll-driven tabs (Memorize, Settings — Columns that
+        // do scroll at large font scales and on short phones) hoist their
+        // ScrollState the same way. All hoisted here so the bar can reach
+        // them.
         val namesListState = rememberLazyListState()
         val bookmarksListState = rememberLazyListState()
+        val memorizeScrollState = rememberScrollState()
+        val settingsScrollState = rememberScrollState()
 
         LaunchedEffect(startNumber) {
             if (startNumber in 1..99) {
@@ -437,6 +446,7 @@ private fun App(
                             onFlashcards = { navController.navigate("flashcards") },
                             onQuiz = { navController.navigate("quiz") },
                             onLearned = { navController.navigate("learned") },
+                            scrollState = memorizeScrollState,
                         )
                     }
                     // The two list tabs offer their empties the same way out: the
@@ -487,6 +497,7 @@ private fun App(
                         SettingsScreen(
                             viewModel = viewModel,
                             onAbout = { navController.navigate("about") },
+                            scrollState = settingsScrollState,
                         )
                     }
                     composable("about") {
@@ -508,6 +519,13 @@ private fun App(
                         when (route) {
                             "names" -> namesListState
                             "bookmarks" -> bookmarksListState
+                            else -> null
+                        }
+                    },
+                    scrollStateFor = { route ->
+                        when (route) {
+                            "memorize" -> memorizeScrollState
+                            "settings" -> settingsScrollState
                             else -> null
                         }
                     },
@@ -541,9 +559,12 @@ private fun QuietBottomBar(
     navController: NavHostController,
     currentRoute: String?,
     listStateFor: (String) -> LazyListState?,
+    scrollStateFor: (String) -> ScrollState?,
     modifier: Modifier = Modifier,
 ) {
-    FloatingBar(modifier = modifier) { BottomBarTabs(navController, currentRoute, listStateFor) }
+    FloatingBar(modifier = modifier) {
+        BottomBarTabs(navController, currentRoute, listStateFor, scrollStateFor)
+    }
 }
 
 /**
@@ -558,6 +579,7 @@ private fun BottomBarTabs(
     navController: NavHostController,
     currentRoute: String?,
     listStateFor: (String) -> LazyListState?,
+    scrollStateFor: (String) -> ScrollState?,
 ) {
     val scope = rememberCoroutineScope()
     val motionScale = LocalMotionScale.current
@@ -595,17 +617,25 @@ private fun BottomBarTabs(
                         role = Role.Tab,
                         onClick = {
                             // Already here: go back to the top of the
-                            // list instead of navigating nowhere.
+                            // page instead of navigating nowhere.
                             // restoreState would otherwise restore the
                             // scroll position, so re-tapping did
                             // literally nothing. Snapped instantly at
                             // animator scale 0, like every Motion.*
-                            // animation in the app.
+                            // animation in the app. Every tab answers:
+                            // the two lazy lists scroll to item 0, the
+                            // two scroll-driven Columns to offset 0.
                             val here = listStateFor(item.route)
-                            if (selected && here != null) {
+                            val scrollHere = scrollStateFor(item.route)
+                            if (selected && (here != null || scrollHere != null)) {
                                 scope.launch {
-                                    if (motionScale == 0f) here.scrollToItem(0)
-                                    else here.animateScrollToItem(0)
+                                    if (here != null) {
+                                        if (motionScale == 0f) here.scrollToItem(0)
+                                        else here.animateScrollToItem(0)
+                                    } else {
+                                        if (motionScale == 0f) scrollHere?.scrollTo(0)
+                                        else scrollHere?.animateScrollTo(0)
+                                    }
                                 }
                                 return@selectable
                             }

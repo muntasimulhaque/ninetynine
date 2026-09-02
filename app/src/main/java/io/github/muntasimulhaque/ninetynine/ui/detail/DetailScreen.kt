@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.defaultMinSize
@@ -13,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.pager.HorizontalPager
@@ -33,7 +35,6 @@ import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -53,6 +54,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
@@ -61,7 +63,6 @@ import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.muntasimulhaque.ninetynine.R
@@ -89,6 +90,7 @@ import io.github.muntasimulhaque.ninetynine.ui.theme.components.scaledGap
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.ScreenLabel
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.SectionLabel
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.ScrollbarThumb
+import io.github.muntasimulhaque.ninetynine.ui.theme.components.tabLabelStyle
 import io.github.muntasimulhaque.ninetynine.ui.theme.rememberHaptics
 import kotlin.math.absoluteValue
 import kotlinx.coroutines.CoroutineScope
@@ -338,15 +340,34 @@ private fun LearnedAction(learned: Boolean, number: Int, onToggle: () -> Unit) {
             role = Role.Switch
         },
     ) {
-        Icon(
-            imageVector = if (learned) Icons.Filled.CheckCircle else Icons.Outlined.CheckCircle,
-            contentDescription = stringResource(R.string.mark_learned),
-            tint = if (learned) MaterialTheme.colorScheme.secondary else LocalContentColor.current,
-            modifier = Modifier.graphicsLayer {
-                scaleX = scale.value
-                scaleY = scale.value
-            },
-        )
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Icon(
+                imageVector = if (learned) Icons.Filled.CheckCircle else Icons.Outlined.CheckCircle,
+                contentDescription = stringResource(R.string.mark_learned),
+                // Resting, it wears the top bar's grey — the same ink the
+                // share icon carries, not the page's near-black. Learned, it
+                // fills with the app's gold, as before.
+                tint = if (learned) MaterialTheme.colorScheme.secondary
+                else MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier
+                    .size(20.dp)
+                    .graphicsLayer {
+                        scaleX = scale.value
+                        scaleY = scale.value
+                    },
+            )
+            Spacer(Modifier.height(2.dp))
+            // The eye gets the tab bar's short chrome label — same register:
+            // 9sp x the device factor, never the reader's slider. The ear
+            // keeps the full action from the icon's description, so TalkBack
+            // never hears the state word twice; the label itself is silent.
+            FitText(
+                text = stringResource(R.string.plate_learned).uppercase(),
+                style = tabLabelStyle(),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.clearAndSetSemantics {},
+            )
+        }
     }
 }
 
@@ -397,15 +418,29 @@ private fun BookmarkAction(bookmarked: Boolean, number: Int, onToggle: () -> Uni
             role = Role.Switch
         },
     ) {
-        Icon(
-            imageVector = if (bookmarked) Icons.Filled.Bookmark else Icons.Filled.BookmarkBorder,
-            contentDescription = stringResource(R.string.cd_bookmark),
-            tint = if (bookmarked) MaterialTheme.colorScheme.secondary else LocalContentColor.current,
-            modifier = Modifier.graphicsLayer {
-                scaleX = scale.value
-                scaleY = scale.value
-            },
-        )
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Icon(
+                imageVector = if (bookmarked) Icons.Filled.Bookmark else Icons.Filled.BookmarkBorder,
+                contentDescription = stringResource(R.string.cd_bookmark),
+                // Same resting grey as the learned act and the share icon;
+                // kept, it fills with the app's gold.
+                tint = if (bookmarked) MaterialTheme.colorScheme.secondary
+                else MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier
+                    .size(20.dp)
+                    .graphicsLayer {
+                        scaleX = scale.value
+                        scaleY = scale.value
+                    },
+            )
+            Spacer(Modifier.height(2.dp))
+            FitText(
+                text = stringResource(R.string.plate_bookmark).uppercase(),
+                style = tabLabelStyle(),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.clearAndSetSemantics {},
+            )
+        }
     }
 }
 
@@ -442,7 +477,8 @@ private fun DetailNavPlate(
             // floor the tab bar's slots wear, so the two capsules read as one
             // register. Each weighted slot caps its label at the space it
             // owns, so two long transliterations can never overlap at any
-            // font scale — they ellipsize instead of wrapping mid-word.
+            // font scale — the labels shrink through FitText instead of
+            // wrapping mid-word, and the 20dp chevron survives every name.
             modifier = Modifier
                 .barMeasure()
                 .heightIn(min = 54.dp)
@@ -458,23 +494,37 @@ private fun DetailNavPlate(
                     val previousCd = stringResource(R.string.previous_name, previousLabel)
                     TextButton(
                         onClick = onPrevious,
+                        // TextButton's default 16dp horizontal padding ate a
+                        // quarter of the weighted slot; the slot's own weight
+                        // keeps the tap honest with far less.
+                        contentPadding = PaddingValues(horizontal = 4.dp),
                         modifier = Modifier.semantics {
                             contentDescription = previousCd
                         },
                     ) {
-                        Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, contentDescription = null)
+                        Icon(
+                            Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+                            contentDescription = null,
+                            // The tab bar's icon register; the arrow survives
+                            // every name and every font scale.
+                            modifier = Modifier.size(20.dp),
+                        )
                         // Roman, not italic. Italic means epithet, gloss or
                         // quote everywhere else in the app — the page above
                         // has just taught the reader that — so setting a
                         // Name in it says the wrong thing. titleSmall also
                         // rescues these from TextButton's labelLarge, which
                         // made the app's main keep-reading affordance the
-                        // smallest Latin on the page.
-                        Text(
-                            previousLabel,
+                        // smallest Latin on the page. FitText, not Ellipsis:
+                        // a Divine Name must never cut off, so the longest
+                        // transliterations (Al-Muta'aalee, Al-Mutakabbir,
+                        // Al-Mu'akhkhir) shrink a little instead of losing
+                        // their tail. TextButton's own primary carries the
+                        // colour, as the bare Text did before.
+                        FitText(
+                            text = previousLabel,
                             style = MaterialTheme.typography.titleSmall,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
+                            color = MaterialTheme.colorScheme.primary,
                         )
                     }
                 }
@@ -494,17 +544,21 @@ private fun DetailNavPlate(
                     val nextCd = stringResource(R.string.next_name, nextLabel)
                     TextButton(
                         onClick = onNext,
+                        contentPadding = PaddingValues(horizontal = 4.dp),
                         modifier = Modifier.semantics {
                             contentDescription = nextCd
                         },
                     ) {
-                        Text(
-                            nextLabel,
+                        FitText(
+                            text = nextLabel,
                             style = MaterialTheme.typography.titleSmall,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
+                            color = MaterialTheme.colorScheme.primary,
                         )
-                        Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null)
+                        Icon(
+                            Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                            contentDescription = null,
+                            modifier = Modifier.size(20.dp),
+                        )
                     }
                 }
             }

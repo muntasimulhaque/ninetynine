@@ -374,7 +374,20 @@ app/src/main/assets/     names.json (99 entries), intro.txt, fonts/ (+licenses).
   a continuous watch would fight it. Who caused the arrival (the re-tap or
   a reader who flung back) is irrelevant. Without it the bar stayed hidden
   and "top of the list" read as "top of the hero card". Only Home has a
-  hiding bar; don't generalize to others.
+  hiding bar; don't generalize to others. The RE-TAP itself is one contract
+  every tab answers (owner decision, 1.19): Names and Bookmarks hoist their
+  `LazyListState` (scroll to item 0), Memorize and Settings hoist a
+  `ScrollState` (scroll to offset 0) — their screens take a defaulted
+  `scrollState` parameter so test call sites keep their own state.
+- **The detail plate's keep-acts wear the quiet ink and a short label:**
+  resting, the check-circle and bookmark render `onSurfaceVariant` — the
+  same grey as the top bar's share icon, not the page's near-black — and
+  each carries a short chrome label (LEARNED / BOOKMARK) at the tab bar's
+  `tabLabelStyle()` register (9sp × device factor, FitText-fitted inside the
+  48dp IconButton, `clearAndSetSemantics` so TalkBack keeps hearing the full
+  action + state once). Active, they fill gold as always. The full phrase
+  "Mark as learned" cannot fit the plate's centre slot at a readable size;
+  the short words can — owner decision, 1.19.
 - **The share sheet offers the plate AND the words:** "Share text" sends the
   Arabic, the name and epithet on one line, the full meaning, and the store
   title — the card's hierarchy as plain text. The name page's meaning is the
@@ -400,8 +413,10 @@ app/src/main/assets/     names.json (99 entries), intro.txt, fonts/ (+licenses).
 - **The two axes need no manual, by design:** the name page carries one
   floating capsule (`DetailNavPlate`, the same `FloatingBar` plate the tab
   bar wears) holding everything a reader does to a name — previous and next
-  wearing the neighbour's transliteration, and the two acts of keeping as
-  glyphs: an unfilled check-circle that fills gold when learned
+  wearing the neighbour's transliteration (FitText-fitted at `titleSmall`,
+  20dp chevrons, tight `contentPadding` — the longest transliteration
+  shrinks a little instead of ellipsizing), and the two acts of keeping:
+  an unfilled check-circle that fills gold when learned
   (`LearnedAction`), and the bookmark, the platform's universal keep glyph.
   Share alone stays in the top bar (a send-away act reads at the page's
   edge; five slots would crowd a 320dp phone). The capsule is FIXED, unlike

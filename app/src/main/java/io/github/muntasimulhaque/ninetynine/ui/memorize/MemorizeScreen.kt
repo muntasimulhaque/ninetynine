@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -63,6 +64,10 @@ fun MemorizeScreen(
     onFlashcards: () -> Unit,
     onQuiz: () -> Unit,
     onLearned: () -> Unit,
+    // Hoisted by App() so the bottom bar's re-tap can scroll this tab to
+    // its top, like every other tab. Defaulted so preview/test call sites
+    // keep their own state.
+    scrollState: ScrollState = rememberScrollState(),
 ) {
     val learned by viewModel.learned.collectAsStateWithLifecycle()
     val learnedLoaded by viewModel.learnedLoaded.collectAsStateWithLifecycle()
@@ -113,7 +118,7 @@ fun MemorizeScreen(
                 .wrapContentWidth(Alignment.CenterHorizontally)
                 .widthIn(max = pageMeasure())
                 .padding(padding)
-                .verticalScroll(rememberScrollState())
+                .verticalScroll(scrollState)
                 .padding(horizontal = ListInset),
         ) {
             Spacer(Modifier.height(20.dp))
