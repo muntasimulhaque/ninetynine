@@ -299,11 +299,13 @@ private data class TopLevelRoute(
  * and set the book. Settings joined the bar as a full tab (owner decision,
  * 1.18), taking the rightmost, quietest slot; the corner gear every bar
  * carried is gone, so the top bars hold content only — Home's title renders
- * larger in the freed corner, still fitted by FitText. The measured cost the
- * owner accepted: at a 2.0 system font scale on a 320dp phone the longest
- * label ("BOOKMARKS") renders at FitText scale ~0.49 — about 8.9sp, the 9sp
- * base — above the 0.40 floor and never clipping; at the default scale on
- * every phone all four labels render whole.
+ * larger in the freed corner, still fitted by FitText. The labels went mixed
+ * case with the two-voice register (owner decision, 1.22), which also
+ * softened the measured cost the owner accepted in 1.18: at a 2.0 system
+ * font scale on a 320dp phone the longest label ("Bookmarks") renders at
+ * FitText scale ~0.69 — caps measured ~0.49 — above the 0.40 floor and
+ * never clipping; at the default scale on every phone all four labels
+ * render whole.
  */
 private val topLevelRoutes = listOf(
     TopLevelRoute("names", R.string.nav_names, Icons.AutoMirrored.Filled.MenuBook, Icons.AutoMirrored.Outlined.MenuBook),
@@ -687,13 +689,16 @@ private fun BottomBarTabs(
                 // does still apply, so the labels fit themselves
                 // rather than ellipsizing to "MEM…".
                 //
-                // "BOOKMARKS" is the longest label the bar carries —
-                // 6.681 em in Spectral Medium, so 141.9dp at a system
-                // font scale of 2.0, against MEMORIZE's 121.5dp. At
-                // four tabs a 320dp phone gives each one 70.0dp, so
-                // the worst case is ~0.49 — about 8.9sp, the 9sp base
-                // — and the 0.40 floor is never approached. At the
-                // default font scale every phone, down to 320dp,
+                // Mixed case — the chrome-you-tap voice of the two-voice
+                // register (owner decision, 1.22); tracked caps stay with
+                // the overlines. "Bookmarks" is the longest label the bar
+                // carries — 5.178 em in Spectral SemiBold (the selected
+                // weight, the wider one), so 93.2dp of ink at a system
+                // font scale of 2.0, plus 8 tracking gaps × 0.5sp = 8dp
+                // — ~101dp, against Memorize's ~90dp. At four tabs a
+                // 320dp phone gives each one 70.0dp, so the worst case
+                // is ~0.69 — and the 0.40 floor is never approached. At
+                // the default font scale every phone, down to 320dp,
                 // renders all four labels whole. On the 7-inch class
                 // the labels start 1.125× wider and the tab slots are
                 // 200dp; on the 10-inch class 1.25× wider against
@@ -712,7 +717,7 @@ private fun BottomBarTabs(
                 // screen or a high-contrast mode could not tell which
                 // tab was active at all.
                 FitText(
-                    text = stringResource(item.labelRes).uppercase(),
+                    text = stringResource(item.labelRes),
                     style = tabLabelStyle().copy(fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium),
                     color = tint,
                     modifier = Modifier.padding(horizontal = 2.dp),

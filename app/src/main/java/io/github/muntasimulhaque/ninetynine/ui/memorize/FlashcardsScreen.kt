@@ -103,6 +103,7 @@ import io.github.muntasimulhaque.ninetynine.ui.theme.components.ScrollbarThumb
 import io.github.muntasimulhaque.ninetynine.ui.theme.rememberHaptics
 import io.github.muntasimulhaque.ninetynine.util.DeckBuilder
 import kotlinx.coroutines.launch
+import java.util.Locale
 import kotlin.math.absoluteValue
 
 /** Session state for one flashcard run; survives rotation with the ViewModel. */
@@ -750,7 +751,7 @@ private fun SwipeFlipCard(
                 Text(
                     text = stringResource(
                         if (dragKnow) R.string.i_know_it else R.string.still_learning
-                    ).uppercase(),
+                    ).uppercase(Locale.ROOT),
                     style = MaterialTheme.typography.labelMedium,
                     color = when {
                         dragKnow && front -> HeroGold

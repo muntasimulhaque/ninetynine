@@ -100,6 +100,7 @@ import io.github.muntasimulhaque.ninetynine.ui.theme.components.barMeasure
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.paperTopBarColors
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.scaledGap
 import io.github.muntasimulhaque.ninetynine.util.SearchFilter
+import java.util.Locale
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
 
@@ -515,7 +516,7 @@ private fun DailyHeroCard(name: Name, onClick: () -> Unit) {
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text(
-                text = stringResource(R.string.notification_title).uppercase(),
+                text = stringResource(R.string.notification_title).uppercase(Locale.ROOT),
                 style = MaterialTheme.typography.labelMedium,
                 color = HeroGold,
                 textAlign = TextAlign.Center,

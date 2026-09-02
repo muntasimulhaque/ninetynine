@@ -10,7 +10,7 @@ so do not add a word or a stray space.
 
 - **Application ID (package name):** `io.github.muntasimulhaque.ninetynine`
 - **Privacy policy URL:** `https://muntasimulhaque.github.io/ninetynine/privacy-policy.html`
-- **Version (this release):** versionName `1.21`, versionCode `31`
+- **Version (this release):** versionName `1.22`, versionCode `32`
 
 ---
 
@@ -57,6 +57,24 @@ Made to be read:
 
 Free and open source. May Allah make us among those who learn, memorize,
 understand and act upon His beautiful Names.
+```
+
+## What's new (version 1.22)
+
+```
+Small labels, easier to read:
+
+• The bottom bar's tabs — Names,
+  Memorize, Bookmarks, Settings —
+  and the name page's Learned and
+  Bookmark labels are now set in
+  normal case, easier to recognise
+  at a glance.
+• The wide-tracked capitals remain
+  on the quiet annotations, like
+  NAME OF THE DAY.
+• Label text now behaves correctly
+  on devices set to any language.
 ```
 
 ## What's new (version 1.21)

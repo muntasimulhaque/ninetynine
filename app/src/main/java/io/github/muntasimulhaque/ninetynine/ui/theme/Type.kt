@@ -127,7 +127,9 @@ private val BaseTypography = Typography(
         lineHeight = 18.sp,
         letterSpacing = 0.4.sp,
     ),
-    // Tracked small caps: use with .uppercase() for overlines like "NAME OF THE DAY".
+    // Tracked small caps: use with .uppercase(Locale.ROOT) for overlines
+    // like "NAME OF THE DAY" (ROOT — the default-locale form renders a
+    // dotted İ on Turkish devices).
     labelMedium = TextStyle(
         fontFamily = SpectralFamily,
         fontWeight = FontWeight.Medium,

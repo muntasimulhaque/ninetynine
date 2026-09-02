@@ -396,12 +396,14 @@ private fun LearnedAction(learned: Boolean, number: Int, onToggle: () -> Unit) {
                 },
         )
         Spacer(Modifier.height(2.dp))
-        // The eye gets the tab bar's short chrome label — same register:
+        // The eye gets the tab bar's short chrome label — same register,
+        // and the same mixed-case voice: chrome you tap reads as words;
+        // tracked caps stay with the overlines (owner decision, 1.22).
         // 9sp x the device factor, never the reader's slider. The ear
         // keeps the full action from the button's description, so TalkBack
         // never hears the state word twice.
         FitText(
-            text = stringResource(R.string.plate_learned).uppercase(),
+            text = stringResource(R.string.plate_learned),
             style = tabLabelStyle(),
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.clearAndSetSemantics {},
@@ -481,7 +483,7 @@ private fun BookmarkAction(bookmarked: Boolean, number: Int, onToggle: () -> Uni
         )
         Spacer(Modifier.height(2.dp))
         FitText(
-            text = stringResource(R.string.plate_bookmark).uppercase(),
+            text = stringResource(R.string.plate_bookmark),
             style = tabLabelStyle(),
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.clearAndSetSemantics {},

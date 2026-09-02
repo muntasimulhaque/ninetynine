@@ -64,7 +64,7 @@ restart: 0.1 … 0.9, then 1.0 / 10, then 1.1 / 11, then 1.2 / 12, then
 1.3 / 13, then 1.4 / 14, then 1.5 / 15, then 1.6 / 16, then 1.7 / 17, then
 1.8 / 18, then 1.9 / 19, then 1.10 / 20, then 1.11 / 21, then 1.12 / 22, then
 1.13 / 23, then 1.14 / 24, then 1.15 / 25, then 1.16 / 26, then 1.17 / 27,
-then 1.19 / 29, then **1.20 / 30 (current)**.
+then 1.19 / 29, then 1.20 / 30, then 1.21 / 31, then **1.22 / 32 (current)**.
 
 The release keystore path/credentials live in a `keystore.properties` outside
 the repo (Google Play Signing Key folder). When absent (CI, fresh clone) the
@@ -249,6 +249,16 @@ app/src/main/assets/     names.json (99 entries), intro.txt, fonts/ (+licenses).
   FitText doesn't center.
 - **Never set a sentence in `labelMedium`/`labelSmall`** (they carry wide
   tracking — overlines only; prose is `bodySmall`+).
+- **Two voices for small type (owner decision, 1.22):** tracked wide caps are
+  the register of ANNOTATION — `SectionLabel`, `ScreenLabel`, the overlines
+  ("NAME OF THE DAY", "I KNOW IT / STILL LEARNING", "NEW BEST"), the counters
+  ("QUESTION 1 OF 10") and the share wordmark. Mixed case at `tabLabelStyle()`
+  (9sp × device factor, 0.5sp tracking) is the register of CHROME THE READER
+  TAPS — the four tab labels and the detail plate's Learned / Bookmark. Don't
+  set a tappable label in caps, and don't lowercase an overline. Any
+  `.uppercase()`/`.lowercase()` on user-visible text or matching logic must be
+  locale-insensitive (`Locale.ROOT`) — the default-locale form renders
+  "MEMORİZE" on Turkish devices.
 - **Reading rule:** the short meaning (`title`) shows only where the full
   `meaning` does NOT (Detail/Share/flashcard back: meaning only; list rows,
   hero card, widget, notification, quiz keep the title).
@@ -287,9 +297,9 @@ app/src/main/assets/     names.json (99 entries), intro.txt, fonts/ (+licenses).
   earlier three-tab ruling). The top bars now carry content only, and Home's
   title renders larger in the freed corner. The measured cost the owner
   accepted: at a 2.0 system font scale on a 320dp phone the longest label
-  renders at FitText scale ~0.49 (about the 9sp base), above the floor,
-  nothing clipping; at the default scale every phone renders all four labels
-  whole. About —
+  ("Bookmarks", mixed case since the two-voice register) renders at FitText
+  scale ~0.69 — caps measured ~0.49 — above the floor, nothing clipping; at
+  the default scale every phone renders all four labels whole. About —
   the book's front matter — still sits as the gold-chevron `NavRow` at the
   foot of the Settings page, above the version line; Settings wears the
   quiet running head and no back button (it is a tab, not a pushed screen),
@@ -386,7 +396,8 @@ app/src/main/assets/     names.json (99 entries), intro.txt, fonts/ (+licenses).
 - **The detail plate's keep-acts wear the quiet ink and a short label:**
   resting, the check-circle and bookmark render `onSurfaceVariant` — the
   same grey as the top bar's share icon, not the page's near-black — and
-  each carries a short chrome label (LEARNED / BOOKMARK) at the tab bar's
+  each carries a short chrome label (Learned / Bookmark — mixed case, the
+  chrome-you-tap voice of the two-voice register) at the tab bar's
   `tabLabelStyle()` register (9sp × device factor, FitText-fitted,
   `clearAndSetSemantics` so TalkBack keeps hearing the full action + state
   once). They are explicit stadium-clipped clickable Columns with a 48dp

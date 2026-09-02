@@ -73,6 +73,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileOutputStream
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -316,7 +317,7 @@ internal fun ShareCard(name: Name, modifier: Modifier = Modifier) {
                     // little everywhere was the accepted price of the store and
                     // the running head finally saying the same thing.
                     FitText(
-                        text = stringResource(R.string.store_title).uppercase(),
+                        text = stringResource(R.string.store_title).uppercase(Locale.ROOT),
                         style = MaterialTheme.typography.labelMedium,
                         color = HeroSubtext,
                         minScale = 0.45f,

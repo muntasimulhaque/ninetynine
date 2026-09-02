@@ -1,6 +1,7 @@
 package io.github.muntasimulhaque.ninetynine.util
 
 import io.github.muntasimulhaque.ninetynine.data.Name
+import java.util.Locale
 
 object SearchFilter {
 
@@ -19,7 +20,7 @@ object SearchFilter {
      * these names from elsewhere; they should not have to guess our spelling.
      */
     private fun latinKey(s: String): String {
-        val stripped = LATIN_NOISE.replace(s.lowercase(), "")
+        val stripped = LATIN_NOISE.replace(s.lowercase(Locale.ROOT), "")
         val sb = StringBuilder(stripped.length)
         for (c in stripped) {
             val folded = when (c) {

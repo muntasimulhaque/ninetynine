@@ -17,6 +17,7 @@ import io.github.muntasimulhaque.ninetynine.ui.theme.HeroGold
 import io.github.muntasimulhaque.ninetynine.ui.theme.HeroSubtext
 import io.github.muntasimulhaque.ninetynine.ui.theme.HeroText
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.ArabicSize
+import java.util.Locale
 
 /**
  * The expanded daily notification wears the same plate as the hero card, the
@@ -83,7 +84,7 @@ internal object DailyPlate {
             color = HeroGold.toArgb()
             textAlign = Paint.Align.CENTER
         }
-        val overlineText = context.getString(R.string.notification_title).uppercase()
+        val overlineText = context.getString(R.string.notification_title).uppercase(Locale.ROOT)
         val overlineBox = overline.fontMetrics.let { it.bottom - it.top }
 
         // Transliteration — Spectral Light, stepping down like FitText so the

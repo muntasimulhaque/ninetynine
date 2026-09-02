@@ -70,6 +70,7 @@ import io.github.muntasimulhaque.ninetynine.ui.theme.LocalMotionScale
 import io.github.muntasimulhaque.ninetynine.ui.theme.LocalPureBlackTheme
 import io.github.muntasimulhaque.ninetynine.ui.theme.LocalTextScale
 import io.github.muntasimulhaque.ninetynine.ui.theme.Motion
+import java.util.Locale
 
 /*
  * The furniture every page is built from. Kept in one place so Memorize,
@@ -97,7 +98,9 @@ val LocalBottomBarOverlay = staticCompositionLocalOf { 0.dp }
 @Composable
 fun SectionLabel(text: String, modifier: Modifier = Modifier) {
     Text(
-        text = text.uppercase(),
+        // Locale.ROOT: the default-locale form renders "MEMORİZE" on
+        // Turkish devices (owner decision, 1.22 — same fix everywhere).
+        text = text.uppercase(Locale.ROOT),
         style = MaterialTheme.typography.labelMedium,
         color = MaterialTheme.colorScheme.secondary,
         modifier = modifier.semantics { heading() },
@@ -114,7 +117,7 @@ fun ScreenLabel(text: String, modifier: Modifier = Modifier) {
     // the fixed 64dp app bar, and at a combined 2.8x scale they wrapped to
     // two lines and clipped. Shrinking beats wrapping for a running register.
     FitText(
-        text = text.uppercase(),
+        text = text.uppercase(Locale.ROOT),
         style = MaterialTheme.typography.labelMedium,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = modifier.semantics { heading() },
@@ -178,13 +181,16 @@ fun TabTitle(
 
 private const val RunningHeadScale = 0.85f
 
-/** The bottom bar's tab label: the ramp's labelSmall at the device factor only —
- *  chrome never follows the reader's text-size slider (the clipping guarantee). */
+/** The chrome-you-tap voice: the bottom bar's tab labels and the detail
+ *  plate's Learned / Bookmark, in mixed case with only a whisper of tracking
+ *  (owner decision, 1.22 — tracked wide caps stay with the overlines). The
+ *  ramp's labelSmall at the device factor only — chrome never follows the
+ *  reader's text-size slider (the clipping guarantee). */
 @Composable
 fun tabLabelStyle(): TextStyle =
     MaterialTheme.typography.labelSmall.copy(
         fontSize = (9 * LocalDeviceFactor.current).sp,
-        letterSpacing = 1.2.sp,
+        letterSpacing = 0.5.sp,
     )
 
 /** The way back, identical on every pushed screen. */

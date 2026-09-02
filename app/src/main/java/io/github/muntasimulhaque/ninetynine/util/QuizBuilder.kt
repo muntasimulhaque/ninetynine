@@ -1,6 +1,7 @@
 package io.github.muntasimulhaque.ninetynine.util
 
 import io.github.muntasimulhaque.ninetynine.data.Name
+import java.util.Locale
 import kotlin.random.Random
 import kotlinx.serialization.Serializable
 
@@ -24,7 +25,7 @@ object QuizBuilder {
     private val WORD_NOISE = Regex("[^a-z ]")
 
     internal fun contentWords(title: String): Set<String> {
-        val words = WORD_NOISE.replace(title.lowercase(), " ")
+        val words = WORD_NOISE.replace(title.lowercase(Locale.ROOT), " ")
             .split(' ')
             .filter { it.isNotBlank() && it !in STOP_WORDS }
             .toSet()
@@ -35,7 +36,7 @@ object QuizBuilder {
         // "The One"). Fall back to the whole title as a single token: "the
         // one" is contained by no other title's word set, so the ambiguity
         // filter keeps doing its job.
-        return if (words.isEmpty()) setOf(title.lowercase().trim()) else words
+        return if (words.isEmpty()) setOf(title.lowercase(Locale.ROOT).trim()) else words
     }
 
     /**
