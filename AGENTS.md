@@ -425,7 +425,14 @@ app/src/main/assets/     names.json (99 entries), intro.txt, fonts/ (+licenses).
   edge; five slots would crowd a 320dp phone). The capsule is FIXED, unlike
   the scrolling footer it replaced — on a long meaning the chevrons sat
   below the fold at exactly the moment a name strikes; that was also the
-  reason the keep-acts had once moved to the top bar. The capsule's weighted
+  reason the keep-acts had once moved to the top bar. It is an OVERLAY on
+  the pager, not a Scaffold bottom bar — a reserved slot clips the meaning
+  at the plate's top edge and the floating read dies (1.21): the capsule is
+  aligned BottomCenter over the pager, its laid-out height is measured
+  (onSizeChanged, the tab bar's trick) and handed to NamePage as the
+  clearance the page's tail scrolls above — the plate's trailing spacer
+  lives INSIDE the min-height column, so a short page never scrolls and a
+  long one gains exactly the extent it needs. The capsule's weighted
   end slots keep the keep-acts centred on first/last pages, its labels
   change as the pager settles (the same moment the counter does), and every
   empty state still teaches its own axis at the moment it matters. An

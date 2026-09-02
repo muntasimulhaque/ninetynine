@@ -10,7 +10,7 @@ so do not add a word or a stray space.
 
 - **Application ID (package name):** `io.github.muntasimulhaque.ninetynine`
 - **Privacy policy URL:** `https://muntasimulhaque.github.io/ninetynine/privacy-policy.html`
-- **Version (this release):** versionName `1.20`, versionCode `30`
+- **Version (this release):** versionName `1.21`, versionCode `31`
 
 ---
 
@@ -57,6 +57,24 @@ Made to be read:
 
 Free and open source. May Allah make us among those who learn, memorize,
 understand and act upon His beautiful Names.
+```
+
+## What's new (version 1.21)
+
+```
+The name page's bottom bar now floats
+like the main tab bar:
+
+• On a long meaning, the text scrolls
+  beneath the bar at the foot of the
+  page — the same floating read as the
+  lists, instead of stopping above it.
+• The end of the page still lifts fully
+  clear of the bar, and the bar itself
+  is unchanged.
+
+All 99 Names and your progress are
+unchanged.
 ```
 
 ## What's new (version 1.20)

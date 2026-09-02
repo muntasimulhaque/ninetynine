@@ -57,6 +57,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
@@ -67,6 +69,7 @@ import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.muntasimulhaque.ninetynine.R
@@ -247,10 +250,45 @@ fun DetailScreen(
                 },
             )
         },
-        // The name page's floating capsule: previous and next, then the two
-        // acts of keeping. Fixed, unlike the footer it replaces — see
-        // [DetailNavPlate].
-        bottomBar = {
+    ) { padding ->
+        // The capsule overlays the pager — the same scroll-under float the
+        // tab bar gives the lists (the Scaffold no longer reserves a bottom
+        // slot, so only the top bar's padding is applied and the meaning
+        // passes beneath the plate). The plate reports its laid-out height —
+        // measured, not guessed: it follows the system font scale and the
+        // navigation mode (24dp gesture, 48dp three-button) — and that
+        // clearance is what NamePage scrolls its tail above.
+        val density = LocalDensity.current
+        var plateHeightPx by remember { mutableIntStateOf(0) }
+        val plateClearance = with(density) { plateHeightPx.toDp() }
+        Box(
+            Modifier
+                .fillMaxSize()
+                .padding(top = padding.calculateTopPadding()),
+        ) {
+            HorizontalPager(
+                state = pagerState,
+                modifier = Modifier.fillMaxSize(),
+            ) { page ->
+                NamePage(
+                    name = pages[page],
+                    pagerState = pagerState,
+                    page = page,
+                    bottomClearance = plateClearance,
+                    // Pages dim slightly while in motion, then settle to full
+                    // presence. Read inside the layer block so a swipe redraws
+                    // rather than recomposing every visible page each frame.
+                    modifier = Modifier.graphicsLayer {
+                        val offset =
+                            ((pagerState.currentPage - page) + pagerState.currentPageOffsetFraction)
+                                .absoluteValue.coerceIn(0f, 1f)
+                        alpha = 1f - offset * 0.3f
+                    },
+                )
+            }
+            // The name page's floating capsule: previous and next, then the
+            // two acts of keeping. Fixed, unlike the footer it replaced —
+            // see [DetailNavPlate].
             DetailNavPlate(
                 current = current,
                 previousLabel = pages.getOrNull(pagerState.currentPage - 1)?.transliteration,
@@ -270,28 +308,9 @@ fun DetailScreen(
                 onNext = {
                     goToPage(scope, pagerState, pagerState.currentPage + 1, motionScale)
                 },
-            )
-        },
-    ) { padding ->
-        HorizontalPager(
-            state = pagerState,
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding),
-        ) { page ->
-            NamePage(
-                name = pages[page],
-                pagerState = pagerState,
-                page = page,
-                // Pages dim slightly while in motion, then settle to full
-                // presence. Read inside the layer block so a swipe redraws
-                // rather than recomposing every visible page each frame.
-                modifier = Modifier.graphicsLayer {
-                    val offset =
-                        ((pagerState.currentPage - page) + pagerState.currentPageOffsetFraction)
-                            .absoluteValue.coerceIn(0f, 1f)
-                    alpha = 1f - offset * 0.3f
-                },
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .onSizeChanged { plateHeightPx = it.height },
             )
         }
     }
@@ -484,9 +503,16 @@ private fun BookmarkAction(bookmarked: Boolean, number: Int, onToggle: () -> Uni
  * labels change as the pager settles, the same moment the counter above does.
  * The weighted end slots keep the two keep-acts centred whether the
  * neighbours exist (page 0 has no previous; the last page no next).
+ *
+ * It is an OVERLAY on the pager, not a Scaffold bottom bar: a reserved slot
+ * clips the page's text at the plate's top edge, and a floating sheet with
+ * nothing passing beneath it is just a panel. The caller measures this
+ * composable's height and hands it to [NamePage] as the clearance its tail
+ * scrolls above — the same trick the tab bar uses in MainActivity.
  */
 @Composable
 private fun DetailNavPlate(
+    modifier: Modifier = Modifier,
     current: Name,
     previousLabel: String?,
     nextLabel: String?,
@@ -497,7 +523,7 @@ private fun DetailNavPlate(
     onPrevious: () -> Unit,
     onNext: () -> Unit,
 ) {
-    FloatingBar {
+    FloatingBar(modifier = modifier) {
         Row(
             // The row takes its height from its children with the same 54dp
             // floor the tab bar's slots wear, so the two capsules read as one
@@ -616,11 +642,17 @@ private fun NamePage(
     name: Name,
     pagerState: PagerState,
     page: Int,
+    // The floating capsule overlays this page, so the scroll extent grows by
+    // the plate's measured height: on a long meaning the tail can lift fully
+    // above the plate, while a page shorter than the screen still does not
+    // scroll at all (the spacer lives inside the min-height column).
+    bottomClearance: Dp,
     modifier: Modifier = Modifier,
 ) {
-    // Single scrollable page: the controls scroll with the content, but a
-    // weighted spacer pushes them to just above the system bar whenever the
-    // content is shorter than the screen.
+    // Single scrollable page: the keep-acts live in the floating capsule
+    // below (DetailNavPlate), and the page grows its scroll extent by that
+    // plate's measured clearance so its tail can lift above it. A page
+    // shorter than the screen does not scroll at all.
     // The page keeps the book's measure on wide screens — the Name, the
     // meaning, the note and the footer all hold `readingMeasure`'s column,
     // and the thumb hugs that column's edge. Phones never reach the cap.
@@ -731,6 +763,12 @@ private fun NamePage(
                     }
                 }
                 Spacer(Modifier.weight(1f))
+                // The scroll-under room: this is inside the min-height
+                // column, so short pages absorb it in the weighted spacer
+                // (no phantom scroll) while long pages gain exactly the
+                // extent needed to clear the plate — the same +16dp of air
+                // the list screens leave above their bar.
+                Spacer(Modifier.height(bottomClearance + 16.dp))
             }
         }
 
@@ -742,7 +780,7 @@ private fun NamePage(
             scrollState = scrollState,
             modifier = Modifier
                 .align(Alignment.TopEnd)
-                .padding(top = 16.dp, bottom = 16.dp, end = 8.dp),
+                .padding(top = 16.dp, bottom = 16.dp + bottomClearance, end = 8.dp),
         )
     }
 }
