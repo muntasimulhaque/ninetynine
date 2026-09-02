@@ -10,7 +10,7 @@ so do not add a word or a stray space.
 
 - **Application ID (package name):** `io.github.muntasimulhaque.ninetynine`
 - **Privacy policy URL:** `https://muntasimulhaque.github.io/ninetynine/privacy-policy.html`
-- **Version (this release):** versionName `1.19`, versionCode `29`
+- **Version (this release):** versionName `1.20`, versionCode `30`
 
 ---
 
@@ -57,6 +57,26 @@ Made to be read:
 
 Free and open source. May Allah make us among those who learn, memorize,
 understand and act upon His beautiful Names.
+```
+
+## What's new (version 1.20)
+
+```
+Two fixes on the pages you read most:
+
+• Re-tapping Memorize, Names,
+  Bookmarks or Settings in the bottom
+  bar now always returns you to the
+  top of the page. On some devices it
+  could close the app instead — that
+  crash is gone.
+• On a name page the next Name's
+  label now shrinks to fit, exactly
+  like the previous one, so no Name
+  is ever cut off, at any text size.
+
+All 99 Names and your progress are
+unchanged.
 ```
 
 ## What's new (version 1.19)
