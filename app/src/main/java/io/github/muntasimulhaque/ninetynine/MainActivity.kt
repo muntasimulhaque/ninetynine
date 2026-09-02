@@ -3,7 +3,6 @@ package io.github.muntasimulhaque.ninetynine
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.graphics.BlurMaskFilter
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -24,11 +23,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -39,11 +35,12 @@ import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.automirrored.outlined.MenuBook
 import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.School
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.outlined.Bookmark
 import androidx.compose.material.icons.outlined.School
+import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -57,21 +54,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Outline
-import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.graphics.asAndroidPath
-import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
-import androidx.compose.ui.graphics.nativeCanvas
-import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
@@ -106,9 +94,9 @@ import io.github.muntasimulhaque.ninetynine.ui.theme.LocalPureBlackTheme
 import io.github.muntasimulhaque.ninetynine.ui.theme.Motion
 import io.github.muntasimulhaque.ninetynine.ui.theme.Names99Theme
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.FitText
+import io.github.muntasimulhaque.ninetynine.ui.theme.components.FloatingBar
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.LocalBottomBarOverlay
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.barMeasure
-import io.github.muntasimulhaque.ninetynine.ui.theme.components.pageMeasure
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.tabLabelStyle
 import io.github.muntasimulhaque.ninetynine.util.DailyName
 import kotlinx.coroutines.launch
@@ -304,16 +292,21 @@ private data class TopLevelRoute(
 )
 
 /*
- * Three destinations, all of them content: read the names, practise them, keep
- * the ones you turn to. Settings is configuration rather than a place in the
- * book, so it sits behind the gear in the corner of each of these instead of
- * taking a quarter of the bar — which also keeps every label legible at a large
- * system font (see the note on FitText below).
+ * Four destinations: read the names, practise them, keep the ones you turn to,
+ * and set the book. Settings joined the bar as a full tab (owner decision,
+ * 1.18), taking the rightmost, quietest slot; the corner gear every bar
+ * carried is gone, so the top bars hold content only — Home's title renders
+ * larger in the freed corner, still fitted by FitText. The measured cost the
+ * owner accepted: at a 2.0 system font scale on a 320dp phone the longest
+ * label ("BOOKMARKS") renders at FitText scale ~0.49 — about 8.9sp, the 9sp
+ * base — above the 0.40 floor and never clipping; at the default scale on
+ * every phone all four labels render whole.
  */
 private val topLevelRoutes = listOf(
     TopLevelRoute("names", R.string.nav_names, Icons.AutoMirrored.Filled.MenuBook, Icons.AutoMirrored.Outlined.MenuBook),
     TopLevelRoute("memorize", R.string.memorize, Icons.Filled.School, Icons.Outlined.School),
     TopLevelRoute("bookmarks", R.string.bookmarks, Icons.Filled.Bookmark, Icons.Outlined.Bookmark),
+    TopLevelRoute("settings", R.string.settings, Icons.Filled.Settings, Icons.Outlined.Settings),
 )
 
 @Composable
@@ -413,7 +406,6 @@ private fun App(
                         HomeScreen(
                             viewModel = viewModel,
                             onNameClick = { number -> navController.navigate("detail/$number") },
-                            onSettings = { navController.navigate("settings") },
                             listState = namesListState,
                         )
                     }
@@ -445,7 +437,6 @@ private fun App(
                             onFlashcards = { navController.navigate("flashcards") },
                             onQuiz = { navController.navigate("quiz") },
                             onLearned = { navController.navigate("learned") },
-                            onSettings = { navController.navigate("settings") },
                         )
                     }
                     // The two list tabs offer their empties the same way out: the
@@ -467,7 +458,6 @@ private fun App(
                             onNameClick = { number ->
                                 navController.navigate("detail/$number?scope=$SCOPE_BOOKMARKS")
                             },
-                            onSettings = { navController.navigate("settings") },
                             onBrowseNames = browseNames,
                             listState = bookmarksListState,
                         )
@@ -493,10 +483,9 @@ private fun App(
                             onBack = { navController.popBackStack() },
                         )
                     }
-                    composable("settings") {
+                    composable("settings", enterTransition = tabFade(motionScale), exitTransition = tabFadeOut(motionScale)) {
                         SettingsScreen(
                             viewModel = viewModel,
-                            onBack = { navController.popBackStack() },
                             onAbout = { navController.navigate("about") },
                         )
                     }
@@ -542,10 +531,10 @@ private fun tabFadeOut(motionScale: Float):
 }
 
 /**
- * The bottom bar's vessel: the three tabs themselves ([BottomBarTabs]) inside
+ * The bottom bar's vessel: the four tabs themselves ([BottomBarTabs]) inside
  * the floating, scroll-under plate — [FloatingBar]'s capsule, halo and
- * transparent gesture strip. The flat variant that once lived beside it was
- * discarded when the floating capsule was chosen (see plan-of-record).
+ * transparent gesture strip (shared with the name page's capsule, in
+ * PageParts).
  */
 @Composable
 private fun QuietBottomBar(
@@ -555,147 +544,6 @@ private fun QuietBottomBar(
     modifier: Modifier = Modifier,
 ) {
     FloatingBar(modifier = modifier) { BottomBarTabs(navController, currentRoute, listStateFor) }
-}
-
-/**
- * Variant B — the floating bar: no band at all. The plate lifts off the page
- * and floats on a soft halo above a transparent gesture strip; the list's rows
- * pass beneath it, hidden by the plate rather than faded by a scrim. The plate
- * wears the page's own paper colour — a floating sheet, not a separate band —
- * and its ends are true capsule/pill arcs ([RoundedCornerShape] at 50%, so the
- * radius is always half the bar's height — semicircular ends, exactly the
- * Uber/Galaxy register) rather than the superellipse [SquircleShape] the
- * cards wear, whose flatter corners read as a rounded rectangle on a wide
- * short plate. One construction in every theme — a paper plate lifted by a
- * soft halo, no borders anywhere (the hero plates' own symmetry) — with only
- * the colours changing: light keeps the page's own paper; dark lifts the
- * plate a container rung above the page, because a shadow is black paint and
- * on near-black paper the tone is what reads; BLACK takes one rung more, its
- * true-black page leaving the halo (drawn there too, harmlessly) nothing to
- * darken.
- */
-@Composable
-private fun FloatingBar(modifier: Modifier = Modifier, content: @Composable () -> Unit) {
-    val dark = LocalDarkTheme.current
-    val pureBlack = LocalPureBlackTheme.current
-    // Capsule/pill, Uber's register — and this is the part the earlier attempts
-    // got wrong: a capsule is CIRCULAR arcs (radius = half the short side), not
-    // a superellipse. SquircleShape (n=4) even at max radius keeps its ends
-    // flatter than a semicircle, so a wide plate still reads rounded-rt. A
-    // percent corner size of 50% resolves to half the plate's height (the
-    // short side), which makes the two ends meet in a true semicircle: a
-    // stadium. RoundedCornerShape is correct here precisely because the bar is
-    // NOT a card — cards keep the smooth squircle, the pill is a capsule by
-    // definition.
-    val plateShape = RoundedCornerShape(50)
-    // The plate's paper, per theme: the page's own in light; a container rung
-    // above it in dark — a shadow is black paint, so on near-black paper the
-    // tone is what lifts the plate (Material's own dark-elevation grammar).
-    // BLACK's true-black page takes one rung more to read at the same
-    // perceived height. No theme draws a border: light never had one, and the
-    // dark hairline it once wore was the old stand-in for exactly this lift.
-    val plateColor = when {
-        pureBlack -> MaterialTheme.colorScheme.surfaceContainerHigh
-        dark -> MaterialTheme.colorScheme.surfaceContainer
-        else -> MaterialTheme.colorScheme.background
-    }
-    // The Uber halo: not shadowElevation (directional, smudgy on paper)
-    // but the plate's own outline, blurred — see [softHalo]. Softer and a
-    // touch stronger than a Material elevation so it reads as a floating
-    // sheet, the way Uber's does. The ink is the theme's own shadow colour:
-    // the near-black surface ink in light, plain black in dark (at a higher
-    // alpha, since it must darken an already-dark page); on BLACK it falls
-    // invisible and the elevated tone above carries the plate alone.
-    val plateModifier = Modifier.softHalo(
-        shape = plateShape,
-        color = if (dark) Color.Black.copy(alpha = 0.35f)
-        else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.14f),
-        radius = 28.dp,
-        offsetY = 8.dp,
-    )
-    Column(modifier.fillMaxWidth()) {
-        Box(
-            // fillMaxWidth, then padding, then wrapContentWidth, then the cap —
-            // barMeasure()'s own order. The squircle spans the padded width,
-            // the cap binds only on wide screens, and the 14dp margins are the
-            // plate's float (a Box paints nothing of its own).
-            Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 14.dp)
-                .padding(bottom = 12.dp)
-                .wrapContentWidth(Alignment.CenterHorizontally)
-                .widthIn(max = pageMeasure()),
-        ) {
-            Surface(
-                shape = plateShape,
-                color = plateColor,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .then(plateModifier),
-            ) {
-                content()
-            }
-        }
-        // Transparent gesture strip: the plate floats above it and nothing
-        // draws here, so the system handle sits on the page itself.
-        Spacer(Modifier.navigationBarsPadding().height(2.dp))
-    }
-}
-
-/**
- * A soft, even halo — the shadow a floating plate wears on paper. Not
- * [androidx.compose.material3.Surface]'s shadowElevation, which is directional
- * (it lights from above) and reads smudgy on a flat page; that is the very
- * thing that made the old bar's shadow look heavy. Instead the plate's own
- * [shape] outline is drawn into a [android.graphics.Paint] whose
- * [BlurMaskFilter] spreads it outward evenly, so the plate appears to lift off
- * the page rather than cast a hard shadow. Drawn in every theme: near-black
- * surface ink in light, black in dark — where on the AMOLED Black page it
- * falls invisible and the elevated plate tone carries the lift alone.
- */
-private fun Modifier.softHalo(
-    shape: Shape,
-    color: Color,
-    radius: Dp,
-    offsetY: Dp,
-): Modifier = drawBehind {
-    // The outline lives on the shape at the node's own size. Both outline
-    // kinds the app's shapes produce are handled: Generic (SquircleShape's
-    // sampled path) is drawn as a path, and Rounded (RoundedCornerShape's
-    // capsule) is drawn as a round rect with its own resolved corner radius —
-    // never a boxy fallback. Drawing into the node's own canvas keeps exact,
-    // cache-friendly geometry with no extra allocation.
-    val outline = shape.createOutline(size, layoutDirection, this)
-    val blurRadius = radius.toPx()
-    val shift = offsetY.toPx()
-    val paint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
-        this.color = color.toArgb()
-        maskFilter = BlurMaskFilter(blurRadius, BlurMaskFilter.Blur.NORMAL)
-    }
-    drawIntoCanvas { canvas ->
-        val native = canvas.nativeCanvas
-        native.save()
-        native.translate(0f, shift)
-        when (outline) {
-            is Outline.Generic -> native.drawPath(outline.path.asAndroidPath(), paint)
-            is Outline.Rounded -> {
-                // The outline's RoundRect is already in px (createOutline gets
-                // the size in px), so its corner radius needs no conversion. A
-                // capsule's four corners share one radius; the packed value on
-                // the top-left corner is as good as any.
-                val rr = outline.roundRect
-                val radius = rr.topLeftCornerRadius
-                native.drawRoundRect(
-                    android.graphics.RectF(rr.left, rr.top, rr.right, rr.bottom),
-                    radius.x,
-                    radius.y,
-                    paint,
-                )
-            }
-            else -> Unit
-        }
-        native.restore()
-    }
 }
 
 /**
@@ -797,20 +645,21 @@ private fun BottomBarTabs(
                 // "BOOKMARKS" is the longest label the bar carries —
                 // 6.681 em in Spectral Medium, so 141.9dp at a system
                 // font scale of 2.0, against MEMORIZE's 121.5dp. At
-                // three tabs a 320dp phone gives each one 102.7dp, so
-                // the worst case is 0.72 and the 0.40 floor is never
-                // approached. On the 7-inch class the labels
-                // start 1.125× wider and the tab slots are 200dp; on
-                // the 10-inch class 1.25× wider against 427dp — the
-                // room grows faster than the ink on every device the
-                // bar serves.
+                // four tabs a 320dp phone gives each one 70.0dp, so
+                // the worst case is ~0.49 — about 8.9sp, the 9sp base
+                // — and the 0.40 floor is never approached. At the
+                // default font scale every phone, down to 320dp,
+                // renders all four labels whole. On the 7-inch class
+                // the labels start 1.125× wider and the tab slots are
+                // 200dp; on the 10-inch class 1.25× wider against
+                // 427dp — the room grows faster than the ink on every
+                // device the bar serves.
                 //
-                // This is why Settings is a gear rather than a fourth
-                // tab. A fourth would cut each tab to 76.0dp, putting
-                // BOOKMARKS at 0.54 — 9.6sp rendered, no larger than
-                // the 9sp base, so a reader who doubled their system
-                // font would gain nothing at all from having done so.
-                // Selection is carried by weight as well as colour.
+                // That worst case is the measured cost the owner
+                // accepted when Settings joined as the fourth tab
+                // (owner decision, 1.18); see the note on
+                // topLevelRoutes. Selection is carried by weight as
+                // well as colour.
                 // Colour alone failed WCAG 1.4.1: primary against
                 // onSurfaceVariant is 1.22:1 in light and 1.20:1 in
                 // dark — the two differ almost purely in hue, so a

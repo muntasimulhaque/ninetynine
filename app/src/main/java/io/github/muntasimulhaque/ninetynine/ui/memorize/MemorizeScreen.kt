@@ -52,7 +52,6 @@ import io.github.muntasimulhaque.ninetynine.ui.theme.components.NavRow
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.PageMessage
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.PageRule
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.TabTitle
-import io.github.muntasimulhaque.ninetynine.ui.theme.components.TabSettingsAction
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.pageMeasure
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.barMeasure
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.paperTopBarColors
@@ -63,7 +62,6 @@ fun MemorizeScreen(
     viewModel: NamesViewModel,
     onFlashcards: () -> Unit,
     onQuiz: () -> Unit,
-    onSettings: () -> Unit,
     onLearned: () -> Unit,
 ) {
     val learned by viewModel.learned.collectAsStateWithLifecycle()
@@ -102,9 +100,6 @@ fun MemorizeScreen(
                 colors = paperTopBarColors(),
                 title = {
                     TabTitle(stringResource(R.string.memorize))
-                },
-                actions = {
-                    TabSettingsAction(onSettings = onSettings)
                 },
             )
         },

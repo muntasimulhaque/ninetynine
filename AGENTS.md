@@ -63,7 +63,8 @@ versionName, +1 on versionCode per release.** Sequence since the store
 restart: 0.1 … 0.9, then 1.0 / 10, then 1.1 / 11, then 1.2 / 12, then
 1.3 / 13, then 1.4 / 14, then 1.5 / 15, then 1.6 / 16, then 1.7 / 17, then
 1.8 / 18, then 1.9 / 19, then 1.10 / 20, then 1.11 / 21, then 1.12 / 22, then
-1.13 / 23, then 1.14 / 24, then 1.15 / 25, then **1.16 / 26 (current)**.
+1.13 / 23, then 1.14 / 24, then 1.15 / 25, then 1.16 / 26, then 1.17 / 27,
+then **1.18 / 28 (current)**.
 
 The release keystore path/credentials live in a `keystore.properties` outside
 the repo (Google Play Signing Key folder). When absent (CI, fresh clone) the
@@ -248,7 +249,7 @@ app/src/main/assets/     names.json (99 entries), intro.txt, fonts/ (+licenses).
   `meaning` does NOT (Detail/Share/flashcard back: meaning only; list rows,
   hero card, widget, notification, quiz keep the title).
 - **Shared components live in `PageParts.kt`** (BackButton, FitText,
-  ScreenLabel, SectionLabel, NavRow, PageRule, TabSettingsAction, EmptyState,
+  ScreenLabel, SectionLabel, NavRow, PageRule, FloatingBar, EmptyState,
   paperTopBarColors, scaledGap, readingMeasure, named insets). Reuse them.
 - **Empty screens that offer an action use `EmptyState`** (title + optional
   line + optional TextButton); `PageMessage` stays for failure cases with no
@@ -262,8 +263,7 @@ app/src/main/assets/     names.json (99 entries), intro.txt, fonts/ (+licenses).
   matches stay uncoloured — never invent a span that corresponds to nothing.
   Only Home passes a `query` to `NameListItem`; other lists stay pristine.
 - **Search lives in the bar, one entry point, everywhere:** the home bar
-  carries a magnifier beside the ONE corner glyph (`TabSettingsAction`: a
-  plain outlined gear straight to Settings in one tap). Tapping the magnifier swaps the
+  carries a magnifier at its end. Tapping the magnifier swaps the
   running head for a BasicTextField (Crossfade, QUICK — both slots fade as
   one switch; the magnifier's corner becomes the ✕'s) and the keyboard
   rises. This replaced the plate that scrolled with the list: from row
@@ -276,13 +276,20 @@ app/src/main/assets/     names.json (99 entries), intro.txt, fonts/ (+licenses).
   searchOpen)` in HomeScreen); never eject a reader who can still see
   evidence of their search. The ✕ clears AND closes in one tap. The query
   persists until cleared (✕, Back, or the no-results empty's "Clear search").
-- **The corner is a gear; About lives in Settings:** the overflow menu (⋮ →
-  About/Settings) was the only floating tonal surface in a paper-on-paper
-  app, and a two-row popup was ceremony where one tap would do. All three
-  tab bars now end in one outlined gear (`TabSettingsAction`) straight to
-  Settings, and About — the book's front matter — sits as the gold-chevron
-  `NavRow` at the foot of the Settings page, above the version line. Back
-  from About therefore lands on Settings, the screen it now belongs to.
+- **Settings is the fourth tab; About lives at its foot:** the gear that
+  once sat in every tab bar's corner (before that, a ⋮ menu — the only
+  floating tonal surface in a paper-on-paper app) joined the bar as a full
+  labeled tab, rightmost and quietest (owner decision, 1.18 — reopening the
+  earlier three-tab ruling). The top bars now carry content only, and Home's
+  title renders larger in the freed corner. The measured cost the owner
+  accepted: at a 2.0 system font scale on a 320dp phone the longest label
+  renders at FitText scale ~0.49 (about the 9sp base), above the floor,
+  nothing clipping; at the default scale every phone renders all four labels
+  whole. About —
+  the book's front matter — still sits as the gold-chevron `NavRow` at the
+  foot of the Settings page, above the version line; Settings wears the
+  quiet running head and no back button (it is a tab, not a pushed screen),
+  and Back from About still lands on Settings.
 - **Tab heads differ by register:** Home passes `sizeScale = 1f` to
   `TabTitle` — the book's title page, at the full `headlineSmall` where the
   measured width allows (FitText shrinks it back for the second bar icon or
@@ -390,13 +397,21 @@ app/src/main/assets/     names.json (99 entries), intro.txt, fonts/ (+licenses).
   before the mind reads; the row still carries all the semantics.
 - **Themed launcher icons already ship:** the adaptive icon's monochrome layer
   is the Kufic mark — do not re-add it.
-- **The two axes need no manual, by design:** on the name page both acts of
-  keeping sit side by side in the bar as glyphs — an unfilled check-circle
-  that fills gold when learned (`LearnedAction`), and the bookmark, the
-  platform's universal keep glyph — and every empty state teaches its own
-  axis at the moment it matters. An explainer line was tried and deleted on
-  review; the footer pill that once carried the learned verb moved into the
-  bar so the two axes share one place and one feel. If the controls ever need
+- **The two axes need no manual, by design:** the name page carries one
+  floating capsule (`DetailNavPlate`, the same `FloatingBar` plate the tab
+  bar wears) holding everything a reader does to a name — previous and next
+  wearing the neighbour's transliteration, and the two acts of keeping as
+  glyphs: an unfilled check-circle that fills gold when learned
+  (`LearnedAction`), and the bookmark, the platform's universal keep glyph.
+  Share alone stays in the top bar (a send-away act reads at the page's
+  edge; five slots would crowd a 320dp phone). The capsule is FIXED, unlike
+  the scrolling footer it replaced — on a long meaning the chevrons sat
+  below the fold at exactly the moment a name strikes; that was also the
+  reason the keep-acts had once moved to the top bar. The capsule's weighted
+  end slots keep the keep-acts centred on first/last pages, its labels
+  change as the pager settles (the same moment the counter does), and every
+  empty state still teaches its own axis at the moment it matters. An
+  explainer line was tried and deleted on review: if the controls ever need
   one again, fix the controls, not the prose.
 - **The notification's one line is set, not joined:** Arabic · transliteration,
   the same middle dot the feature graphic's tagline wears.

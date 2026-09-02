@@ -10,7 +10,7 @@ so do not add a word or a stray space.
 
 - **Application ID (package name):** `io.github.muntasimulhaque.ninetynine`
 - **Privacy policy URL:** `https://muntasimulhaque.github.io/ninetynine/privacy-policy.html`
-- **Version (this release):** versionName `1.17`, versionCode `27`
+- **Version (this release):** versionName `1.18`, versionCode `28`
 
 ---
 
@@ -57,6 +57,23 @@ Made to be read:
 
 Free and open source. May Allah make us among those who learn, memorize,
 understand and act upon His beautiful Names.
+```
+
+## What's new (version 1.18)
+
+```
+Settings now lives in the bottom bar,
+beside Names, Memorize and Bookmarks —
+one tap, in the same place on every
+screen. The name page gains a floating
+capsule: previous and next, Mark as
+learned and bookmark sit together at
+the foot of the page, always within
+reach on even the longest meanings.
+Search stays in the home bar, where
+the freed corner lets the app's title
+set a little larger. All 99 Names and
+your progress are unchanged.
 ```
 
 ## What's new (version 1.17)

@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentWidth
@@ -51,7 +52,6 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.layout.layout
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.LiveRegionMode
@@ -62,7 +62,6 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.muntasimulhaque.ninetynine.R
@@ -81,6 +80,7 @@ import io.github.muntasimulhaque.ninetynine.ui.theme.components.ArabicText
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.BackButton
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.barMeasure
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.FitText
+import io.github.muntasimulhaque.ninetynine.ui.theme.components.FloatingBar
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.MixedText
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.PageMessage
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.ReadingInset
@@ -94,9 +94,10 @@ import kotlin.math.absoluteValue
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
-// The reading measure sits in from the page edges. The prev/next footer does
-// not — it belongs to the edges themselves, so it bleeds back out through this
-// inset (see NamePage).
+// The reading measure sits in from the page edges. The prev/next chevrons
+// used to bleed back out to the screen edges from inside the page; they live
+// in the floating capsule below now (see DetailNavPlate), and this inset is
+// the page's margin.
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -193,6 +194,8 @@ fun DetailScreen(
     }
     val current = pages[pagerState.currentPage.coerceIn(0, pages.lastIndex)]
     val haptics = rememberHaptics()
+    val scope = rememberCoroutineScope()
+    val motionScale = LocalMotionScale.current
 
     // A featherweight tick as each page settles — like a bead slipping past.
     LaunchedEffect(pagerState) {
@@ -224,31 +227,42 @@ fun DetailScreen(
                     )
                 },
                 navigationIcon = { BackButton(onBack) },
-                // Learning, keeping, then sending: the two inward acts sit
-                // inside, adjacent — both are acts of keeping — and Share
-                // keeps the edge it has always had.
+                // Share keeps the edge: a send-away act reads at the page's
+                // edge, and five slots would crowd a 320dp phone. Learning
+                // and keeping live in the capsule below, beside the chevrons
+                // they turn pages with.
                 actions = {
-                    LearnedAction(
-                        learned = current.number in learned,
-                        number = current.number,
-                        onToggle = {
-                            val number = current.number
-                            viewModel.setLearned(number, number !in learned)
-                        },
-                    )
-                    BookmarkAction(
-                        bookmarked = current.number in bookmarked,
-                        number = current.number,
-                        onToggle = {
-                            viewModel.setBookmarked(current.number, current.number !in bookmarked)
-                        },
-                    )
                     IconButton(onClick = { showShare = true }) {
                         Icon(
                             Icons.Outlined.Share,
                             contentDescription = stringResource(R.string.cd_share),
                         )
                     }
+                },
+            )
+        },
+        // The name page's floating capsule: previous and next, then the two
+        // acts of keeping. Fixed, unlike the footer it replaces — see
+        // [DetailNavPlate].
+        bottomBar = {
+            DetailNavPlate(
+                current = current,
+                previousLabel = pages.getOrNull(pagerState.currentPage - 1)?.transliteration,
+                nextLabel = pages.getOrNull(pagerState.currentPage + 1)?.transliteration,
+                learned = current.number in learned,
+                bookmarked = current.number in bookmarked,
+                onToggleLearned = {
+                    val number = current.number
+                    viewModel.setLearned(number, number !in learned)
+                },
+                onToggleBookmarked = {
+                    viewModel.setBookmarked(current.number, current.number !in bookmarked)
+                },
+                onPrevious = {
+                    goToPage(scope, pagerState, pagerState.currentPage - 1, motionScale)
+                },
+                onNext = {
+                    goToPage(scope, pagerState, pagerState.currentPage + 1, motionScale)
                 },
             )
         },
@@ -263,8 +277,6 @@ fun DetailScreen(
                 name = pages[page],
                 pagerState = pagerState,
                 page = page,
-                previousLabel = pages.getOrNull(page - 1)?.transliteration,
-                nextLabel = pages.getOrNull(page + 1)?.transliteration,
                 // Pages dim slightly while in motion, then settle to full
                 // presence. Read inside the layer block so a swipe redraws
                 // rather than recomposing every visible page each frame.
@@ -397,18 +409,116 @@ private fun BookmarkAction(bookmarked: Boolean, number: Int, onToggle: () -> Uni
     }
 }
 
+/**
+ * The name page's floating capsule — the same [FloatingBar] plate the tab
+ * screens float, carrying everything a reader does to a name: previous and
+ * next (wearing the neighbour's transliteration, so the bar says what turning
+ * the page brings), and the two acts of keeping, learned and bookmarked,
+ * adjacent in the centre. Share stays in the top bar: a send-away act reads
+ * at the page's edge, and five slots would crowd a 320dp phone.
+ *
+ * It replaces the footer that used to scroll with the text — on a long
+ * meaning the chevrons sat below the fold at exactly the moment a name
+ * strikes you. The bar does not move, so turning is always one tap away; its
+ * labels change as the pager settles, the same moment the counter above does.
+ * The weighted end slots keep the two keep-acts centred whether the
+ * neighbours exist (page 0 has no previous; the last page no next).
+ */
+@Composable
+private fun DetailNavPlate(
+    current: Name,
+    previousLabel: String?,
+    nextLabel: String?,
+    learned: Boolean,
+    bookmarked: Boolean,
+    onToggleLearned: () -> Unit,
+    onToggleBookmarked: () -> Unit,
+    onPrevious: () -> Unit,
+    onNext: () -> Unit,
+) {
+    FloatingBar {
+        Row(
+            // The row takes its height from its children with the same 54dp
+            // floor the tab bar's slots wear, so the two capsules read as one
+            // register. Each weighted slot caps its label at the space it
+            // owns, so two long transliterations can never overlap at any
+            // font scale — they ellipsize instead of wrapping mid-word.
+            modifier = Modifier
+                .barMeasure()
+                .heightIn(min = 54.dp)
+                .padding(horizontal = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Box(Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
+                if (previousLabel != null) {
+                    // The chevron carries the direction visually; the name
+                    // alone would leave a screen-reader user unable to tell
+                    // previous from next. (Computed here: a semantics block
+                    // is not a composable context.)
+                    val previousCd = stringResource(R.string.previous_name, previousLabel)
+                    TextButton(
+                        onClick = onPrevious,
+                        modifier = Modifier.semantics {
+                            contentDescription = previousCd
+                        },
+                    ) {
+                        Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, contentDescription = null)
+                        // Roman, not italic. Italic means epithet, gloss or
+                        // quote everywhere else in the app — the page above
+                        // has just taught the reader that — so setting a
+                        // Name in it says the wrong thing. titleSmall also
+                        // rescues these from TextButton's labelLarge, which
+                        // made the app's main keep-reading affordance the
+                        // smallest Latin on the page.
+                        Text(
+                            previousLabel,
+                            style = MaterialTheme.typography.titleSmall,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
+                }
+            }
+            LearnedAction(
+                learned = learned,
+                number = current.number,
+                onToggle = onToggleLearned,
+            )
+            BookmarkAction(
+                bookmarked = bookmarked,
+                number = current.number,
+                onToggle = onToggleBookmarked,
+            )
+            Box(Modifier.weight(1f), contentAlignment = Alignment.CenterEnd) {
+                if (nextLabel != null) {
+                    val nextCd = stringResource(R.string.next_name, nextLabel)
+                    TextButton(
+                        onClick = onNext,
+                        modifier = Modifier.semantics {
+                            contentDescription = nextCd
+                        },
+                    ) {
+                        Text(
+                            nextLabel,
+                            style = MaterialTheme.typography.titleSmall,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                        Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null)
+                    }
+                }
+            }
+        }
+    }
+}
+
 @Composable
 private fun NamePage(
     name: Name,
     pagerState: PagerState,
     page: Int,
-    previousLabel: String?,
-    nextLabel: String?,
     modifier: Modifier = Modifier,
 ) {
-    val scope = rememberCoroutineScope()
-    val motionScale = LocalMotionScale.current
-
     // Single scrollable page: the controls scroll with the content, but a
     // weighted spacer pushes them to just above the system bar whenever the
     // content is shorter than the screen.
@@ -422,12 +532,6 @@ private fun NamePage(
             .widthIn(max = readingMeasure())
     ) {
         val minPageHeight = maxHeight
-        // The two chevron labels share the footer row with their icons. Each
-        // text is capped at half the row minus the chrome (two icons, two
-        // internal gaps, two button paddings) so that two long transliterations
-        // can never overlap at any font scale, and ellipsizes instead of
-        // wrapping mid-word.
-        val chevronTextMax = ((maxWidth - ReadingInset * 2 - 88.dp) / 2f).coerceAtLeast(48.dp)
         val scrollState = rememberScrollState()
         Column(
             modifier = Modifier
@@ -528,89 +632,6 @@ private fun NamePage(
                     }
                 }
                 Spacer(Modifier.weight(1f))
-                Spacer(Modifier.height(28.dp))
-                Row(
-                    // Widened back out through the page inset so the chevrons
-                    // land on the same vertical line as the back and share
-                    // icons in the top bar, instead of floating in toward the
-                    // middle of the page. Safe to overflow: the padding sits
-                    // inside the scroll container, so this only reaches the
-                    // viewport's own edge — nothing clips it.
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .layout { measurable, constraints ->
-                            val bleed = ReadingInset.roundToPx()
-                            val placeable = measurable.measure(
-                                constraints.copy(
-                                    minWidth = constraints.minWidth + bleed * 2,
-                                    maxWidth = constraints.maxWidth + bleed * 2,
-                                )
-                            )
-                            layout(constraints.maxWidth, placeable.height) {
-                                // Mirrors with the layout direction; in RTL the
-                                // start side is physically right.
-                                placeable.place(
-                                    if (layoutDirection == LayoutDirection.Rtl) bleed else -bleed,
-                                    0,
-                                )
-                            }
-                        },
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    if (previousLabel != null) {
-                        // The chevrons carry the direction visually; the name
-                        // alone would leave a screen-reader user unable to tell
-                        // previous from next. (Computed here: a semantics block
-                        // is not a composable context.)
-                        val previousCd = stringResource(R.string.previous_name, previousLabel)
-                        TextButton(
-                            onClick = { goToPage(scope, pagerState, page - 1, motionScale) },
-                            modifier = Modifier.semantics {
-                                contentDescription = previousCd
-                            },
-                        ) {
-                            Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, contentDescription = null)
-                            // Roman, not italic. Italic means epithet, gloss or
-                            // quote everywhere else in the app — the page above
-                            // has just taught the reader that — so setting a
-                            // Name in it says the wrong thing. titleSmall also
-                            // rescues these from TextButton's labelLarge, which
-                            // made the app's main keep-reading affordance the
-                            // smallest Latin on the page.
-                            Text(
-                                previousLabel,
-                                style = MaterialTheme.typography.titleSmall,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                                modifier = Modifier.widthIn(max = chevronTextMax),
-                            )
-                        }
-                    } else {
-                        Spacer(Modifier.widthIn(min = 48.dp))
-                    }
-                    if (nextLabel != null) {
-                        val nextCd = stringResource(R.string.next_name, nextLabel)
-                        TextButton(
-                            onClick = { goToPage(scope, pagerState, page + 1, motionScale) },
-                            modifier = Modifier.semantics {
-                                contentDescription = nextCd
-                            },
-                        ) {
-                            Text(
-                                nextLabel,
-                                style = MaterialTheme.typography.titleSmall,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                                modifier = Modifier.widthIn(max = chevronTextMax),
-                            )
-                            Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null)
-                        }
-                    } else {
-                        Spacer(Modifier.widthIn(min = 48.dp))
-                    }
-                }
-                Spacer(Modifier.height(16.dp))
             }
         }
 

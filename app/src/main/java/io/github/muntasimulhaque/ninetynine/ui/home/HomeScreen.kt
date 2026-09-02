@@ -96,7 +96,6 @@ import io.github.muntasimulhaque.ninetynine.ui.theme.components.pageMeasure
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.EmptyState
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.LazyScrollbarThumb
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.PageMessage
-import io.github.muntasimulhaque.ninetynine.ui.theme.components.TabSettingsAction
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.barMeasure
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.paperTopBarColors
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.scaledGap
@@ -109,7 +108,6 @@ import kotlinx.coroutines.delay
 fun HomeScreen(
     viewModel: NamesViewModel,
     onNameClick: (Int) -> Unit,
-    onSettings: () -> Unit,
     listState: LazyListState,
 ) {
     val names by viewModel.names.collectAsStateWithLifecycle()
@@ -223,13 +221,15 @@ fun HomeScreen(
                     // both cross-fading on the house QUICK fade so the two
                     // slots read as one switch rather than two movements.
                     //
-                    // Home is the book's title page — with a single overflow
-                    // glyph beside it (or, searching, none) its title keeps
-                    // the full headlineSmall register (sizeScale 1f) where the
-                    // other tabs run quieter heads. FitText holds it inside
-                    // the narrower space a second icon costs; 0.25f floor:
-                    // see TabTitle — the app's own name must survive the
-                    // narrowest bar at the largest scales.
+                    // Home is the book's title page — with only the
+                    // magnifier beside it (or, searching, none) its title
+                    // keeps the full headlineSmall register (sizeScale 1f)
+                    // where the other tabs run quieter heads. Settings joined
+                    // the bottom bar (1.18), so the corner the gear once took
+                    // is freed and FitText renders the title larger in it; it
+                    // still holds inside the narrower space the magnifier
+                    // costs. 0.25f floor: see TabTitle — the app's own name
+                    // must survive the narrowest bar at the largest scales.
                     Crossfade(
                         targetState = searchOpen,
                         animationSpec = Motion.tween(Motion.QUICK),
@@ -266,7 +266,6 @@ fun HomeScreen(
                                         contentDescription = stringResource(R.string.cd_search),
                                     )
                                 }
-                                TabSettingsAction(onSettings = onSettings)
                             }
                         }
                         AnimatedVisibility(

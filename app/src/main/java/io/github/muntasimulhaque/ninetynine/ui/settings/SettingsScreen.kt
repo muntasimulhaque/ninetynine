@@ -89,12 +89,12 @@ import io.github.muntasimulhaque.ninetynine.ui.theme.LocalDeviceFactor
 import io.github.muntasimulhaque.ninetynine.ui.theme.Motion
 import io.github.muntasimulhaque.ninetynine.ui.theme.appTypography
 import io.github.muntasimulhaque.ninetynine.ui.theme.rememberHaptics
-import io.github.muntasimulhaque.ninetynine.ui.theme.components.BackButton
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.ListInset
+import io.github.muntasimulhaque.ninetynine.ui.theme.components.LocalBottomBarOverlay
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.MixedText
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.NavRow
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.PageRule
-import io.github.muntasimulhaque.ninetynine.ui.theme.components.ScreenLabel
+import io.github.muntasimulhaque.ninetynine.ui.theme.components.TabTitle
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.pageMeasure
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.barMeasure
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.paperTopBarColors
@@ -111,7 +111,6 @@ private const val SCALE_MAX = 1.4f
 @Composable
 fun SettingsScreen(
     viewModel: NamesViewModel,
-    onBack: () -> Unit,
     onAbout: () -> Unit,
 ) {
     val context = LocalContext.current
@@ -163,13 +162,13 @@ fun SettingsScreen(
 
     Scaffold(
         topBar = {
-            // A pushed screen since the gear replaced the tab, so it is titled
-            // and left the same way as About, Flashcards and Quiz.
+            // A tab since 1.18, so it wears the same quiet running head as
+            // Memorize and Bookmarks and carries no back button — the tab
+            // grammar and system Back carry the leaving.
             TopAppBar(
                 modifier = Modifier.barMeasure(),
                 colors = paperTopBarColors(),
-                title = { ScreenLabel(stringResource(R.string.settings)) },
-                navigationIcon = { BackButton(onBack) },
+                title = { TabTitle(stringResource(R.string.settings)) },
             )
         },
     ) { padding ->
@@ -330,14 +329,15 @@ fun SettingsScreen(
                 )
             }
 
-            // About returned here after a year in the tab-bar corner: first
-            // as two permanent icons, then as one ⋮ opening a two-row menu —
-            // both chrome a reader meets every hour for a page they meet
-            // twice. The corner is now a plain gear straight to Settings, and
-            // About, the book's front matter (the hadith, the source, the
-            // typefaces), sits at the foot of configuration — one hop, where
-            // a reader already pausing on the app's own questions finds it.
-            // The gold chevron marks it as the page's one navigation row.
+            // About has lived at the foot of Settings since it left the
+            // tab-bar corner (first as two permanent icons, then as one ⋮
+            // menu, then as one corner gear — all chrome a reader meets every
+            // hour for a page they meet twice; Settings is a fourth tab
+            // now). About, the book's front matter (the hadith, the source,
+            // the typefaces), sits at the foot of configuration — one hop
+            // from the tab, where a reader already pausing on the app's own
+            // questions finds it. The gold chevron marks it as the page's one
+            // navigation row.
             SectionBreak()
             NavRow(
                 title = stringResource(R.string.about),
@@ -357,7 +357,10 @@ fun SettingsScreen(
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-            Spacer(Modifier.height(28.dp))
+            // The floating bar overlays the page now that Settings is a tab,
+            // so the last line clears the plate — the bar's measured height,
+            // the same channel the lists grow by.
+            Spacer(Modifier.height(28.dp + LocalBottomBarOverlay.current))
         }
     }
 
