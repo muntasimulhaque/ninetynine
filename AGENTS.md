@@ -75,7 +75,11 @@ release build degrades to unsigned rather than failing.
 1. **Bump the version**: `app/build.gradle.kts`, the sequence above, and the
    version field in `docs/play-listing.md`.
 2. **Write the "What's new" notes** (≤500 chars) into `docs/play-listing.md`
-   — the copy/paste source for the Console.
+   — the copy/paste source for the Console. No boilerplate beyond what the
+   release actually touches: the closing "All 99 Names and your progress are
+   unchanged" line appears ONLY when content or progress behaviour really
+   was at risk and the note reassures about it — an ordinary UI change
+   carries no such line (owner decision, after 1.21).
 3. **Verify locally**: full CI suite (`:app:testDebugUnitTest :app:lintDebug
    :app:assembleDebug :app:assembleRelease`).
 4. **Commit and push**, verify CI green via the Actions API (full 40-char
