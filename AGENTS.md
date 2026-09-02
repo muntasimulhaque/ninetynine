@@ -383,11 +383,14 @@ app/src/main/assets/     names.json (99 entries), intro.txt, fonts/ (+licenses).
   resting, the check-circle and bookmark render `onSurfaceVariant` — the
   same grey as the top bar's share icon, not the page's near-black — and
   each carries a short chrome label (LEARNED / BOOKMARK) at the tab bar's
-  `tabLabelStyle()` register (9sp × device factor, FitText-fitted inside the
-  48dp IconButton, `clearAndSetSemantics` so TalkBack keeps hearing the full
-  action + state once). Active, they fill gold as always. The full phrase
-  "Mark as learned" cannot fit the plate's centre slot at a readable size;
-  the short words can — owner decision, 1.19.
+  `tabLabelStyle()` register (9sp × device factor, FitText-fitted,
+  `clearAndSetSemantics` so TalkBack keeps hearing the full action + state
+  once). They are explicit stadium-clipped clickable Columns with a 48dp
+  touch floor — NOT IconButtons (see pitfalls); the first capture shipped
+  them inside an IconButton and its circle clip cut the labels mid-glyph.
+  Active, they fill gold as always. The full phrase "Mark as learned" cannot
+  fit the plate's centre slot at a readable size; the short words can —
+  owner decision, 1.19.
 - **The share sheet offers the plate AND the words:** "Share text" sends the
   Arabic, the name and epithet on one line, the full meaning, and the store
   title — the card's hierarchy as plain text. The name page's meaning is the
@@ -526,6 +529,14 @@ eight places (#28, #32, #44, #48, #80, #87, #94, #95).
 
 - **Files are CRLF** (`.gitattributes text=auto`). The patch tool fails to
   match old_text ending in a trailing newline — include the FOLLOWING line.
+- **IconButton clips its content to a 48dp circle.** Anything taller than
+  an icon — an icon+label column, a two-line stack — is measured fine but
+  CUT mid-glyph, worst just off-centre where the inscribed chord narrows to
+  ~44dp; FitText cannot save it, because the text fits the constraints and
+  the clip eats it. Multi-element buttons are explicit Columns with
+  `clip(RoundedCornerShape(50))` before `clickable` and
+  `minimumInteractiveComponentSize()` for the touch floor (the detail
+  plate's keep-acts; shipped once as IconButtons, 1.19).
 - **Repo-wide greps: use `git grep`** when the cwd path contains spaces, and
   it only searches tracked files so build output can't pollute a sweep.
 - **After removing a Text/composable block, re-grep unused imports** — the

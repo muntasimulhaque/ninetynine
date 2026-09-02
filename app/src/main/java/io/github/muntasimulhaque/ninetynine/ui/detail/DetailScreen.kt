@@ -1,6 +1,7 @@
 package io.github.muntasimulhaque.ninetynine.ui.detail
 
 import androidx.compose.animation.core.Animatable
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -21,6 +22,7 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -36,6 +38,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -52,6 +55,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -330,44 +334,59 @@ private fun LearnedAction(learned: Boolean, number: Int, onToggle: () -> Unit) {
     // A toggle, not a button that happens to carry state text: Role.Switch
     // gives TalkBack a toggle action and a checked/unchecked reading, matching
     // how the deck menu's checkbox row already behaves.
-    IconButton(
-        onClick = {
-            haptics.confirm()
-            onToggle()
-        },
-        modifier = Modifier.semantics {
-            stateDescription = state
-            role = Role.Switch
-        },
+    //
+    // An explicit column, NOT an IconButton: the icon+label pair sits below
+    // the centre line, where a 48dp circle's inscribed width is ~44dp — and
+    // the IconButton CLIPS to that circle, so the first capture cut LEARNED
+    // mid-glyph. Here the press highlight clips to the bar's own stadium
+    // register (the same RoundedCornerShape(50) the tab bar clips to, set
+    // before clickable), and minimumInteractiveComponentSize keeps the 48dp
+    // touch floor. The full action lives in the contentDescription and the
+    // state in stateDescription — exactly what the merged IconButton node
+    // read before; the visible label is silent to TalkBack.
+    val cd = stringResource(R.string.mark_learned)
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+        modifier = Modifier
+            .minimumInteractiveComponentSize()
+            .clip(RoundedCornerShape(50))
+            .clickable(role = Role.Switch) {
+                haptics.confirm()
+                onToggle()
+            }
+            .padding(horizontal = 10.dp)
+            .semantics {
+                contentDescription = cd
+                stateDescription = state
+            },
     ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Icon(
-                imageVector = if (learned) Icons.Filled.CheckCircle else Icons.Outlined.CheckCircle,
-                contentDescription = stringResource(R.string.mark_learned),
-                // Resting, it wears the top bar's grey — the same ink the
-                // share icon carries, not the page's near-black. Learned, it
-                // fills with the app's gold, as before.
-                tint = if (learned) MaterialTheme.colorScheme.secondary
-                else MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier
-                    .size(20.dp)
-                    .graphicsLayer {
-                        scaleX = scale.value
-                        scaleY = scale.value
-                    },
-            )
-            Spacer(Modifier.height(2.dp))
-            // The eye gets the tab bar's short chrome label — same register:
-            // 9sp x the device factor, never the reader's slider. The ear
-            // keeps the full action from the icon's description, so TalkBack
-            // never hears the state word twice; the label itself is silent.
-            FitText(
-                text = stringResource(R.string.plate_learned).uppercase(),
-                style = tabLabelStyle(),
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.clearAndSetSemantics {},
-            )
-        }
+        Icon(
+            imageVector = if (learned) Icons.Filled.CheckCircle else Icons.Outlined.CheckCircle,
+            contentDescription = null,
+            // Resting, it wears the top bar's grey — the same ink the
+            // share icon carries, not the page's near-black. Learned, it
+            // fills with the app's gold, as before.
+            tint = if (learned) MaterialTheme.colorScheme.secondary
+            else MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier
+                .size(20.dp)
+                .graphicsLayer {
+                    scaleX = scale.value
+                    scaleY = scale.value
+                },
+        )
+        Spacer(Modifier.height(2.dp))
+        // The eye gets the tab bar's short chrome label — same register:
+        // 9sp x the device factor, never the reader's slider. The ear
+        // keeps the full action from the button's description, so TalkBack
+        // never hears the state word twice.
+        FitText(
+            text = stringResource(R.string.plate_learned).uppercase(),
+            style = tabLabelStyle(),
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.clearAndSetSemantics {},
+        )
     }
 }
 
@@ -407,40 +426,47 @@ private fun BookmarkAction(bookmarked: Boolean, number: Int, onToggle: () -> Uni
 
     // The button is named once and never changes; what changes is the state
     // announced after it. Set on the button, which is the node TalkBack focuses.
+    // Same explicit column as the learned act: the IconButton's 48dp circle
+    // clip cut BOOKMARK mid-glyph on the first capture.
     val state = stringResource(if (bookmarked) R.string.bookmarked else R.string.not_bookmarked)
-    IconButton(
-        onClick = {
-            haptics.confirm()
-            onToggle()
-        },
-        modifier = Modifier.semantics {
-            stateDescription = state
-            role = Role.Switch
-        },
+    val cd = stringResource(R.string.cd_bookmark)
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+        modifier = Modifier
+            .minimumInteractiveComponentSize()
+            .clip(RoundedCornerShape(50))
+            .clickable(role = Role.Switch) {
+                haptics.confirm()
+                onToggle()
+            }
+            .padding(horizontal = 10.dp)
+            .semantics {
+                contentDescription = cd
+                stateDescription = state
+            },
     ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Icon(
-                imageVector = if (bookmarked) Icons.Filled.Bookmark else Icons.Filled.BookmarkBorder,
-                contentDescription = stringResource(R.string.cd_bookmark),
-                // Same resting grey as the learned act and the share icon;
-                // kept, it fills with the app's gold.
-                tint = if (bookmarked) MaterialTheme.colorScheme.secondary
-                else MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier
-                    .size(20.dp)
-                    .graphicsLayer {
-                        scaleX = scale.value
-                        scaleY = scale.value
-                    },
-            )
-            Spacer(Modifier.height(2.dp))
-            FitText(
-                text = stringResource(R.string.plate_bookmark).uppercase(),
-                style = tabLabelStyle(),
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.clearAndSetSemantics {},
-            )
-        }
+        Icon(
+            imageVector = if (bookmarked) Icons.Filled.Bookmark else Icons.Filled.BookmarkBorder,
+            contentDescription = null,
+            // Same resting grey as the learned act and the share icon;
+            // kept, it fills with the app's gold.
+            tint = if (bookmarked) MaterialTheme.colorScheme.secondary
+            else MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier
+                .size(20.dp)
+                .graphicsLayer {
+                    scaleX = scale.value
+                    scaleY = scale.value
+                },
+        )
+        Spacer(Modifier.height(2.dp))
+        FitText(
+            text = stringResource(R.string.plate_bookmark).uppercase(),
+            style = tabLabelStyle(),
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.clearAndSetSemantics {},
+        )
     }
 }
 
