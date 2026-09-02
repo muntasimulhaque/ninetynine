@@ -678,6 +678,14 @@ eight places (#28, #32, #44, #48, #80, #87, #94, #95).
   APK installed, or ScreenshotTest on API ≤ 35 images (the test now saves to
   the AGP additional-test-output dir, not files/screenshots). Hard-won adb
   gotchas:
+- **Two capture nondeterminisms (proven 1.22, run 33648558302):** the
+  ScreenshotTest scenes render the SCREENS directly, so MainActivity's bottom
+  bar never appears in any capture — tab-label changes are invisible to the
+  sets (only the name scene shows the detail plate's labels). And the
+  flashcards/quiz scenes show SHUFFLED content (DeckBuilder/QuizBuilder use
+  unseeded `Random`), so those two PNGs legitimately differ on every run.
+  When a screenshot-refresh diff surprises you, diff the old/new PNGs before
+  assuming a regression.
   - Search lives in the home bar: stop an upward scroll to reveal it (or tap
     NAMES' re-tap to land at a fully revealed top), tap the magnifier. A live
     query persists until cleared — tap the bar's ✕ ("Close search") or press
