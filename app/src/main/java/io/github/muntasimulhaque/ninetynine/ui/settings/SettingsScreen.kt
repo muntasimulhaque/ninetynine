@@ -350,6 +350,10 @@ fun SettingsScreen(
                 titleStyle = MaterialTheme.typography.bodyLarge,
                 onClickLabel = stringResource(R.string.cd_open_about),
             )
+            // Air between the row above and the datum below — everything else
+            // on this page breathes, and the version line hugging the About
+            // row's padding read as cramped (shipped once without it).
+            Spacer(Modifier.height(12.dp))
 
             // Compile-time constant: no PackageManager call, and no fallback
             // string to go stale one release after somebody forgets it.

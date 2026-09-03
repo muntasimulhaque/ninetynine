@@ -64,7 +64,7 @@ restart: 0.1 … 0.9, then 1.0 / 10, then 1.1 / 11, then 1.2 / 12, then
 1.3 / 13, then 1.4 / 14, then 1.5 / 15, then 1.6 / 16, then 1.7 / 17, then
 1.8 / 18, then 1.9 / 19, then 1.10 / 20, then 1.11 / 21, then 1.12 / 22, then
 1.13 / 23, then 1.14 / 24, then 1.15 / 25, then 1.16 / 26, then 1.17 / 27,
-then 1.19 / 29, then 1.20 / 30, then 1.21 / 31, then **1.22 / 32 (current)**.
+then 1.19 / 29, then 1.20 / 30, then 1.21 / 31, then 1.22 / 32, then **1.23 / 33 (current)**.
 
 The release keystore path/credentials live in a `keystore.properties` outside
 the repo (Google Play Signing Key folder). When absent (CI, fresh clone) the
@@ -117,9 +117,10 @@ in five to seven minutes (proven 2026-08-24, run 32762916428: all three
 legs, 15 PNGs). It triggers on pushes touching UI files, or via
 workflow_dispatch.
 
-- When visible UI changes: wait for the run, download the three
-  `store-screenshots-*` artifacts (phone/tablet7/tablet10, eight scenes
-  each — 24 PNGs a full set),
+- When visible UI changes (or the canonical scene set itself changes, as
+  in 1.23): wait for the run, download the three
+  `store-screenshots-*` artifacts (phone/tablet7/tablet10, nine scenes
+  each — 27 PNGs a full set),
   and hand over/refresh from exactly those PNGs.
   `gh run download <run-id> -R muntasimulhaque/ninetynine` works on both
   machines (gh is installed and authenticated on each).
@@ -174,7 +175,8 @@ workflow_dispatch.
   every change), uploads the debug APK (7-day retention). Actions SHA-pinned;
   `permissions: contents: read`.
 - **screenshots.yml** (pushes touching UI files, plus manual dispatch):
-  captures the eight ScreenshotTest scenes on phone/7"/10" emulators at
+  captures the nine canonical ScreenshotTest scenes (see the list in
+  Testing) on phone/7"/10" emulators at
   API 35 and uploads `store-screenshots-phone/-tablet7/-tablet10` artifacts.
   See Store screenshots from CI under Release hand-off.
 - Verify green runs with `gh` — installed and authenticated on both machines
@@ -539,12 +541,33 @@ eight places (#28, #32, #44, #48, #80, #87, #94, #95).
   real asset, CounterFormatTest.
   Count grows as guards are added — sum the XMLs in
   `app/build/test-results/testDebugUnitTest/`.
-- Instrumentation (`ScreenshotTest`) renders eight scenes (home, home-dark,
-  name, quiz, memorize, flashcards, share, settings) to the instrumentation
-  run's additional test output
+- Instrumentation (`ScreenshotTest`) renders the CANONICAL PLAY SCENE SET
+  (owner decision, 1.23 — replaces the earlier eight-scene set; no scene
+  targets a particular name, any name will do):
+
+    1. `home` — the Names page
+    2. `memorize` — the Memorize page
+    3. `flashcards-front` and `flashcards-back` — BOTH faces of the card
+       (the back is reached by flipping the deck ViewModel directly, never
+       by injecting a tap — the test stays a pure render)
+    4. `quiz` — the Quiz page
+    5. `bookmarks` — the Bookmarks page, POPULATED (the first three loaded
+       names are bookmarked through the ViewModel and the capture waits for
+       the rows; an empty shelf says nothing)
+    6. `settings` — the Settings page
+    7. `name` — a name page (the first in the book; "any name")
+    8. `share` — a name's share screen (the first loaded name; the plate
+       renders outside the sheet, which the compose root cannot capture)
+
+  rendered to the instrumentation run's additional test output
   directory (AGP copies them off-device for the workflow; local runs fall
   back to the app's files dir); pure render, no input injection, so it runs
   on API ≤ 35 images. Used by screenshots.yml and Android Studio captures.
+  The rule is `createAndroidComposeRule<ComponentActivity>()` — the plain
+  rule exposes no `.activity`, which the flashcard scenes need for the
+  shared ViewModelStore. A stale set in `docs/screenshots/` must be DELETED
+  before re-downloading (`gh run download` overwrites files but leaves
+  scenes the new run no longer captures).
 - Pure logic lives in `util/` precisely so it is unit-testable.
 
 ## Editing pitfalls that bite

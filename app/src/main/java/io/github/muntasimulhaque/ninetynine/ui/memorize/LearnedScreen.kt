@@ -25,6 +25,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.muntasimulhaque.ninetynine.R
 import io.github.muntasimulhaque.ninetynine.ui.NamesViewModel
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.BackButton
+import io.github.muntasimulhaque.ninetynine.ui.theme.components.barMeasure
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.NameListItem
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.NameRowInset
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.nameRowTextInset
@@ -67,6 +68,9 @@ fun LearnedScreen(
     Scaffold(
         topBar = {
             TopAppBar(
+                // Chrome joins the book's column like every other top bar —
+                // this was the one of nine call-sites left outside it.
+                modifier = Modifier.barMeasure(),
                 colors = paperTopBarColors(),
                 title = { ScreenLabel(stringResource(R.string.learned_names)) },
                 navigationIcon = { BackButton(onBack) },

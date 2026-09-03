@@ -2,6 +2,7 @@ package io.github.muntasimulhaque.ninetynine
 
 import android.app.Application
 import android.graphics.Bitmap
+import androidx.activity.ComponentActivity
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -16,17 +17,20 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.test.captureToImage
-import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import io.github.muntasimulhaque.ninetynine.data.ThemeMode
 import io.github.muntasimulhaque.ninetynine.ui.NamesViewModel
+import io.github.muntasimulhaque.ninetynine.ui.bookmarks.BookmarksScreen
 import io.github.muntasimulhaque.ninetynine.ui.detail.DetailScreen
 import io.github.muntasimulhaque.ninetynine.ui.home.HomeScreen
 import io.github.muntasimulhaque.ninetynine.ui.memorize.FlashcardsScreen
+import io.github.muntasimulhaque.ninetynine.ui.memorize.FlashcardsViewModel
 import io.github.muntasimulhaque.ninetynine.ui.memorize.MemorizeScreen
 import io.github.muntasimulhaque.ninetynine.ui.memorize.QuizScreen
 import io.github.muntasimulhaque.ninetynine.ui.settings.SettingsScreen
@@ -39,23 +43,44 @@ import org.junit.runner.RunWith
 import java.io.File
 
 /**
- * Renders the eight Play-listing screens directly (no app session, no adb taps)
- * at whatever resolution the device reports, and saves a PNG per scene to the
- * instrumentation run's additional test output directory (falling back to the
- * app's internal files dir). The CI workflow runs this on a phone, 7-inch and
- * 10-inch emulator; AGP copies the PNGs off-device into the build's
- * connected-androidTest additional output folder for the workflow to upload.
+ * Renders the canonical Play-listing scene set directly (no app session, no
+ * adb taps) at whatever resolution the device reports, and saves a PNG per
+ * scene to the instrumentation run's additional test output directory
+ * (falling back to the app's internal files dir). The CI workflow runs this
+ * on a phone, 7-inch and 10-inch emulator; AGP copies the PNGs off-device
+ * into the build's connected-androidTest additional output folder for the
+ * workflow to upload.
+ *
+ * The canonical set (owner decision, 1.23 — replaces the earlier eight):
+ *
+ * - home (the Names page)
+ * - memorize
+ * - flashcards-front AND flashcards-back (both faces of the card)
+ * - quiz
+ * - bookmarks (a kept shelf, not the empty state)
+ * - settings
+ * - name (a name page)
+ * - share (a name's share screen)
+ *
+ * No scene targets a particular name — any name will do. The name page takes
+ * the first in the book, the share card the first loaded, the quiz whatever
+ * the round draws; nothing downstream keys on a specific name.
  *
  * This mirrors the other app's screenshot pipeline: mount a screen with a real
  * ViewModel, wait for the names to load, capture the idle frame. Deterministic
  * and far lighter than driving the running app, so the slow CI tablet emulators
- * don't ANR.
+ * don't ANR. Pure render, no input injection: the flashcard's back face is
+ * reached by flipping the session ViewModel directly, never by performing
+ * clicks.
  */
 @RunWith(AndroidJUnit4::class)
 class ScreenshotTest {
 
+    // The Android variant exposes the host ComponentActivity, whose
+    // ViewModelStore the flashcard scenes reach to flip the card directly
+    // (renderFlashcards) — the same instance FlashcardsScreen finds.
     @get:Rule
-    val composeRule = createComposeRule()
+    val composeRule = createAndroidComposeRule<ComponentActivity>()
 
     private fun app(): Application =
         InstrumentationRegistry.getInstrumentation().targetContext.applicationContext as Application
@@ -99,27 +124,17 @@ class ScreenshotTest {
         }
     }
 
-    private fun waitForNames(vm: NamesViewModel) {
-        composeRule.waitUntil(timeoutMillis = 20_000) { vm.names.value.isNotEmpty() }
+    private fun waitForNames(viewModel: NamesViewModel) {
+        composeRule.waitUntil(timeoutMillis = 20_000) { viewModel.names.value.isNotEmpty() }
     }
 
     @Test
-    fun homeLight() = render("home", ThemeMode.LIGHT) {
+    fun home() = render("home") {
         HomeScreen(it, {}, rememberLazyListState())
     }
 
     @Test
-    fun homeDark() = render("home-dark", ThemeMode.DARK) {
-        HomeScreen(it, {}, rememberLazyListState())
-    }
-
-    @Test
-    fun namePage() = render("name", ThemeMode.LIGHT) {
-        DetailScreen(it, startNumber = 1, bookmarksOnly = false, onBack = {})
-    }
-
-    @Test
-    fun memorize() = render("memorize", ThemeMode.LIGHT) {
+    fun memorize() = render("memorize") {
         MemorizeScreen(
             it,
             onFlashcards = {},
@@ -129,28 +144,57 @@ class ScreenshotTest {
     }
 
     @Test
-    fun quiz() = render("quiz", ThemeMode.LIGHT) {
+    fun quiz() = render("quiz") {
         QuizScreen(it, onNameClick = {}, onBack = {})
     }
 
     @Test
-    fun flashcards() = render("flashcards", ThemeMode.LIGHT) {
-        FlashcardsScreen(it, onBack = {})
+    fun settings() = render("settings") {
+        SettingsScreen(it, onAbout = {})
     }
 
     @Test
-    fun share() = render("share", ThemeMode.LIGHT) { vm ->
-        // The share plate over Al-Aleem — the longest meaning, the card at
-        // its fullest (the same name the adb recipes pick for detail/share).
-        // The plate renders directly, not inside ShareSheet: the sheet lives
-        // in its own window, which the compose test root cannot PixelCopy.
-        // Scrollable + Centre arrangement = centred when the card fits,
-        // top-anchored and scrollable when it overflows (tablet7).
-        val names by vm.names.collectAsStateWithLifecycle()
-        val aleem = names.firstOrNull { name ->
-            name.transliteration == "Al-Aleem"
+    fun namePage() = render("name") { viewModel ->
+        // Any name will do; the first in the book is simply the one that is
+        // always there.
+        DetailScreen(viewModel, startNumber = 1, bookmarksOnly = false, onBack = {})
+    }
+
+    @Test
+    fun flashcardsFront() = renderFlashcards("flashcards-front") { }
+
+    @Test
+    fun flashcardsBack() = renderFlashcards("flashcards-back") { session ->
+        // The back face is reached by flipping the session ViewModel, not by
+        // injecting a tap: the test stays a pure render, and the flip
+        // animation settles before the capture (waitForIdle).
+        session.flip()
+    }
+
+    @Test
+    fun bookmarks() = render("bookmarks", onNamesReady = { viewModel ->
+        // Populate the shelf with the first few loaded names — a kept-shelf
+        // screenshot says what the tab is for, an empty one says nothing, and
+        // which names are kept is deliberately arbitrary. The capture waits
+        // until the writes have reached the flow, so the rows are on screen.
+        viewModel.names.value.take(3).forEach { viewModel.setBookmarked(it.number, true) }
+        composeRule.waitUntil(timeoutMillis = 20_000) {
+            viewModel.bookmarked.value.size >= 3
         }
-        if (aleem != null) {
+    }) {
+        BookmarksScreen(it, {}, {}, rememberLazyListState())
+    }
+
+    @Test
+    fun share() = render("share") { viewModel ->
+        // Any name will do — the first loaded one. The plate renders directly,
+        // not inside ShareSheet: the sheet lives in its own window, which the
+        // compose test root cannot PixelCopy. Scrollable + Centre arrangement
+        // = centred when the card fits, top-anchored and scrollable when it
+        // overflows (tablet7).
+        val names by viewModel.names.collectAsStateWithLifecycle()
+        val anyName = names.firstOrNull()
+        if (anyName != null) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -159,28 +203,54 @@ class ScreenshotTest {
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center,
             ) {
-                ShareCard(name = aleem, modifier = Modifier.fillMaxWidth())
+                ShareCard(name = anyName, modifier = Modifier.fillMaxWidth())
             }
         }
     }
 
-    @Test
-    fun settings() = render("settings", ThemeMode.LIGHT) {
-        SettingsScreen(it, onAbout = {})
-    }
-
+    /**
+     * The shared render: mount the screen, wait for the names, let the scene
+     * do any last settling ([onNamesReady] — populating the bookmarks shelf,
+     * say), and save.
+     */
     private fun render(
         name: String,
-        themeMode: ThemeMode,
+        onNamesReady: (NamesViewModel) -> Unit = {},
         screen: @Composable (NamesViewModel) -> Unit,
     ) {
         val viewModel = NamesViewModel(app())
         composeRule.setContent {
-            Names99Theme(themeMode = themeMode, textScale = 1f) {
+            Names99Theme(themeMode = ThemeMode.LIGHT, textScale = 1f) {
                 screen(viewModel)
             }
         }
         waitForNames(viewModel)
+        onNamesReady(viewModel)
+        saveScreenshot(name)
+    }
+
+    /**
+     * The two flashcard scenes, front and back, from one deck. The session
+     * ViewModel is resolved from the test host's own store — the same
+     * instance FlashcardsScreen finds via viewModel() — so [onDeckReady] can
+     * drive the deck's state directly (flip for the back face) without any
+     * input injection.
+     */
+    private fun renderFlashcards(
+        name: String,
+        onDeckReady: (FlashcardsViewModel) -> Unit,
+    ) {
+        val viewModel = NamesViewModel(app())
+        composeRule.setContent {
+            Names99Theme(themeMode = ThemeMode.LIGHT, textScale = 1f) {
+                FlashcardsScreen(viewModel, onBack = {})
+            }
+        }
+        waitForNames(viewModel)
+        val session = ViewModelProvider(composeRule.activity)[FlashcardsViewModel::class.java]
+        composeRule.waitUntil(timeoutMillis = 20_000) { session.deck.isNotEmpty() }
+        composeRule.waitForIdle()
+        onDeckReady(session)
         saveScreenshot(name)
     }
 }

@@ -53,11 +53,17 @@ class Prefs(private val context: Context) {
      * the store initialises; letting a non-IO exception escape would crash the
      * process on a launch. A fallback value for one read is harmless — the next
      * retry delivers the stored truth.
+     *
+     * The retry backs off — 250ms doubling to a 4s ceiling — so a store that
+     * stays unreadable settles into a slow pulse instead of a 4Hz spin for the
+     * life of the process. A transient cold-start race retries almost
+     * immediately, exactly as before; only the pathological persistent case
+     * changes shape.
      */
     private val data: Flow<Preferences> = context.dataStore.data
-        .retryWhen { _, _ ->
+        .retryWhen { _, attempt ->
             emit(emptyPreferences())
-            delay(250)
+            delay(250L shl attempt.coerceIn(0L, 4L).toInt())
             true
         }
 

@@ -10,7 +10,7 @@ so do not add a word or a stray space.
 
 - **Application ID (package name):** `io.github.muntasimulhaque.ninetynine`
 - **Privacy policy URL:** `https://muntasimulhaque.github.io/ninetynine/privacy-policy.html`
-- **Version (this release):** versionName `1.22`, versionCode `32`
+- **Version (this release):** versionName `1.23`, versionCode `33`
 
 ---
 
@@ -57,6 +57,21 @@ Made to be read:
 
 Free and open source. May Allah make us among those who learn, memorize,
 understand and act upon His beautiful Names.
+```
+
+## What's new (version 1.23)
+
+```
+Our first public release — welcome!
+
+Read and memorize the Ninety Nine Names of
+Allah at your own pace: a Name of the Day,
+flashcards, a short quiz, bookmarks and
+daily reminder, all offline and private.
+
+Small polish throughout: steadier screen
+headings on tablets, and hardening under
+the hood for a calmer, more reliable read.
 ```
 
 ## What's new (version 1.22)

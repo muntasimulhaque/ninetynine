@@ -16,7 +16,6 @@ import io.github.muntasimulhaque.ninetynine.ui.theme.HeroContainer
 import io.github.muntasimulhaque.ninetynine.ui.theme.HeroGold
 import io.github.muntasimulhaque.ninetynine.ui.theme.HeroSubtext
 import io.github.muntasimulhaque.ninetynine.ui.theme.HeroText
-import io.github.muntasimulhaque.ninetynine.ui.theme.components.ArabicSize
 import java.util.Locale
 
 /**
