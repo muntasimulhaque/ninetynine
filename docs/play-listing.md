@@ -10,7 +10,7 @@ so do not add a word or a stray space.
 
 - **Application ID (package name):** `io.github.muntasimulhaque.ninetynine`
 - **Privacy policy URL:** `https://muntasimulhaque.github.io/ninetynine/privacy-policy.html`
-- **Version (this release):** versionName `1.23`, versionCode `33`
+- **Version (this release):** versionName `1.24`, versionCode `34`
 
 ---
 
@@ -57,6 +57,16 @@ Made to be read:
 
 Free and open source. May Allah make us among those who learn, memorize,
 understand and act upon His beautiful Names.
+```
+
+## What's new (version 1.24)
+
+```
+Nothing in the app itself changed.
+
+This release only refreshes the
+GitHub front page: current
+screenshots and a tidier README.
 ```
 
 ## What's new (version 1.23)

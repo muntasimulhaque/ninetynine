@@ -4,26 +4,33 @@ A free, open-source, native Android app for reading and memorizing Al-Asma ul-Hu
 
 Based on the lecture of Sheikh Ibn Uthaymeen (Rahimahullah), as presented in *"The Ninety Nine Names of Allah: A Memorisation Tool with Transliteration and Meanings"*. Content curated at [muntasimulhaque.bearblog.dev/99-names](https://muntasimulhaque.bearblog.dev/99-names/).
 
+Available on Google Play.
+
 <p align="center">
   <a href="https://play.google.com/store/apps/details?id=io.github.muntasimulhaque.ninetynine">
     <img src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png" alt="Get it on Google Play" height="70">
   </a>
 </p>
 
+## Screenshots
+
 <p>
   <img src="docs/screenshots/phone/phone_home.png" width="205" alt="The home screen with the name of the day at the top">
-  <img src="docs/screenshots/phone/phone_name.png" width="205" alt="A single name: Arabic, transliteration, meaning and a scholarly note">
+  <img src="docs/screenshots/phone/phone_name.png" width="205" alt="A single name: Arabic, transliteration, meaning, and keep actions">
+  <img src="docs/screenshots/phone/phone_flashcards-front.png" width="205" alt="Flashcards: the name side of the card">
+  <img src="docs/screenshots/phone/phone_flashcards-back.png" width="205" alt="Flashcards: the meaning side of the card">
   <img src="docs/screenshots/phone/phone_quiz.png" width="205" alt="The ten-question quiz">
-  <img src="docs/screenshots/phone/phone_flashcards.png" width="205" alt="Flashcards with a flip animation">
-  <img src="docs/screenshots/phone/phone_home-dark.png" width="205" alt="The home screen in dark theme">
   <img src="docs/screenshots/phone/phone_memorize.png" width="205" alt="Memorization progress">
+  <img src="docs/screenshots/phone/phone_bookmarks.png" width="205" alt="Bookmarks: the names you kept">
   <img src="docs/screenshots/phone/phone_share.png" width="205" alt="Share a name as a rendered card">
-  <img src="docs/screenshots/phone/phone_settings.png" width="205" alt="Settings">
+  <img src="docs/screenshots/phone/phone_settings.png" width="205" alt="Settings: theme, text size, and the daily name">
 </p>
+
+Tablet sets live beside the phone set in `docs/screenshots/` (`tablet7/`, `tablet10/`).
 
 ## Features
 
-- **Read** — all 99 names with Arabic script set in KFGQPC Uthmanic Script HAFS — the typeface of the Madinah Mushaf — with transliteration and full meanings, plus scholarly notes (e.g. the distinction between Ar-Rahmaan and Ar-Raheem). Browse the list, swipe between names, and search by name, meaning, note, or number; hold your finger down on a name page to copy the Name itself — Arabic or transliteration — or its meaning.
+- **Read** — all 99 names with Arabic script set in KFGQPC Uthmanic Script HAFS — the typeface of the Madinah Mushaf — with transliteration and full meanings, plus scholarly notes (e.g. the distinction between Ar-Rahmaan and Ar-Raheem). Browse the list, swipe between names, and search by name, meaning, note, or number; on a name page the Name and its transliteration copy as one unit with a long-press, and the meaning below copies the same way.
 - **Keep** — bookmark the names you turn to and find them together in their own tab, in the order they appear in the book. Separate from memorization: resetting your progress leaves your bookmarks alone.
 - **Share** — turn any name into a beautifully rendered card (Arabic, transliteration, meaning) and share it as an image — or as plain text, for captions and notes.
 - **Memorize** — flashcards with a flip animation and an "I know it / Still learning" loop, a ten-question quiz with a remembered best score, and a quiet progress count (no streaks, no gamification).
