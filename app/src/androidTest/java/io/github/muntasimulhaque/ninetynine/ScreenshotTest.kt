@@ -1,5 +1,6 @@
 package io.github.muntasimulhaque.ninetynine
 
+import android.Manifest
 import android.app.Application
 import android.graphics.Bitmap
 import androidx.activity.ComponentActivity
@@ -150,16 +151,29 @@ class ScreenshotTest {
     }
 
     @Test
-    fun settings() = render("settings", onNamesReady = { viewModel ->
-        // The reminder is on by default; the capture must show the app's real
-        // resting state, not whatever a reused CI device's DataStore carries —
-        // the listing's settings screenshot once showed the advertised toggle
-        // switched off. Same discipline as the bookmarks scene above: seed the
-        // state, wait for it to reach the flow, then capture.
-        viewModel.setDailyEnabled(true)
-        composeRule.waitUntil(timeoutMillis = 20_000) { viewModel.dailyEnabled.value }
-    }) {
-        SettingsScreen(it, onAbout = {})
+    fun settings() {
+        // The settings screen's own consent logic (LifecycleResumeEffect)
+        // turns the reminder off whenever POST_NOTIFICATIONS is missing —
+        // correct on a real device whose reader said no, but on the test app
+        // nobody ever asks, so it silently un-toggled the advertised switch
+        // and the capture showed it off (1.27's first set did). Grant the
+        // permission the way the shell would, BEFORE the screen composes, so
+        // the scene renders the app's real resting state. A failed grant
+        // fails the scene: a lying capture is worse than no capture.
+        val instrumentation = InstrumentationRegistry.getInstrumentation()
+        instrumentation.uiAutomation.grantRuntimePermission(
+            instrumentation.targetContext.packageName,
+            Manifest.permission.POST_NOTIFICATIONS,
+        )
+        render("settings", onNamesReady = { viewModel ->
+            // Belt and braces on top of the grant: pin the default ON and
+            // wait for it to reach the flow, so even a device carrying a
+            // stale stored value captures the app's advertised state.
+            viewModel.setDailyEnabled(true)
+            composeRule.waitUntil(timeoutMillis = 20_000) { viewModel.dailyEnabled.value }
+        }) {
+            SettingsScreen(it, onAbout = {})
+        }
     }
 
     @Test
