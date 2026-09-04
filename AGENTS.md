@@ -59,13 +59,7 @@ file is read or command run. Do it without asking, without exception.
 ## Versioning
 
 `versionName`/`versionCode` live in `app/build.gradle.kts`; Settings shows
-`BuildConfig.VERSION_NAME`, so they can never disagree. Rule: **+0.1 on
-versionName, +1 on versionCode per release.** Sequence since the store
-restart: 0.1 … 0.9, then 1.0 / 10, then 1.1 / 11, then 1.2 / 12, then
-1.3 / 13, then 1.4 / 14, then 1.5 / 15, then 1.6 / 16, then 1.7 / 17, then
-1.8 / 18, then 1.9 / 19, then 1.10 / 20, then 1.11 / 21, then 1.12 / 22, then
-1.13 / 23, then 1.14 / 24, then 1.15 / 25, then 1.16 / 26, then 1.17 / 27,
-then 1.19 / 29, then 1.20 / 30, then 1.21 / 31, then 1.22 / 32, then 1.23 / 33, then 1.24 / 34, then 1.25 / 35, then **1.26 / 36 (current)**.
+`BuildConfig.VERSION_NAME`, so they can never disagree. Rule: **+0.1 on versionName, +1 on versionCode per release** (currently **1.26 / 36**; there is no 1.18 — it was skipped, don't go looking for it).
 
 The release keystore path/credentials live in a `keystore.properties` outside
 the repo (Google Play Signing Key folder). When absent (CI, fresh clone) the
@@ -116,36 +110,20 @@ release build degrades to unsigned rather than failing.
 
 ### Store screenshots come from CI, not from a hand-rolled local session
 
-The Play sets are whatever `screenshots.yml` captured, never per-machine
-re-derivations. The workflow mirrors the proven one from the count-and-play
-repo (API 35, KVM enabled, snapshot-less boots, cached AVDs) and goes green
-in five to seven minutes (proven 2026-08-24, run 32762916428: all three
-legs, 15 PNGs). It triggers on pushes touching UI files, or via
-workflow_dispatch.
+The Play sets are whatever `screenshots.yml` captured (phone/7"/10" emulators, API 35), never per-machine re-derivations. It triggers on pushes touching UI files, or via workflow_dispatch.
 
 - When visible UI changes (or the canonical scene set itself changes, as
   in 1.23): wait for the run, download the three
-  `store-screenshots-*` artifacts (phone/tablet7/tablet10, nine scenes
-  each — 27 PNGs a full set),
-  and hand over/refresh from exactly those PNGs.
-  `gh run download <run-id> -R muntasimulhaque/ninetynine` works on both
-  machines (gh is installed and authenticated on each).
-- The repo keeps a copy of the latest full set in `docs/screenshots/`
-  (`phone/`, `tablet7/`, `tablet10/`; the README thumbnails show the
-  phone set). Refresh it from the run's artifacts and commit —
+  `store-screenshots-*` artifacts and refresh `docs/screenshots/` from
+  exactly those PNGs:
   `gh run download <run-id> -R muntasimulhaque/ninetynine -n
   store-screenshots-phone -D docs/screenshots/phone` (likewise
-  tablet7/tablet10). Proven end-to-end by workflow_dispatch
-  (2026-08-25, run 32815084999, green in ~4 minutes).
+  tablet7/tablet10). `gh` is installed and authenticated on both machines.
 - Never re-capture a listing set by hand. The local adb recipes in Known
-  quirks remain for interactive checks and one-off scenes; if a local capture
+  quirks are for interactive checks and one-off scenes; if a local capture
   fails twice, stop debugging the emulator and let CI do it.
 - Port proven code by DIFFING against the source, never by re-typing from
-  memory. When this workflow was ported, a re-typed line invented a
-  nonexistent method (`getArguments` lives on InstrumentationRegistry, not on
-  Instrumentation) and the upload step was dropped entirely; both reached CI
-  because the local check read a pipeline's exit code instead of gradle's.
-  Verify builds by the real exit code, never by grepping piped output.
+  memory. Verify builds by the real exit code, never by grepping piped output.
 
 ## Build, test, verify
 
@@ -181,10 +159,8 @@ workflow_dispatch.
   every change), uploads the debug APK (7-day retention). Actions SHA-pinned;
   `permissions: contents: read`.
 - **screenshots.yml** (pushes touching UI files, plus manual dispatch):
-  captures the nine canonical ScreenshotTest scenes (see the list in
-  Testing) on phone/7"/10" emulators at
-  API 35 and uploads `store-screenshots-phone/-tablet7/-tablet10` artifacts.
-  See Store screenshots from CI under Release hand-off.
+  captures the nine ScreenshotTest scenes on phone/7"/10" emulators (API 35)
+  and uploads the three `store-screenshots-*` artifacts.
 - Verify green runs with `gh` — installed and authenticated on both machines
   (e.g. `gh run view <run-id> -R muntasimulhaque/ninetynine`). The raw
   Actions API with a token from `git credential fill` remains the fallback;
@@ -195,12 +171,9 @@ workflow_dispatch.
 
 `docs/` holds `play-listing.md` (copy/paste listing doc), `play-icon-512.png`,
 `play-feature-1024x500.png`, `privacy-policy.html` (hosted on GitHub Pages),
-and the phone screenshots under `docs/screenshots/phone/` shown by the
-README (the CI-captured sets live beside it in `docs/screenshots/tablet7/`
-and `docs/screenshots/tablet10/`).
-The tablet sets were removed once (commit `ac293db`) and re-added later as
-CI-captured sets (owner decision, 2026-08-25); tablet captures are still
-uploaded to Play by hand.
+and the CI-captured screenshot sets in `docs/screenshots/` (`phone/` — the
+README thumbnails — plus `tablet7/` and `tablet10/`; tablet captures are
+uploaded to Play by hand).
 
 ## Code layout
 
@@ -225,20 +198,19 @@ app/src/main/assets/     names.json (99 entries), intro.txt, fonts/ (+licenses).
 
 ## State & crash-proofing rules
 
-- **DataStore emits a frame or two late.** Any `stateIn(…, emptyList())`-style
-  flow must be gated on a `*Loaded` flag before building UI, or you flash
+- **DataStore emits a frame or two late.** Gate `stateIn(…)` flows on a
+  `*Loaded` flag before building UI, or you flash
   "0 learned"/"nothing kept"/a spinner over real data.
 - **ViewModel flags must be declared BEFORE their eager flow.**
-  `stateIn(Eagerly)` starts collecting immediately; if its
-  `.onEach { _flag.value = true }` references a flag declared later, a cold
-  start that reads DataStore during construction hits a null flag and crashes
-  with an init-order NPE (this shipped once, `NamesViewModel.kt:87`).
-- **Content reads are crash-proof.** `NamesRepository.load` wraps the asset
-  read in `runCatching` (empty list → screens say so). `Prefs` uses
-  `retryWhen` (a bare `catch` emits then COMPLETES the flow, killing every
-  derived flow for the process); `Prefs.write` swallows exceptions
-  (cancellation rethrown) because a failed save escaping a
-  `viewModelScope.launch` kills the process over a toggle.
+  `stateIn(Eagerly)` collects immediately; an `.onEach` touching a
+  later-declared flag crashes cold start with an init-order NPE.
+- **Content reads are crash-proof.** `NamesRepository.load` catches
+  `Exception` (`CancellationException` rethrown; empty list → screens say
+  so). `Prefs` reads through `retryWhen` (a bare `catch` COMPLETES the
+  flow, killing every derived flow for the process) and sanitizes what it
+  returns; `Prefs.write` swallows `Exception` (cancellation rethrown) and
+  validates what it stores — a failed save must never kill the process
+  over a toggle.
 - `intro.txt` parse normalizes `\r\n` → `\n`.
 
 ## Design system (read before touching any size/color/spacing)
@@ -275,57 +247,44 @@ app/src/main/assets/     names.json (99 entries), intro.txt, fonts/ (+licenses).
   paperTopBarColors, scaledGap, readingMeasure, named insets). Reuse them.
 - **Empty screens that offer an action use `EmptyState`** (title + optional
   line + optional TextButton); `PageMessage` stays for failure cases with no
-  action. Empty states sit centred via `Modifier.fillParentMaxSize()` inside
-  their `item {}` (a LazyItemScope member — no import). The bookmarks and
-  learned empties offer "Browse the names" — an empty screen that can act
-  should act.
+  action. Centred via `Modifier.fillParentMaxSize()` inside their `item {}`
+  (a LazyItemScope member — no import). An empty screen that can act should
+  act — the bookmarks and learned empties offer "Browse the names".
 - **Search shows its work:** literal query matches in a row's transliteration
   and title render gold + SemiBold. `util/Highlight` computes the ranges
   (≥2-char trimmed query, case-insensitive, non-overlapping); fuzzy-only
   matches stay uncoloured — never invent a span that corresponds to nothing.
   Only Home passes a `query` to `NameListItem`; other lists stay pristine.
 - **Search lives in the bar, one entry point, everywhere:** the home bar
-  carries a magnifier at its end. Tapping the magnifier swaps the
-  running head for a BasicTextField (Crossfade, QUICK — both slots fade as
-  one switch; the magnifier's corner becomes the ✕'s) and the keyboard
-  rises. This replaced the plate that scrolled with the list: from row
-  sixty there was no path to search except scrolling all the way home.
-  Typing filters live through the shared ViewModel query; openness is
-  `rememberSaveable` AND re-derived from a live query (a filtered list must
-  never appear without its field). **Back unwinds search one layer per
-  press** — typed text → empty field → out of search — and only past all
-  three does Back exit on a top-level tab (`BackHandler(enabled =
-  searchOpen)` in HomeScreen); never eject a reader who can still see
-  evidence of their search. The ✕ clears AND closes in one tap. The query
-  persists until cleared (✕, Back, or the no-results empty's "Clear search").
-- **Settings is the fourth tab; About lives at its foot:** the gear that
-  once sat in every tab bar's corner (before that, a ⋮ menu — the only
-  floating tonal surface in a paper-on-paper app) joined the bar as a full
-  labeled tab, rightmost and quietest (owner decision, 1.18 — reopening the
-  earlier three-tab ruling). The top bars now carry content only, and Home's
-  title renders larger in the freed corner. The measured cost the owner
-  accepted: at a 2.0 system font scale on a 320dp phone the longest label
-  ("Bookmarks", mixed case since the two-voice register) renders at FitText
-  scale ~0.69 — caps measured ~0.49 — above the floor, nothing clipping; at
-  the default scale every phone renders all four labels whole. About —
-  the book's front matter — still sits as the gold-chevron `NavRow` at the
-  foot of the Settings page, above the version line; Settings wears the
-  quiet running head and no back button (it is a tab, not a pushed screen),
-  and Back from About still lands on Settings.
+  carries a magnifier at its end; tapping it swaps the running head for a
+  BasicTextField (Crossfade, QUICK) and the keyboard rises. Typing filters
+  live through the shared ViewModel query; openness is `rememberSaveable`
+  AND re-derived from a live query (a filtered list must never appear
+  without its field). **Back unwinds search one layer per press** — typed
+  text → empty field → out of search — and only past all three does Back
+  exit on a top-level tab; never eject a reader who can still see evidence
+  of their search. The ✕ clears AND closes in one tap. The query persists
+  until cleared (✕, Back, or the no-results empty's "Clear search").
+- **Settings is the fourth tab; About lives at its foot:** Settings joined
+  the bar rightmost and quietest (owner decision, 1.18); top bars carry
+  content only. About sits as the gold-chevron `NavRow` at the foot of the
+  Settings page, above the version line; Settings wears the quiet running
+  head and no back button (it is a tab, not a pushed screen), and Back from
+  About still lands on Settings. Worst case (2.0 system font scale on a
+  320dp phone) the longest label still fits above the FitText floor —
+  nothing clipping.
 - **Tab heads differ by register:** Home passes `sizeScale = 1f` to
   `TabTitle` — the book's title page, at the full `headlineSmall` where the
   measured width allows (FitText shrinks it back for the second bar icon or
   a large font scale) — while Bookmarks and Memorize keep the default 0.85
   quiet running head.
-- **The list rows carry their folio numbers** (restored by decision after a
-  quiet-season removal): not lookup scaffolding — search already matches the
-  exact number — but the list's coordinate system, the way memorization
-  speaks ("I've memorized up to 19") and the anchor the learned ticks and
-  kept names are scattered across. A book's folio, not a badge:
+- **The list rows carry their folio numbers** (owner decision): not lookup
+  scaffolding but the list's coordinate system — the way memorization
+  speaks ("I've memorized up to 19"). A book's folio, not a badge:
   `onSurfaceVariant` `labelLarge`, right-aligned in a measured widest-number
-  column (`folioWidth()` in NameListItem.kt) so the units digits line up down
-  the page. Dividers start where the names do (`nameRowTextInset()`), never
-  under the numbers; `NameRowInset` stays the row's outer margin.
+  column (`folioWidth()`) so the units digits line up down the page.
+  Dividers start where the names do (`nameRowTextInset()`), never under the
+  numbers; `NameRowInset` stays the row's outer margin.
 - **The flashcards carry no instruction lines:** "Tap the card…" and the
   swipe hint are gone — the whole front face is one plate holding one Name
   (nothing else to tap), and the drag answers the hand through the I KNOW IT
@@ -333,21 +292,20 @@ app/src/main/assets/     names.json (99 entries), intro.txt, fonts/ (+licenses).
   the undo control never resizes the deck.
 - **The text-size slider previews live:** the specimen answers the bead
   mid-drag, set at the slider's CURRENT absolute value × the device factor
-  (`appTypography(sliderValue * LocalDeviceFactor.current).headlineMedium`),
-  not the theme's committed scale — so the preview matches the page on the
-  device it is standing on. Commit-on-release guards DataStore, never the
+  — not the theme's committed scale — so the preview matches the page on
+  the device it is standing on. Commit-on-release guards DataStore, never the
   preview.
 - **Flashcard drags answer the hand:** the card wears an overline label —
   I KNOW IT / STILL LEARNING — that fades in toward the commit threshold, and
   a tick haptic fires exactly once as the drag crosses it. The label composes
-  only while a drag is live (merged-node children reach TalkBack even at zero
-  alpha), and its graded alpha reads in the draw phase so a moving finger
+  only while a drag is live (an invisible merged child still reaches
+  TalkBack), and its graded alpha reads in the draw phase — a moving finger
   redraws without recomposing the faces.
 - **The quiz celebrates a new best:** `QuizViewModel.bestBefore` captures the
-  standing best once, when a round finishes (guarded — a rotation re-runs the
-  capturing effect after the round's own write has raised the stored best).
-  The result page shows the gold NEW BEST overline only when an existing best
-  fell; first rounds stay silent.
+  standing best once, when a round finishes (a rotation re-runs the capturing
+  effect after the round's own write — capture-once, or the moment never
+  fires). The gold NEW BEST overline shows only when an existing best fell;
+  first rounds stay silent.
 - **Pushed-screen TITLES sit left (`ScreenLabel` in `TopAppBar`); sequence
   COUNTERS sit centre** (`CenterAlignedTopAppBar`: detail "3 of 99",
   flashcards "3 of 12", quiz "3 of 10"). Don't mix.
@@ -361,14 +319,15 @@ app/src/main/assets/     names.json (99 entries), intro.txt, fonts/ (+licenses).
   hoist `LocalMotionScale.current` above and build specs from it. Content
   turns use the house push (fade GENTLE/Settle + rise it/12); nothing user-
   facing hard-cuts between states.
-- **Counters roll, never teleport:** the Memorize count seeds its start from
-  `rememberSaveable lastSeen` so returning after learning more animates old →
-  new exactly once (first composition starts ON target — never from zero);
-  the quiz score counts up once per result (`rememberSaveable played` guard).
-- **Scroll thumbs:** reading pages use `ScrollbarThumb` (ScrollState); lazy
-  lists use `LazyScrollbarThumb` (estimated from average row height × count —
-  position cue only, shares THUMB_MAX_FRACTION/24dp floor). Both display-only;
-  dragging would make them a fast-scroller (rejected decision).
+- **Counters roll, never teleport:** the Memorize count seeds from
+  `rememberSaveable lastSeen` (first composition starts ON target — never
+  from zero); the quiz score counts up once per result (`rememberSaveable
+  played` guard).
+- **Scroll thumbs:** reading pages use `ScrollbarThumb` (ScrollState) —
+  About included, it runs to several screens — lazy lists use
+  `LazyScrollbarThumb` (position cue only, THUMB_MAX_FRACTION/24dp floor).
+  Both display-only; dragging would make them a fast-scroller (rejected
+  decision).
 - **Bottom bar:** the SELECTED tab's glyph fills; resting tabs wear outlined
   variants (`TopLevelRoute.iconResting`) — a third selection channel beside
   tint and label weight. Don't collapse back to one filled icon. A tap's press
@@ -381,26 +340,17 @@ app/src/main/assets/     names.json (99 entries), intro.txt, fonts/ (+licenses).
   window background between splash and app.
 - **Motion only where meaning changes:** pages turn, counters roll, drags
   answer the hand, and pushed screens arrive through the house push —
-  everything else stands still. The hero card, detail page and About entrance
-  fades were removed on the grounds that a first frame is not an event; the
-  daily card still turns at midnight (AnimatedContent), because THAT is a
-  change of meaning. Stillness between changes is what makes the remaining
-  motion read.
-- **Every reading page carries the thumb:** About is a reading page too and
-  runs to several screens; it wears the same quiet `ScrollbarThumb` the name
-  pages do.
+  everything else stands still. First frames get no entrance (the hero,
+  detail and About fades were removed); the daily card still turns at
+  midnight, because THAT is a change of meaning.
 - **Landing at the top means ALL of the top:** re-tapping NAMES animates
   item 0 back into view AND reveals the tucked-away home bar — HomeScreen
-  snaps `scrollBehavior.state.heightOffset` to 0 on ARRIVAL at item 0 — an
-  edge, not a state: parked at the top the bar must still tuck normally, so
-  a continuous watch would fight it. Who caused the arrival (the re-tap or
-  a reader who flung back) is irrelevant. Without it the bar stayed hidden
-  and "top of the list" read as "top of the hero card". Only Home has a
-  hiding bar; don't generalize to others. The RE-TAP itself is one contract
-  every tab answers (owner decision, 1.19): Names and Bookmarks hoist their
-  `LazyListState` (scroll to item 0), Memorize and Settings hoist a
-  `ScrollState` (scroll to offset 0) — their screens take a defaulted
-  `scrollState` parameter so test call sites keep their own state.
+  snaps `scrollBehavior.state.heightOffset` to 0 on ARRIVAL at item 0, an
+  edge, not a state, so a continuous watch can't fight the tuck. The RE-TAP
+  itself is one contract every tab answers (owner decision, 1.19): Names and
+  Bookmarks hoist their `LazyListState` (scroll to item 0), Memorize and
+  Settings hoist a `ScrollState` (scroll to offset 0) — their screens take a
+  defaulted `scrollState` parameter so test call sites keep their own state.
 - **The detail plate's keep-acts wear the quiet ink and a short label:**
   resting, the check-circle and bookmark render `onSurfaceVariant` — the
   same grey as the top bar's share icon, not the page's near-black — and
@@ -409,28 +359,24 @@ app/src/main/assets/     names.json (99 entries), intro.txt, fonts/ (+licenses).
   `tabLabelStyle()` register (9sp × device factor, FitText-fitted,
   `clearAndSetSemantics` so TalkBack keeps hearing the full action + state
   once). They are explicit stadium-clipped clickable Columns with a 48dp
-  touch floor — NOT IconButtons (see pitfalls); the first capture shipped
-  them inside an IconButton and its circle clip cut the labels mid-glyph.
-  Active, they fill gold as always. The full phrase "Mark as learned" cannot
-  fit the plate's centre slot at a readable size; the short words can —
-  owner decision, 1.19.
+  touch floor — NOT IconButtons (see pitfalls): an IconButton's circle clip
+  cuts labels mid-glyph. Active, they fill gold as always. The full phrase
+  "Mark as learned" cannot fit the plate's centre slot at a readable size;
+  the short words can (owner decision, 1.19).
 - **The share sheet offers the plate AND the words:** "Share text" sends the
   Arabic, the name and epithet on one line, the full meaning, and the store
   title — the card's hierarchy as plain text. The name page's meaning is the
   app's one selectable text (`SelectionContainer`, long-press to copy); the
-  flashcard faces stay swipe surfaces on purpose. The Name pairs its Arabic
-  and transliteration into one selectable unit above the meaning — either
-  copies whole, long-press as anywhere.
+  Name pairs its Arabic and transliteration into one selectable unit above
+  the meaning. The flashcard faces stay swipe surfaces on purpose.
 - **The share sheet must always settle:** its card scroller wears the
   `quenchUpward` nested-scroll connection (ShareSheet.kt), which eats upward
-  drag/fling leftover between content and sheet. Without it a few upward
-  pushes set the near-full-height sheet oscillating against its own bounds
-  (m3 1.4.0, `skipPartiallyExpanded`). It shipped ONCE on the wrong side —
-  chained after `.verticalScroll` it is a DESCENDANT of the scroller, the
-  leftovers never passed through it, and the sheet still shook; see the
-  pitfall below. Do not remove it as redundant, keep it BEFORE
-  `.verticalScroll`, and keep any future sheet content behind the same
-  guard.
+  drag/fling leftover between content and sheet — without it the
+  near-full-height sheet oscillates against its own bounds (m3 1.4.0,
+  `skipPartiallyExpanded`). It must chain BEFORE `.verticalScroll`: after
+  it, the connection is a DESCENDANT the leftover never passes through.
+  Do not remove it as redundant, and keep any future sheet content behind
+  the same guard.
 - **Theme rows wear a swatch:** a 22dp circle of the theme's own paper with
   its ink as an 8dp bead — System split across both papers. The eye picks
   before the mind reads; the row still carries all the semantics.
@@ -440,27 +386,19 @@ app/src/main/assets/     names.json (99 entries), intro.txt, fonts/ (+licenses).
   floating capsule (`DetailNavPlate`, the same `FloatingBar` plate the tab
   bar wears) holding everything a reader does to a name — previous and next
   wearing the neighbour's transliteration (FitText-fitted at `titleSmall`,
-  20dp chevrons, tight `contentPadding` — the longest transliteration
-  shrinks a little instead of ellipsizing), and the two acts of keeping:
-  an unfilled check-circle that fills gold when learned
-  (`LearnedAction`), and the bookmark, the platform's universal keep glyph.
-  Share alone stays in the top bar (a send-away act reads at the page's
-  edge; five slots would crowd a 320dp phone). The capsule is FIXED, unlike
-  the scrolling footer it replaced — on a long meaning the chevrons sat
-  below the fold at exactly the moment a name strikes; that was also the
-  reason the keep-acts had once moved to the top bar. It is an OVERLAY on
-  the pager, not a Scaffold bottom bar — a reserved slot clips the meaning
-  at the plate's top edge and the floating read dies (1.21): the capsule is
-  aligned BottomCenter over the pager, its laid-out height is measured
-  (onSizeChanged, the tab bar's trick) and handed to NamePage as the
-  clearance the page's tail scrolls above — the plate's trailing spacer
-  lives INSIDE the min-height column, so a short page never scrolls and a
-  long one gains exactly the extent it needs. The capsule's weighted
-  end slots keep the keep-acts centred on first/last pages, its labels
-  change as the pager settles (the same moment the counter does), and every
-  empty state still teaches its own axis at the moment it matters. An
-  explainer line was tried and deleted on review: if the controls ever need
-  one again, fix the controls, not the prose.
+  20dp chevrons — the longest transliteration shrinks a little instead of
+  ellipsizing), and the two acts of keeping side by side: an unfilled
+  check-circle that fills gold when learned (`LearnedAction`), and the
+  bookmark. Share alone stays in the top bar (a send-away act reads at the
+  page's edge; five slots would crowd a 320dp phone). The capsule is FIXED
+  and an OVERLAY on the pager, not a Scaffold bottom bar — a reserved slot
+  clips the meaning at the plate's top edge and the floating read dies
+  (1.21): its measured height (onSizeChanged) becomes the clearance the
+  page's tail scrolls above, inside the min-height column so a short page
+  never scrolls and a long one gains exactly the extent it needs. The
+  weighted end slots keep the keep-acts centred on first/last pages; labels
+  change as the pager settles, the same moment the counter does. If the
+  controls ever need an explainer line again, fix the controls, not the prose.
 - **The notification's one line is set, not joined:** Arabic · transliteration,
   the same middle dot the feature graphic's tagline wears.
 - **Widget corners follow the device:** render-time read of the framework
@@ -472,8 +410,7 @@ app/src/main/assets/     names.json (99 entries), intro.txt, fonts/ (+licenses).
   TalkBack picks an Arabic voice for the Name instead of attempting it with
   the default English one. Keep the span on any new Arabic surface.
 - **Wide screens keep the book's column:** full-screen content sits inside a
-  centred `pageMeasure()` cap (560dp × the reading scale — Home, Bookmarks,
-  Learned, Flashcards, Quiz, Memorize, Settings; the name page at
+  centred `pageMeasure()` cap (560dp × the reading scale; the name page at
   `readingMeasure()`), so a tablet gets page proportions, not rows stretched
   edge to edge, and the list thumbs hug the column. The pattern is
   `fillMaxSize().wrapContentWidth(CenterHorizontally).widthIn(max = …)` —
@@ -483,12 +420,8 @@ app/src/main/assets/     names.json (99 entries), intro.txt, fonts/ (+licenses).
   bottom bar's divider + tabs wear `Modifier.barMeasure()` (PageParts) — the
   same fillMaxWidth · wrapContentWidth · widthIn(max = pageMeasure()) chain —
   so on wide screens the running head, the page and the footer share one set
-  of margins instead of chrome hugging the screen edges while the content
-  floats centred. Same cap, same order rule; on phones (and 7" portrait,
-  600dp < the cap) it never binds and nothing changes. Chosen 2026-08-30
-  over the two heavier candidates: a Material navigation rail at expanded
-  widths (branch tablet-b) and a list-detail names screen (tablet-c), both
-  built and screenshotted on the branch comparison, then set aside.
+  of margins. Same cap, same order rule; on phones (and 7" portrait,
+  600dp < the cap) it never binds and nothing changes.
 - **Wide devices set larger type — the device factor:** sp type is
   physically identical on every screen, which reads small at the distance a
   7"/10" tablet is held. `Names99Theme` folds a factor (1.0 phone / 1.125 at
@@ -496,21 +429,16 @@ app/src/main/assets/     names.json (99 entries), intro.txt, fonts/ (+licenses).
   into the reading scale, so typography, Arabic, column caps and gaps all
   grow together — the same book in a larger format, proportions unchanged.
   The bottom bar's labels take the device factor but NEVER the reader's
-  slider (the clipping guarantee is about the slider, and a wide bar has
-  proportionally more room); the widget and the notification plate keep
-  their own fixed sizing — they have no screen to respond to.
+  slider; the widget and the notification plate keep their own fixed sizing.
 - **The reminder is on by default:** `dailyEnabled` defaults to true, so a
   fresh install gets the Name each morning without finding a switch. The
   reader's consent lives in the system dialog, not in prose: MainActivity
   asks for POST_NOTIFICATIONS once at first launch (API 33+ only, guarded by
   the `notifications_asked` pref, written before the dialog opens so a
   process death mid-dialog never nags), and ONLY when the reminder is
-  actually wanted — a reader whose pref says off is never asked, so someone
-  who toggled it off keeps their off, for ever, with no dialog. Granting
-  needs no wiring (the schedule re-anchors every launch; the worker checks
-  the permission at post time); a denial writes the pref off and cancels the
-  work, so switch, scheduler and worker agree. Below API 33 there is nothing
-  to ask and the reminder just works from the first morning.
+  actually wanted — a reader whose pref says off is never asked. A denial
+  writes the pref off and cancels the work, so switch, scheduler and worker
+  agree. Below API 33 there is nothing to ask and the reminder just works.
 - **The daily notification expands to the plate:** `DailyPlate` renders the
   hero-card identity (HAFS Arabic via Canvas — `DailyNameWidget.arabicBitmap`,
   internal — plus Spectral Latin) into a 16:9 bitmap for BigPictureStyle,
@@ -549,8 +477,7 @@ eight places (#28, #32, #44, #48, #80, #87, #94, #95).
   Count grows as guards are added — sum the XMLs in
   `app/build/test-results/testDebugUnitTest/`.
 - Instrumentation (`ScreenshotTest`) renders the CANONICAL PLAY SCENE SET
-  (owner decision, 1.23 — replaces the earlier eight-scene set; no scene
-  targets a particular name, any name will do):
+  (owner decision, 1.23; no scene targets a particular name — any name will do):
 
     1. `home` — the Names page
     2. `memorize` — the Memorize page
@@ -566,15 +493,13 @@ eight places (#28, #32, #44, #48, #80, #87, #94, #95).
     8. `share` — a name's share screen (the first loaded name; the plate
        renders outside the sheet, which the compose root cannot capture)
 
-  rendered to the instrumentation run's additional test output
-  directory (AGP copies them off-device for the workflow; local runs fall
-  back to the app's files dir); pure render, no input injection, so it runs
-  on API ≤ 35 images. Used by screenshots.yml and Android Studio captures.
-  The rule is `createAndroidComposeRule<ComponentActivity>()` — the plain
-  rule exposes no `.activity`, which the flashcard scenes need for the
-  shared ViewModelStore. A stale set in `docs/screenshots/` must be DELETED
-  before re-downloading (`gh run download` overwrites files but leaves
-  scenes the new run no longer captures).
+  rendered to the run's additional test output directory (AGP copies them
+  off-device for the workflow; local runs fall back to the app's files dir);
+  pure render, no input injection, so it runs on API ≤ 35 images. The rule is
+  `createAndroidComposeRule<ComponentActivity>()` — the plain rule exposes no
+  `.activity`, which the flashcard scenes need. A stale set in
+  `docs/screenshots/` must be DELETED before re-downloading (`gh run download`
+  overwrites but never removes).
 - Pure logic lives in `util/` precisely so it is unit-testable.
 
 ## Editing pitfalls that bite
@@ -587,8 +512,8 @@ eight places (#28, #32, #44, #48, #80, #87, #94, #95).
   ~44dp; FitText cannot save it, because the text fits the constraints and
   the clip eats it. Multi-element buttons are explicit Columns with
   `clip(RoundedCornerShape(50))` before `clickable` and
-  `minimumInteractiveComponentSize()` for the touch floor (the detail
-  plate's keep-acts; shipped once as IconButtons, 1.19).
+  `minimumInteractiveComponentSize()` for the touch floor (as the detail
+  plate's keep-acts do).
 - **Repo-wide greps: use `git grep`** when the cwd path contains spaces, and
   it only searches tracked files so build output can't pollute a sweep.
 - **After removing a Text/composable block, re-grep unused imports** — the
@@ -599,17 +524,16 @@ eight places (#28, #32, #44, #48, #80, #87, #94, #95).
   compile error CI only reaches at `:app:compileDebugAndroidTestKotlin`
   (inside screenshots.yml, all three legs red). The canonical suite does not
   compile it: after any screen-signature change, run that task locally
-  before pushing. This shipped once (1.18).
-- **`ScrollState.animateScrollTo` kills the app when the animation actually runs.** It is declared `Unit` but its compiled dex passes its `$completion` straight through to `animateScrollBy` (declared `Float`), so when the scroll suspends ≥1 frame and completes, the caller's resumption receives a Float where a Unit was promised — `ClassCastException: Float cannot be cast to kotlin.Unit` (shipped 1.19: re-tapping Memorize or Settings on the bottom bar crashed the app on some devices; repro'd on API 27, invisible where the animation completed inline). Call the Float-typed pair instead — `scrollTo` (jump) / `animateScrollBy` (animated) — so the declared type matches what actually lands. The lazy/pager equivalents (`scrollToItem`, `animateScrollToItem`, `scrollToPage`, `animateScrollToPage`) are proper state machines and safe.
-- **`FitText` beside a fixed sibling in a `Row` must be measured LAST.** Row measures children left to right against the width that remains: a `FitText` placed BEFORE the sibling sees the full row width, declines to shrink, and the sibling then overflows the slot (shipped 1.19: the detail plate's next-name label never shrank and cut its chevron off, while the previous button — icon first — always fitted). Give such a `FitText` `Modifier.weight(1f, fill = false)` so the fixed children are measured first. The same pattern appears in the share wordmark (seal + spacer before it) — already correct, keep it that way.
+  before pushing.
+- **`ScrollState.animateScrollTo` kills the app when the animation actually runs.** Declared `Unit`, it passes its `$completion` straight through to `animateScrollBy` (declared `Float`): when the scroll suspends ≥1 frame, the resumption receives a Float where a Unit was promised — `ClassCastException`. Call the Float-typed pair instead — `scrollTo` (jump) / `animateScrollBy` (animated). The lazy/pager equivalents (`scrollToItem`, `animateScrollToItem`, `scrollToPage`, `animateScrollToPage`) are proper state machines and safe.
+- **`FitText` beside a fixed sibling in a `Row` must be measured LAST.** Row measures children left to right against the width that remains: a `FitText` placed BEFORE the sibling sees the full row width, declines to shrink, and the sibling then overflows the slot. Give such a `FitText` `Modifier.weight(1f, fill = false)` so the fixed children are measured first. The same pattern appears in the share wordmark (seal + spacer before it) — already correct, keep it that way.
 - **Modifier order matters:** `heightIn(max=X)` BEFORE `fillMaxHeight()`, or
   the cap is ignored; never pair `heightIn` on a Column child with
   `fillMaxHeight` on its children (expands to full screen, blanks the app).
   The same is true in nested scroll: a `NestedScrollConnection` must chain
   BEFORE (outside of) the `.verticalScroll` it guards — after it, the
   connection is a descendant and the scroller's own leftover never passes
-  through it. This shipped the share-sheet shake for one release
-  (`quenchUpward`); the fix was swapping two modifier lines.
+  through it (this shipped the share-sheet shake for one release).
 - **Arabic widths from hmtx are nominal (isolated advances)** — no shaping in
   stdlib; shaped runs ~0.6–0.7× narrower. Never assert Arabic overflow from
   nominal widths alone ("upper bound, needs device check").
@@ -677,63 +601,53 @@ eight places (#28, #32, #44, #48, #80, #87, #94, #95).
 - No INTERNET / network / analytics / ads / billing — ever.
 - Scrollbar thumb capped at 40% of track (`THUMB_MAX_FRACTION`), floor 24dp:
   exact position, clamped length cue. Don't "fix" back to raw proportions.
+- No navigation rail or list-detail on tablets — both were built, compared,
+  and set aside for the column.
 
 ## Known quirks & accepted limitations
 
-- The widget's Arabic now renders in the bundled HAFS — drawn into a bitmap
-  by Canvas (which shapes vocalized text correctly), stepped down until its
-  whole line box fits the bucket, since Glance Text can't wear bundled fonts.
+- The widget's Arabic renders in the bundled HAFS — drawn into a bitmap
+  by Canvas (which shapes vocalized text correctly), stepped down until the
+  whole line box fits, since Glance Text can't wear bundled fonts.
   Latin falls back to the system serif; the notification still draws with
   system fonts and keeps `systemFontSafeArabic()` sanitization for الله.
 - Counters always render Western digits via `%1$s` on purpose (`%d` follows
   device locale; ar/ur bidi reversed the pairs). Guarded by CounterFormatTest.
 - WorkManager notification timing drifts a few minutes (system batching).
 - At a 2.0 system font scale the detail plate's neighbour labels degrade to
-  ellipsis ("Al…") — the keep-act labels swell with the system scale and
-  crowd the end slots below even the 0.4 floor. Reader-range scales (default
-  through the slider's 1.4) always render the name whole; the truncation is
-  FitText's documented pathological-scale insurance, accepted 1.20.
-- Local debug APKs sign with the machine keystore; CI artifacts with CI's —
-  installing one over the other fails
-  INSTALL_FAILED_UPDATE_INCOMPATIBLE and uninstalling wipes DataStore
-  progress. Device-test from the CI artifact.
+  ellipsis ("Al…") — the keep-act labels crowd the end slots below even the
+  0.4 floor. Reader-range scales always render the name whole; the truncation
+  is FitText's pathological-scale insurance (accepted 1.20).
+- A local debug APK won't install over a CI artifact and vice versa
+  (different signers — INSTALL_FAILED_UPDATE_INCOMPATIBLE), and uninstalling
+  wipes DataStore progress. Device-test from the CI artifact.
 - The app deliberately has no SnackbarHost (reset has no Undo; some failures
   surface as Toast). Don't assume one exists.
-- ScreenshotTest cannot run on local android-37.1 images (Espresso input
-  injection dies on an InputManager reflection error). Listing screenshots
-  come from the CI workflow (see Store screenshots from CI under Release
-  hand-off); the local recipes below are fallback for interactive checks and
-  one-off scenes: driving the real app over adb (`uiautomator dump` → match
+- ScreenshotTest cannot run on local android-37.1 images (Espresso
+  InputManager reflection error) — listing captures come from CI. Local
+  fallback for one-off scenes: driving the real app over adb (`uiautomator dump` → match
   text or content-desc → `input tap` → `exec-out screencap`) with the debug
   APK installed, or ScreenshotTest on API ≤ 35 images (the test now saves to
-  the AGP additional-test-output dir, not files/screenshots). Hard-won adb
-  gotchas:
-- **Two capture nondeterminisms (proven 1.22, run 33648558302):** the
-  ScreenshotTest scenes render the SCREENS directly, so MainActivity's bottom
-  bar never appears in any capture — tab-label changes are invisible to the
-  sets (only the name scene shows the detail plate's labels). And the
-  flashcards/quiz scenes show SHUFFLED content (DeckBuilder/QuizBuilder use
-  unseeded `Random`), so those two PNGs legitimately differ on every run.
-  When a screenshot-refresh diff surprises you, diff the old/new PNGs before
-  assuming a regression.
-  - Search lives in the home bar: stop an upward scroll to reveal it (or tap
-    NAMES' re-tap to land at a fully revealed top), tap the magnifier. A live
-    query persists until cleared — tap the bar's ✕ ("Close search") or press
-    Back (clears first, then closes) before tapping rows you expected from
-    the full list.
+  the AGP additional-test-output dir, not files/screenshots).
+Local adb gotchas:
+- **Two capture nondeterminisms (proven 1.22):** the scenes render the
+  SCREENS directly, so MainActivity's bottom bar never appears — tab-label
+  changes are invisible to the sets. And flashcards/quiz show SHUFFLED
+  content (unseeded `Random`), so those two PNGs legitimately differ on
+  every run. Diff old/new PNGs before assuming a regression.
+  - Search lives in the home bar: stop an upward scroll to reveal it (or
+    re-tap NAMES), tap the magnifier; a live query
+    persists until cleared — tap the bar's ✕ ("Close search") or Back before tapping rows you expected from the full list.
   - Match text EXACTLY, not by substring ("NAMES" also occurs inside
     "99 names still to learn").
   - uiautomator dumps go stale during animations/IME — retry until the node
     appears; dismiss the keyboard (BACK) before tapping rows; Gboard's toolbar
     panel swallows taps aimed through it.
-  - The swiftshader SystemUI ANR appears seconds after launch — loop checks;
-    if Wait doesn't stick, kill the emulator process and cold-boot
-    (`-no-window -no-snapshot` is fine; first screencaps may still be black —
-    poll for page content, never background colour). Better: prevent the
-    dialog outright with `adb shell settings put global hide_error_dialogs
-    1` — uiautomator dump runs through SystemUI's accessibility pipeline, so
-    while the ANR dialog is up the dump itself fails and `Wait` can never be
-    found by text; suppressing the dialog keeps dumps and captures clean.
+  - The swiftshader SystemUI ANR appears seconds after launch — loop checks,
+    else cold-boot (`-no-window -no-snapshot`; poll for page content, never
+    background colour). Better: `adb shell settings put global
+    hide_error_dialogs 1` up front — while the dialog is up, dumps fail and
+    `Wait` can never be found by text.
   - The list starts 1 Allah, 2 Al-Ahad, 3 Al-A'laa … (source order):
     Ar-Rahmaan is NOT near the top. For detail/share scenes use search
     ("Aleem" → Al-Aleem, longest meaning, scrollbar thumb visible) or the row
