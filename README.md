@@ -33,7 +33,7 @@ Tablet sets live beside the phone set in `docs/screenshots/` (`tablet7/`, `table
 - **Read** — all 99 names with Arabic script set in KFGQPC Uthmanic Script HAFS — the typeface of the Madinah Mushaf — with transliteration and full meanings, plus scholarly notes (e.g. the distinction between Ar-Rahmaan and Ar-Raheem). Browse the list, swipe between names, and search by name, meaning, note, or number; on a name page the Name and its transliteration copy as one unit with a long-press, and the meaning below copies the same way.
 - **Keep** — bookmark the names you turn to and find them together in their own tab, in the order they appear in the book. Separate from memorization: resetting your progress leaves your bookmarks alone.
 - **Share** — turn any name into a beautifully rendered card (Arabic, transliteration, meaning) and share it as an image — or as plain text, for captions and notes.
-- **Memorize** — flashcards with a flip animation and an "I know it / Still learning" loop, a ten-question quiz with a remembered best score, and a quiet progress count (no streaks, no gamification).
+- **Memorize** — flashcards with a flip animation and an "I know it / Still learning" loop, a ten-question quiz with a remembered best score and a revisit list naming what you missed, and a quiet progress count (no streaks, no gamification).
 - **Daily** — a "Name of the Day" that rotates deterministically through all 99, shown on the home screen, as an optional notification at a time you choose, and as a resizable home-screen widget in the app's emerald-and-gold livery, its Name set in the bundled Mushaf typeface.
 - **Considered** — warm paper light theme, dark, and true-black AMOLED; adjustable text size; quiet haptics; a tab bar that floats as a soft pill with a gentle shadow; bundled KFGQPC Uthmanic Script HAFS (Arabic) and Spectral (Latin) typefaces; predictive back; edge-to-edge.
 - **Pure** — no ads, no analytics, no tracking, and **no INTERNET permission**, so the app cannot open a network connection at all. The only permission it declares for itself is notifications, and only if you turn the daily name on; the remaining manifest permissions come from Android's WorkManager library, which schedules the daily reminder. See [PRIVACY.md](PRIVACY.md).
@@ -56,8 +56,9 @@ to you, it is worth saying which convention you are going by.
 2. Run on a device or emulator (minimum Android 7.0, API 24).
 3. For a release build: **Build → Generate Signed App Bundle**.
 
-Unit tests run with `./gradlew testDebugUnitTest`: the daily-name rotation, quiz
-generation, search, deck building, and a guard over `assets/names.json` itself —
+Unit tests run with `./gradlew :app:testDebugUnitTest`: the daily-name rotation, quiz
+generation, search and its highlight ranges, deck building, the flashcard and quiz
+session contracts, and a guard over `assets/names.json` itself —
 that it holds 99 sequential entries, no blank or duplicate fields, NFC-normalized
 Arabic, and not one character the bundled Mushaf typeface cannot draw.
 

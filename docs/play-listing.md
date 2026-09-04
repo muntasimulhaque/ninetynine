@@ -10,7 +10,7 @@ so do not add a word or a stray space.
 
 - **Application ID (package name):** `io.github.muntasimulhaque.ninetynine`
 - **Privacy policy URL:** `https://muntasimulhaque.github.io/ninetynine/privacy-policy.html`
-- **Version (this release):** versionName `1.25`, versionCode `35`
+- **Version (this release):** versionName `1.26`, versionCode `36`
 
 ---
 
@@ -57,6 +57,13 @@ Made to be read:
 
 Free and open source. May Allah make us among those who learn, memorize,
 understand and act upon His beautiful Names.
+```
+
+## What's new (version 1.26)
+
+```
+Nothing in the app itself changed.
+The GitHub front page now describes the whole app, including the quiz's revisit list.
 ```
 
 ## What's new (version 1.25)
