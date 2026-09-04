@@ -85,7 +85,7 @@ class NamesViewModel(application: Application) : AndroidViewModel(application) {
         .stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
     val dailyEnabled: StateFlow<Boolean> = prefs.dailyEnabled
-        .stateIn(viewModelScope, SharingStarted.Eagerly, false)
+        .stateIn(viewModelScope, SharingStarted.Eagerly, true)
 
     // Declared before [dailyTime] on purpose — same init-order rule as
     // [learned]: stateIn(Eagerly) can deliver DataStore's first value during

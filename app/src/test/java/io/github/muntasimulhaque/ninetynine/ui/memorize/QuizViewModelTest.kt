@@ -194,4 +194,29 @@ class QuizViewModelTest {
         vm.restart(names, learned = emptySet())
         assertEquals(Int.MIN_VALUE, vm.bestBefore)
     }
+
+    @Test
+    fun corruptedRestoredQuestionsAreDiscarded() {
+        val bad = "[{\"number\":1,\"options\":[\"a\",\"b\"],\"answerIndex\":9}]"
+        val restored = QuizViewModel(SavedStateHandle(mapOf("quiz.questions" to bad)))
+        assertTrue(restored.questions.isEmpty())
+        restored.ensureQuiz(names, learned = emptySet())
+        assertEquals(10, restored.questions.size)
+    }
+
+    @Test
+    fun selectWithNoQuestionsReturnsFalse() {
+        val vm = vm()
+        assertFalse(vm.select(0))
+        assertEquals(0, vm.score)
+    }
+
+    @Test
+    fun selectOutOfRangeOptionIsIgnored() {
+        val vm = vm()
+        vm.ensureQuiz(names, learned = emptySet())
+        assertFalse(vm.select(99))
+        assertEquals(0, vm.score)
+        assertEquals(-1, vm.chosenFor(0))
+    }
 }

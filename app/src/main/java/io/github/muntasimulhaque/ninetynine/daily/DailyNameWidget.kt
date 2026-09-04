@@ -50,6 +50,7 @@ import io.github.muntasimulhaque.ninetynine.ui.theme.HeroText
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.ArabicSize
 import io.github.muntasimulhaque.ninetynine.util.DailyName
 import kotlin.math.PI
+import kotlinx.coroutines.CancellationException
 import kotlin.math.ceil
 import kotlin.math.cos
 import kotlin.math.min
@@ -94,10 +95,15 @@ class DailyNameWidget : GlanceAppWidget() {
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         // This render executes inside a Glance SessionWorker on the main
-        // thread — outside any runCatching the callers (MainActivity.onResume,
+        // thread — outside any guard the callers (MainActivity.onResume,
         // the WorkManager workers, TimeChangeReceiver) can wrap. A cold-start
         // hiccup here must be a skipped refresh, never a crash.
-        runCatching { render(context) }
+        try {
+            render(context)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (_: Exception) {
+        }
     }
 
     private suspend fun render(context: Context): Unit {
@@ -116,9 +122,11 @@ class DailyNameWidget : GlanceAppWidget() {
         // text stack). Null only if the resource read fails, which should
         // never happen: the TTF ships in the APK. The fallback keeps the old
         // system-serif path so a widget always renders.
-        val hafs = runCatching {
+        val hafs = try {
             ResourcesCompat.getFont(context, R.font.kfgqpc_hafs_uthmanic)
-        }.getOrNull()
+        } catch (_: Exception) {
+            null
+        }
         // Always call provideContent, even when name is null. Without this, a
         // transient load failure (empty list from NamesRepository) would skip
         // the render entirely, and the Glance SessionWorker would consider the
@@ -210,7 +218,7 @@ class DailyNameWidget : GlanceAppWidget() {
             // zero-size or failed allocation falls back to the flat
             // ColorProvider background — a square plate always beats no
             // plate.
-            val plateBitmap = runCatching {
+            val plateBitmap = try {
                 squirclePlateBitmap(
                     // DpSize's width/height are Dp; .value times the density
                     // is the real pixel surface. ceil so the plate never
@@ -220,7 +228,9 @@ class DailyNameWidget : GlanceAppWidget() {
                     radiusPx = plateRadius.value * density,
                     argbColor = HeroContainer.toArgb(),
                 )
-            }.getOrNull()
+            } catch (_: Exception) {
+                null
+            }
             val plate = GlanceModifier
                 .fillMaxSize()
                 .let { m ->
@@ -399,7 +409,7 @@ private fun squirclePlateBitmap(
     val r = radiusPx.coerceIn(0f, min(w, h) / 2f)
     val n = 4f
     // Platform type: cannot be null; an allocation failure throws, which the
-    // caller's runCatching turns into the flat-color fallback.
+    // caller's guard turns into the flat-color fallback.
     val bitmap = Bitmap.createBitmap(widthPx, heightPx, Bitmap.Config.ARGB_8888)
     val canvas = Canvas(bitmap)
     if (r <= 0f) {
@@ -506,13 +516,15 @@ class DailyNameWidgetReceiver : GlanceAppWidgetReceiver() {
  * its corners at all. getDimension returns px; convert once here so callers
  * stay in dp.
  */
-private fun systemCornerRadius(context: Context): Dp = runCatching {
+private fun systemCornerRadius(context: Context): Dp = try {
     val id = context.resources.getIdentifier(
         "system_app_widget_background_radius",
         "dimen",
         "android",
     )
-    if (id == 0) return@runCatching 20.dp
+    if (id == 0) return 20.dp
     val density = context.resources.displayMetrics.density
     (context.resources.getDimension(id) / density).dp
-}.getOrDefault(20.dp)
+} catch (_: Exception) {
+    20.dp
+}

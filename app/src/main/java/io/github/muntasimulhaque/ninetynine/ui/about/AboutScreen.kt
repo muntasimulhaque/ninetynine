@@ -51,6 +51,7 @@ import io.github.muntasimulhaque.ninetynine.ui.theme.components.paperTopBarColor
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.ScreenLabel
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.ScrollbarThumb
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.SectionLabel
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -69,9 +70,13 @@ fun AboutScreen(onBack: () -> Unit) {
     val context = LocalContext.current
     val intro by produceState(initialValue = "") {
         value = withContext(Dispatchers.IO) {
-            runCatching {
+            try {
                 context.assets.open("intro.txt").bufferedReader().use { it.readText() }
-            }.getOrDefault("")
+            } catch (e: CancellationException) {
+                throw e
+            } catch (_: Exception) {
+                ""
+            }
         }
     }
     // intro.txt may be checked out with CRLF endings; normalize before splitting.
@@ -313,8 +318,11 @@ private fun LinkRow(labelRes: Int, onClick: () -> Unit) {
 }
 
 private fun Context.openUrl(url: String) {
-    runCatching { startActivity(Intent(Intent.ACTION_VIEW, url.toUri())) }
-        .onFailure { Toast.makeText(this, R.string.link_failed, Toast.LENGTH_SHORT).show() }
+    try {
+        startActivity(Intent(Intent.ACTION_VIEW, url.toUri()))
+    } catch (_: Exception) {
+        Toast.makeText(this, R.string.link_failed, Toast.LENGTH_SHORT).show()
+    }
 }
 
 /**
@@ -333,10 +341,12 @@ private fun Context.sendFeedback() {
         getString(R.string.app_title),
         BuildConfig.VERSION_NAME,
     )
-    runCatching {
+    try {
         startActivity(
             Intent(Intent.ACTION_SENDTO, "mailto:$to".toUri())
                 .putExtra(Intent.EXTRA_SUBJECT, subject)
         )
-    }.onFailure { Toast.makeText(this, R.string.link_failed, Toast.LENGTH_SHORT).show() }
+    } catch (_: Exception) {
+        Toast.makeText(this, R.string.link_failed, Toast.LENGTH_SHORT).show()
+    }
 }

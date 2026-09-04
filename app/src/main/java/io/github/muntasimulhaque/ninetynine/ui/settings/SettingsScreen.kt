@@ -126,7 +126,9 @@ fun SettingsScreen(
     val dailyTime by viewModel.dailyTime.collectAsStateWithLifecycle()
     val dailyTimeLoaded by viewModel.dailyTimeLoaded.collectAsStateWithLifecycle()
 
-    var sliderValue by remember(textScale) { mutableFloatStateOf(textScale) }
+    var sliderValue by remember(textScale) {
+        mutableFloatStateOf(textScale.coerceIn(SCALE_MIN, SCALE_MAX))
+    }
     var showTimePicker by rememberSaveable { mutableStateOf(false) }
     var showResetDialog by rememberSaveable { mutableStateOf(false) }
     var showBlockedDialog by rememberSaveable { mutableStateOf(false) }
@@ -375,9 +377,10 @@ fun SettingsScreen(
 
     if (showTimePicker) {
         // Material 3 time picker, themed with the app — not the legacy dialog.
+        // Coerced: TimePicker throws on out-of-range hours from a restored backup.
         val timeState = rememberTimePickerState(
-            initialHour = dailyTime.first,
-            initialMinute = dailyTime.second,
+            initialHour = dailyTime.first.coerceIn(0, 23),
+            initialMinute = dailyTime.second.coerceIn(0, 59),
             is24Hour = DateFormat.is24HourFormat(context),
         )
         AlertDialog(
@@ -463,8 +466,14 @@ private fun openNotificationSettings(context: android.content.Context) {
         Uri.fromParts("package", context.packageName, null),
     )
     // Both are hand-offs to the system; a device with neither should not crash.
-    runCatching { context.startActivity(toNotifications) }
-        .onFailure { runCatching { context.startActivity(toAppDetails) } }
+    try {
+        context.startActivity(toNotifications)
+    } catch (_: Exception) {
+        try {
+            context.startActivity(toAppDetails)
+        } catch (_: Exception) {
+        }
+    }
 }
 
 /**
@@ -641,9 +650,11 @@ private fun HairlineSlider(
 }
 
 private fun formatTime(context: android.content.Context, hour: Int, minute: Int): String {
+    val safeHour = hour.coerceIn(0, 23)
+    val safeMinute = minute.coerceIn(0, 59)
     val calendar = Calendar.getInstance().apply {
-        set(Calendar.HOUR_OF_DAY, hour)
-        set(Calendar.MINUTE, minute)
+        set(Calendar.HOUR_OF_DAY, safeHour)
+        set(Calendar.MINUTE, safeMinute)
     }
     val pattern = if (DateFormat.is24HourFormat(context)) "HH:mm" else "h:mm a"
     return SimpleDateFormat(pattern, Locale.getDefault()).format(calendar.time)

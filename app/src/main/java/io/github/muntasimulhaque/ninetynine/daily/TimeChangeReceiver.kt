@@ -34,19 +34,20 @@ class TimeChangeReceiver : BroadcastReceiver() {
         // execute when the process restarts — unlike goAsync() which has a
         // 10-second lease and no persistence across process death.
         //
-        // runCatching, like every other scheduler call site: WorkManager
+        // Guarded, like every other scheduler call site: WorkManager
         // initialises lazily, and a transient init race throwing from inside
         // onReceive would kill the process mid-broadcast — at exactly the
         // moments (clock change, app update) a refresh is least affordable.
         // A skipped refresh retries on the next worker run; a crash does not.
         val request = OneTimeWorkRequestBuilder<WidgetUpdateWorker>()
             .build()
-        runCatching {
+        try {
             WorkManager.getInstance(context.applicationContext).enqueueUniqueWork(
                 "time_change_widget_refresh",
                 ExistingWorkPolicy.REPLACE,
                 request,
             )
+        } catch (_: Exception) {
         }
     }
 }

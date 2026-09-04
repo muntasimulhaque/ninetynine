@@ -155,22 +155,23 @@ private fun TextStyle.scaled(factor: Float): TextStyle =
 
 /** Typography with every size multiplied by the user's text-scale preference. */
 fun appTypography(scale: Float): Typography {
-    if (scale == 1f) return BaseTypography
+    val safe = (if (scale.isFinite()) scale else 1f).coerceIn(0.5f, 2f)
+    if (safe == 1f) return BaseTypography
     return Typography(
-        displayLarge = BaseTypography.displayLarge.scaled(scale),
-        displayMedium = BaseTypography.displayMedium.scaled(scale),
-        displaySmall = BaseTypography.displaySmall.scaled(scale),
-        headlineLarge = BaseTypography.headlineLarge.scaled(scale),
-        headlineMedium = BaseTypography.headlineMedium.scaled(scale),
-        headlineSmall = BaseTypography.headlineSmall.scaled(scale),
-        titleLarge = BaseTypography.titleLarge.scaled(scale),
-        titleMedium = BaseTypography.titleMedium.scaled(scale),
-        titleSmall = BaseTypography.titleSmall.scaled(scale),
-        bodyLarge = BaseTypography.bodyLarge.scaled(scale),
-        bodyMedium = BaseTypography.bodyMedium.scaled(scale),
-        bodySmall = BaseTypography.bodySmall.scaled(scale),
-        labelLarge = BaseTypography.labelLarge.scaled(scale),
-        labelMedium = BaseTypography.labelMedium.scaled(scale),
-        labelSmall = BaseTypography.labelSmall.scaled(scale),
+        displayLarge = BaseTypography.displayLarge.scaled(safe),
+        displayMedium = BaseTypography.displayMedium.scaled(safe),
+        displaySmall = BaseTypography.displaySmall.scaled(safe),
+        headlineLarge = BaseTypography.headlineLarge.scaled(safe),
+        headlineMedium = BaseTypography.headlineMedium.scaled(safe),
+        headlineSmall = BaseTypography.headlineSmall.scaled(safe),
+        titleLarge = BaseTypography.titleLarge.scaled(safe),
+        titleMedium = BaseTypography.titleMedium.scaled(safe),
+        titleSmall = BaseTypography.titleSmall.scaled(safe),
+        bodyLarge = BaseTypography.bodyLarge.scaled(safe),
+        bodyMedium = BaseTypography.bodyMedium.scaled(safe),
+        bodySmall = BaseTypography.bodySmall.scaled(safe),
+        labelLarge = BaseTypography.labelLarge.scaled(safe),
+        labelMedium = BaseTypography.labelMedium.scaled(safe),
+        labelSmall = BaseTypography.labelSmall.scaled(safe),
     )
 }

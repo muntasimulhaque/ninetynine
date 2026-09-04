@@ -102,8 +102,12 @@ import kotlin.math.roundToInt
 class QuizViewModel(private val savedState: SavedStateHandle) : ViewModel() {
 
     var questions by mutableStateOf<List<QuizQuestion>>(restoredQuestions()); private set
-    var index by mutableIntStateOf(savedState.get<Int>(KEY_INDEX) ?: 0); private set
-    var score by mutableIntStateOf(savedState.get<Int>(KEY_SCORE) ?: 0); private set
+    var index by mutableIntStateOf(
+        (savedState.get<Int>(KEY_INDEX) ?: 0).coerceAtLeast(0)
+    ); private set
+    var score by mutableIntStateOf(
+        (savedState.get<Int>(KEY_SCORE) ?: 0).coerceIn(0, 99)
+    ); private set
     var selected by mutableIntStateOf(savedState.get<Int>(KEY_SELECTED) ?: -1); private set
 
     /**
@@ -136,18 +140,36 @@ class QuizViewModel(private val savedState: SavedStateHandle) : ViewModel() {
      * way to find out which four — the information existed a second earlier and
      * was thrown away. A book of exercises has an answers page.
      */
-    var missed by mutableStateOf<List<Int>>(savedState.get<IntArray>(KEY_MISSED)?.toList() ?: emptyList()); private set
+    var missed by mutableStateOf<List<Int>>(
+        savedState.get<IntArray>(KEY_MISSED)?.toList()?.filter { it in 1..99 } ?: emptyList()
+    ); private set
 
     /**
      * The round lives in the SavedStateHandle, not just memory: a process
      * death mid-quiz restores the exact question, score and missed list, the
      * same way the name pager restores its page. The keys are dropped in
      * [onCleared], so leaving the screen starts the next sitting fresh.
+     *
+     * Restored questions are validated: the bundle is trusted storage, but a
+     * corrupted write must read as "no round" and rebuild, never as an
+     * out-of-bounds answerIndex that crashes the verdict line.
      */
-    private fun restoredQuestions(): List<QuizQuestion> =
-        savedState.get<String>(KEY_QUESTIONS)?.let {
-            runCatching { json.decodeFromString<List<QuizQuestion>>(it) }.getOrNull()
-        } ?: emptyList()
+    private fun restoredQuestions(): List<QuizQuestion> {
+        val raw = savedState.get<String>(KEY_QUESTIONS) ?: return emptyList()
+        val decoded = try {
+            json.decodeFromString<List<QuizQuestion>>(raw)
+        } catch (_: Exception) {
+            return emptyList()
+        }
+        if (decoded.size > QuizBuilder.DEFAULT_COUNT + 10) return emptyList()
+        if (decoded.any { q ->
+                q.number !in 1..99 || q.options.size < 2 ||
+                    q.answerIndex !in q.options.indices ||
+                    q.options.any { it.isBlank() }
+            }
+        ) return emptyList()
+        return decoded
+    }
 
     private fun saveSession() {
         savedState[KEY_QUESTIONS] = json.encodeToString(questions)
@@ -175,6 +197,11 @@ class QuizViewModel(private val savedState: SavedStateHandle) : ViewModel() {
     }
 
     fun ensureQuiz(names: List<Name>, learned: Set<Int>) {
+        if (index !in 0..maxOf(0, questions.lastIndex)) {
+            index = 0
+            selected = -1
+            selectedAt = -1
+        }
         if (questions.isEmpty() && names.isNotEmpty()) {
             questions = QuizBuilder.build(names, preferred = learned)
             saveSession()
@@ -190,17 +217,22 @@ class QuizViewModel(private val savedState: SavedStateHandle) : ViewModel() {
 
     /** Returns true when the tapped option is the correct answer. */
     fun select(optionIndex: Int): Boolean {
+        val question = questions.getOrNull(index) ?: return false
+        if (optionIndex !in question.options.indices) return false
         if (chosenFor(index) != -1) return false
         selected = optionIndex
         selectedAt = index
-        val correct = optionIndex == questions[index].answerIndex
-        if (correct) score++ else missed = missed + questions[index].number
+        val correct = optionIndex == question.answerIndex
+        if (correct) score++ else missed = missed + question.number
         saveSession()
         return correct
     }
 
     fun next() {
-        if (index < questions.lastIndex) {
+        val last = questions.lastIndex
+        if (last < 0) {
+            finished = true
+        } else if (index < last) {
             index++
             // The selection rides along, tagged to the question it answered,
             // so the outgoing turn fades out still showing its verdict.

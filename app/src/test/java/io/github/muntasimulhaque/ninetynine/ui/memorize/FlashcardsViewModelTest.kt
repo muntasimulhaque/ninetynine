@@ -164,4 +164,20 @@ class FlashcardsViewModelTest {
         assertNull(vm.undoable)
         assertNull(vm.undo())
     }
+
+    @Test
+    fun corruptedRestoredDeckIsFiltered() {
+        val restored = FlashcardsViewModel(
+            SavedStateHandle(mapOf("deck.cards" to intArrayOf(1, 0, 999, 2)))
+        )
+        assertEquals(listOf(1, 2), restored.deck)
+    }
+
+    @Test
+    fun invalidRestoredUndoIsDropped() {
+        val restored = FlashcardsViewModel(
+            SavedStateHandle(mapOf("deck.undoNumber" to 999, "deck.undoMarked" to true))
+        )
+        assertNull(restored.undoable)
+    }
 }

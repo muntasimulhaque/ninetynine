@@ -68,6 +68,7 @@ import io.github.muntasimulhaque.ninetynine.ui.theme.components.ArabicSize
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.ArabicText
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.FitText
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.PageInset
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -182,15 +183,16 @@ fun ShareSheet(name: Name, onDismiss: () -> Unit) {
                 onClick = {
                     scope.launch {
                         sharing = true
-                        val result = runCatching {
+                        try {
                             val bitmap = graphicsLayer.toImageBitmap()
                             shareNameImage(context, bitmap, name)
-                        }
-                        sharing = false
-                        if (result.isSuccess) {
                             onDismiss()
-                        } else {
+                        } catch (e: CancellationException) {
+                            throw e
+                        } catch (_: Exception) {
                             Toast.makeText(context, R.string.share_failed, Toast.LENGTH_SHORT).show()
+                        } finally {
+                            sharing = false
                         }
                     }
                 },
@@ -369,7 +371,10 @@ private fun shareNameText(context: Context, name: Name, wordmark: String): Boole
         type = "text/plain"
         putExtra(Intent.EXTRA_TEXT, text)
     }
-    return runCatching {
+    return try {
         context.startActivity(Intent.createChooser(sendIntent, null))
-    }.isSuccess
+        true
+    } catch (_: Exception) {
+        false
+    }
 }

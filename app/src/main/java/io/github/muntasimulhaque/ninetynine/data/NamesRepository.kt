@@ -1,6 +1,7 @@
 package io.github.muntasimulhaque.ninetynine.data
 
 import android.content.Context
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -29,10 +30,14 @@ object NamesRepository {
         cache?.let { return it }
         return mutex.withLock {
             cache ?: withContext(Dispatchers.IO) {
-                runCatching {
+                try {
                     val text = context.assets.open("names.json").bufferedReader().use { it.readText() }
                     json.decodeFromString<List<Name>>(text).sortedBy { it.number }
-                }.getOrDefault(emptyList())
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (_: Exception) {
+                    emptyList()
+                }
             }.also { if (it.isNotEmpty()) cache = it }
         }
     }

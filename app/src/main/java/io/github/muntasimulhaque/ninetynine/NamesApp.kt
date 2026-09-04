@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.glance.appwidget.updateAll
 import io.github.muntasimulhaque.ninetynine.daily.DailyNameWidget
 import io.github.muntasimulhaque.ninetynine.daily.DailyScheduler
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -48,7 +49,12 @@ class NamesApp : Application() {
         // when the process was started by WorkManager to run a worker. A
         // failed refresh is a skipped refresh, never a crash.
         applicationScope.launch {
-            runCatching { DailyNameWidget().updateAll(this@NamesApp) }
+            try {
+                DailyNameWidget().updateAll(this@NamesApp)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (_: Exception) {
+            }
         }
     }
 }

@@ -17,6 +17,7 @@ import io.github.muntasimulhaque.ninetynine.ui.theme.HeroGold
 import io.github.muntasimulhaque.ninetynine.ui.theme.HeroSubtext
 import io.github.muntasimulhaque.ninetynine.ui.theme.HeroText
 import java.util.Locale
+import kotlinx.coroutines.CancellationException
 
 /**
  * The expanded daily notification wears the same plate as the hero card, the
@@ -48,15 +49,16 @@ internal object DailyPlate {
 
     private const val PAD = 84f
 
-    fun render(context: Context, name: Name): Bitmap? = runCatching {
+    fun render(context: Context, name: Name): Bitmap? {
+        return try {
         val hafs = ResourcesCompat.getFont(context, R.font.kfgqpc_hafs_uthmanic)
-            ?: return@runCatching null
+            ?: return null
         val light = ResourcesCompat.getFont(context, R.font.spectral_light)
-            ?: return@runCatching null
+            ?: return null
         val medium = ResourcesCompat.getFont(context, R.font.spectral_medium)
-            ?: return@runCatching null
+            ?: return null
         val mediumItalic = ResourcesCompat.getFont(context, R.font.spectral_mediumitalic)
-            ?: return@runCatching null
+            ?: return null
 
         // The Name, stepped down until its whole line box — HAFS runs tall —
         // fits the plate: the widget's own fit logic, reused verbatim. The
@@ -72,7 +74,7 @@ internal object DailyPlate {
             maxHeightPx = HEIGHT * 0.30f,
             pxPerSp = PX_PER_SP,
             color = HeroGold.toArgb(),
-        ) ?: return@runCatching null
+        ) ?: return null
 
         // Overline — the hero card's "NAME OF THE DAY", tracked small caps
         // (labelMedium's 1.8sp on 11sp, in em units for Paint).
@@ -154,5 +156,10 @@ internal object DailyPlate {
         canvas.restore()
 
         bitmap
-    }.getOrNull()
+        } catch (e: CancellationException) {
+            throw e
+        } catch (_: Exception) {
+            null
+        }
+    }
 }

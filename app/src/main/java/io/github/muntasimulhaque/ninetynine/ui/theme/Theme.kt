@@ -99,8 +99,11 @@ fun Names99Theme(
     // factor. Typography, Arabic, the column caps and the gaps all multiply
     // by it (see [LocalDeviceFactor]); the bottom bar's labels take the
     // device factor alone, so the reader's slider still cannot move them.
+    // Sanitized: DataStore is trusted, but a restored backup can carry any
+    // float, and a NaN scale would poison every sp size on the page.
     val deviceFactor = deviceFactorFor(LocalConfiguration.current.smallestScreenWidthDp)
-    val readingScale = textScale * deviceFactor
+    val safeText = (if (textScale.isFinite()) textScale else 1f).coerceIn(0.5f, 2f)
+    val readingScale = safeText * deviceFactor
 
     CompositionLocalProvider(
         LocalTextScale provides readingScale,
@@ -153,9 +156,17 @@ private fun rememberAnimatorDurationScale(): Float {
     }.value
 }
 
-private fun readAnimatorDurationScale(context: Context): Float =
-    Settings.Global.getFloat(
-        context.contentResolver,
-        Settings.Global.ANIMATOR_DURATION_SCALE,
-        1f,
-    )
+private fun readAnimatorDurationScale(context: Context): Float {
+    val raw = try {
+        Settings.Global.getFloat(
+            context.contentResolver,
+            Settings.Global.ANIMATOR_DURATION_SCALE,
+            1f,
+        )
+    } catch (_: Exception) {
+        1f
+    }
+    // A negative or non-finite scale would make Motion.spec build a tween
+    // with a negative duration and crash; clamp to the meaningful range.
+    return (if (raw.isFinite()) raw else 1f).coerceAtLeast(0f)
+}

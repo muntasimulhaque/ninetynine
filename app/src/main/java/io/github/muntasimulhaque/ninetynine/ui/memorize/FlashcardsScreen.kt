@@ -109,8 +109,13 @@ import kotlin.math.absoluteValue
 /** Session state for one flashcard run; survives rotation with the ViewModel. */
 class FlashcardsViewModel(private val savedState: SavedStateHandle) : ViewModel() {
 
-    var deck by mutableStateOf<List<Int>>(savedState.get<IntArray>(KEY_DECK)?.toList() ?: emptyList()); private set
-    var index by mutableIntStateOf(savedState.get<Int>(KEY_INDEX) ?: 0); private set
+    var deck by mutableStateOf<List<Int>>(
+        savedState.get<IntArray>(KEY_DECK)?.toList()
+            ?.filter { it in 1..99 }?.take(DeckBuilder.SESSION) ?: emptyList()
+    ); private set
+    var index by mutableIntStateOf(
+        (savedState.get<Int>(KEY_INDEX) ?: 0).coerceAtLeast(0)
+    ); private set
     var flipped by mutableStateOf(savedState.get<Boolean>(KEY_FLIPPED) ?: false); private set
     var done by mutableStateOf(savedState.get<Boolean>(KEY_DONE) ?: false); private set
     private var lastInclude: Boolean? = savedState.get<Boolean>(KEY_LAST_INCLUDE)
@@ -133,6 +138,7 @@ class FlashcardsViewModel(private val savedState: SavedStateHandle) : ViewModel(
      */
     private fun restoredUndo(): Pair<Int, Boolean>? {
         val number = savedState.get<Int>(KEY_UNDO_NUMBER) ?: return null
+        if (number !in 1..99) return null
         return number to (savedState.get<Boolean>(KEY_UNDO_MARKED) ?: true)
     }
 

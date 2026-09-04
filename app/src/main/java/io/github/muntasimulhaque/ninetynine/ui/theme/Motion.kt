@@ -52,8 +52,9 @@ object Motion {
 
     /** Non-composable variant for use inside coroutines and non-@Composable lambdas. */
     fun <T> spec(scale: Float, duration: Int, easing: Easing = FastOutSlowInEasing): FiniteAnimationSpec<T> {
-        return if (scale == 0f) snap()
-        else androidx.compose.animation.core.tween((duration * scale).toInt(), easing = easing)
+        val safe = if (scale.isFinite()) scale.coerceAtLeast(0f) else 1f
+        return if (safe == 0f) snap()
+        else androidx.compose.animation.core.tween((duration * safe).toInt(), easing = easing)
     }
 
     /** Soft spring for tactile feedback (press scale, pops). */
@@ -72,13 +73,15 @@ object Motion {
 
     /** Non-composable [soft] for coroutines and gesture callbacks. */
     fun <T> softSpec(scale: Float): FiniteAnimationSpec<T> {
-        return if (scale == 0f) snap()
+        val safe = if (scale.isFinite()) scale else 1f
+        return if (safe == 0f) snap()
         else spring(dampingRatio = 0.8f, stiffness = Spring.StiffnessMediumLow)
     }
 
     /** Non-composable [lively] for coroutines and gesture callbacks. */
     fun <T> livelySpec(scale: Float): FiniteAnimationSpec<T> {
-        return if (scale == 0f) snap()
+        val safe = if (scale.isFinite()) scale else 1f
+        return if (safe == 0f) snap()
         else spring(dampingRatio = 0.55f, stiffness = Spring.StiffnessMedium)
     }
 }

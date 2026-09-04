@@ -36,19 +36,20 @@ class PackageReplacedReceiver : BroadcastReceiver() {
         // execute when the process restarts — unlike goAsync() which has a
         // 10-second lease and no persistence across process death.
         //
-        // runCatching for the same reason as TimeChangeReceiver: a lazy
+        // Guarded for the same reason as TimeChangeReceiver: a lazy
         // WorkManager init race throwing from onReceive would kill the
         // process at the exact moment (an in-place update) the refresh
         // matters most. NamesApp.onCreate also re-renders on every process
         // start, so a skipped enqueue here still recovers.
         val request = OneTimeWorkRequestBuilder<WidgetUpdateWorker>()
             .build()
-        runCatching {
+        try {
             WorkManager.getInstance(context.applicationContext).enqueueUniqueWork(
                 "post_update_widget_refresh",
                 ExistingWorkPolicy.REPLACE,
                 request,
             )
+        } catch (_: Exception) {
         }
     }
 }

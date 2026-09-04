@@ -102,6 +102,7 @@ import io.github.muntasimulhaque.ninetynine.ui.theme.components.LocalBottomBarOv
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.barMeasure
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.tabLabelStyle
 import io.github.muntasimulhaque.ninetynine.util.DailyName
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.first
 
@@ -208,7 +209,12 @@ class MainActivity : ComponentActivity() {
         // widget refreshes on its own worker run anyway, so a failed nudge is
         // a skipped refresh, never a crash.
         lifecycleScope.launch {
-            runCatching { DailyNameWidget().updateAll(this@MainActivity) }
+            try {
+                DailyNameWidget().updateAll(this@MainActivity)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (_: Exception) {
+            }
         }
     }
 
@@ -253,22 +259,37 @@ class MainActivity : ComponentActivity() {
     }
 
     /** Reads the extra, then removes it so a configuration change can't replay the navigation. */
-    private fun consumeNameNumber(intent: Intent?): Int = runCatching {
+    private fun consumeNameNumber(intent: Intent?): Int {
         // This activity is exported, so any app on the device can launch it
         // with arbitrary extras. Reading one unparcels the whole bundle, and a
         // crafted extra naming a class this app does not have throws
-        // BadParcelableException right here in onCreate.
-        val number = intent?.getIntExtra(EXTRA_NAME_NUMBER, -1) ?: -1
-        intent?.removeExtra(EXTRA_NAME_NUMBER)
-        number
-    }.getOrDefault(-1)
+        // BadParcelableException right here in onCreate. The removal runs in
+        // a finally so a poisoned extra cannot survive to throw again.
+        try {
+            return intent?.getIntExtra(EXTRA_NAME_NUMBER, -1) ?: -1
+        } catch (_: Exception) {
+            return -1
+        } finally {
+            try {
+                intent?.removeExtra(EXTRA_NAME_NUMBER)
+            } catch (_: Exception) {
+            }
+        }
+    }
 
     /** Same consume-and-remove discipline as [consumeNameNumber], for shortcut routes. */
-    private fun consumeStartRoute(intent: Intent?): String? = runCatching {
-        val route = intent?.getStringExtra(EXTRA_START_ROUTE)
-        intent?.removeExtra(EXTRA_START_ROUTE)
-        route
-    }.getOrNull()
+    private fun consumeStartRoute(intent: Intent?): String? {
+        try {
+            return intent?.getStringExtra(EXTRA_START_ROUTE)
+        } catch (_: Exception) {
+            return null
+        } finally {
+            try {
+                intent?.removeExtra(EXTRA_START_ROUTE)
+            } catch (_: Exception) {
+            }
+        }
+    }
 
     companion object {
         const val EXTRA_NAME_NUMBER = "nameNumber"
@@ -369,9 +390,15 @@ private fun App(
         // A launcher shortcut lands mid-book: long-pressing the icon offers
         // the practice screens that otherwise sit two taps in. The memorize
         // tab goes on the stack first, so Back from the shortcut's screen
-        // arrives where a reader who walked there would be.
+        // arrives where a reader who walked there would be. Unknown routes
+        // are ignored entirely: the extra is exported, so any app can send
+        // any string, and only the two shortcut routes may move the reader.
         LaunchedEffect(startRoute) {
             val route = startRoute ?: return@LaunchedEffect
+            if (route != ROUTE_FLASHCARDS && route != ROUTE_QUIZ) {
+                onStartRouteConsumed()
+                return@LaunchedEffect
+            }
             onStartRouteConsumed()
             navController.navigate("memorize") {
                 popUpTo(navController.graph.findStartDestination().id) {

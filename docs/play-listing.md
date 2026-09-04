@@ -10,7 +10,7 @@ so do not add a word or a stray space.
 
 - **Application ID (package name):** `io.github.muntasimulhaque.ninetynine`
 - **Privacy policy URL:** `https://muntasimulhaque.github.io/ninetynine/privacy-policy.html`
-- **Version (this release):** versionName `1.24`, versionCode `34`
+- **Version (this release):** versionName `1.25`, versionCode `35`
 
 ---
 
@@ -57,6 +57,20 @@ Made to be read:
 
 Free and open source. May Allah make us among those who learn, memorize,
 understand and act upon His beautiful Names.
+```
+
+## What's new (version 1.25)
+
+```
+Quieter under the hood:
+
+• Bad saved data — a corrupted setting,
+backup or quiz round — now falls back
+safely instead of closing the app.
+• Reminders, text size, flashcards and
+quiz all validate what they are given.
+• Stricter handling of background work
+and sharing, with no new permissions.
 ```
 
 ## What's new (version 1.24)

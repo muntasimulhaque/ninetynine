@@ -30,7 +30,8 @@ The owner works from more than one machine (LENOVO and Dev Pro; see Build,
 test, verify), so this checkout is only one of several. At the start of any
 session, `git fetch` and pull whatever is new on `main` from GitHub, and do
 the work on that pulled head, never on a stale local one. This is the first
-action of every session, before any file is read or command run.
+action of every session, immediately after reading this file, before any other
+file is read or command run. Do it without asking, without exception.
 
 ## Hard invariants (never violate)
 
@@ -64,7 +65,7 @@ restart: 0.1 … 0.9, then 1.0 / 10, then 1.1 / 11, then 1.2 / 12, then
 1.3 / 13, then 1.4 / 14, then 1.5 / 15, then 1.6 / 16, then 1.7 / 17, then
 1.8 / 18, then 1.9 / 19, then 1.10 / 20, then 1.11 / 21, then 1.12 / 22, then
 1.13 / 23, then 1.14 / 24, then 1.15 / 25, then 1.16 / 26, then 1.17 / 27,
-then 1.19 / 29, then 1.20 / 30, then 1.21 / 31, then 1.22 / 32, then 1.23 / 33, then **1.24 / 34 (current)**.
+then 1.19 / 29, then 1.20 / 30, then 1.21 / 31, then 1.22 / 32, then 1.23 / 33, then 1.24 / 34, then **1.25 / 35 (current)**.
 
 The release keystore path/credentials live in a `keystore.properties` outside
 the repo (Google Play Signing Key folder). When absent (CI, fresh clone) the
@@ -533,11 +534,12 @@ eight places (#28, #32, #44, #48, #80, #87, #94, #95).
 
 ## Testing
 
-- **75 unit tests** (JUnit4, `app/src/test`): daily rotation, quiz generation
+- **80 unit tests** (JUnit4, `app/src/test`): daily rotation, quiz generation
   + subsuming-distractor guards, search and the literal highlight ranges,
   deck building (incl. 10-card cap),
   ViewModels (incl. the tagged-selection contract that keeps a turning
-  question's verdict and the best-before capture), NamesAssetTest over the
+  question's verdict and the best-before capture, plus corrupted-restore
+  guards for the quiz and deck), NamesAssetTest over the
   real asset, CounterFormatTest.
   Count grows as guards are added — sum the XMLs in
   `app/build/test-results/testDebugUnitTest/`.

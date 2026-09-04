@@ -61,7 +61,8 @@ class Prefs(private val context: Context) {
      * changes shape.
      */
     private val data: Flow<Preferences> = context.dataStore.data
-        .retryWhen { _, attempt ->
+        .retryWhen { cause, attempt ->
+            if (cause is CancellationException) throw cause
             emit(emptyPreferences())
             delay(250L shl attempt.coerceIn(0L, 4L).toInt())
             true
@@ -81,7 +82,10 @@ class Prefs(private val context: Context) {
     }
 
     val learned: Flow<Set<Int>> = data
-        .map { p -> p[Keys.LEARNED]?.mapNotNull(String::toIntOrNull)?.toSet() ?: emptySet() }
+        .map { p ->
+            p[Keys.LEARNED]?.mapNotNull(String::toIntOrNull)
+                ?.filter { it in 1..99 }?.toSet() ?: emptySet()
+        }
 
     /**
      * The names the reader has kept. A separate axis from [learned] on purpose:
@@ -90,13 +94,25 @@ class Prefs(private val context: Context) {
      * these alone.
      */
     val bookmarked: Flow<Set<Int>> = data
-        .map { p -> p[Keys.BOOKMARKED]?.mapNotNull(String::toIntOrNull)?.toSet() ?: emptySet() }
+        .map { p ->
+            p[Keys.BOOKMARKED]?.mapNotNull(String::toIntOrNull)
+                ?.filter { it in 1..99 }?.toSet() ?: emptySet()
+        }
 
     val themeMode: Flow<ThemeMode> = data
-        .map { p -> runCatching { ThemeMode.valueOf(p[Keys.THEME] ?: "SYSTEM") }.getOrDefault(ThemeMode.SYSTEM) }
+        .map { p ->
+            try {
+                ThemeMode.valueOf(p[Keys.THEME] ?: "SYSTEM")
+            } catch (_: IllegalArgumentException) {
+                ThemeMode.SYSTEM
+            }
+        }
 
     val textScale: Flow<Float> = data
-        .map { p -> p[Keys.TEXT_SCALE] ?: 1f }
+        .map { p ->
+            val raw = p[Keys.TEXT_SCALE] ?: 1f
+            (if (raw.isFinite()) raw else 1f).coerceIn(0.85f, 1.4f)
+        }
 
     /**
      * On by default: the daily reminder is the app's rhythm, and its consent
@@ -112,11 +128,15 @@ class Prefs(private val context: Context) {
         .map { p -> p[Keys.NOTIFICATIONS_ASKED] ?: false }
 
     val dailyTime: Flow<Pair<Int, Int>> = data
-        .map { p -> (p[Keys.DAILY_HOUR] ?: 8) to (p[Keys.DAILY_MINUTE] ?: 0) }
+        .map { p ->
+            val hour = (p[Keys.DAILY_HOUR] ?: 8).coerceIn(0, 23)
+            val minute = (p[Keys.DAILY_MINUTE] ?: 0).coerceIn(0, 59)
+            hour to minute
+        }
 
     /** Best quiz score so far, or -1 when no round has been finished. */
     val quizBest: Flow<Int> = data
-        .map { p -> p[Keys.QUIZ_BEST] ?: -1 }
+        .map { p -> (p[Keys.QUIZ_BEST] ?: -1).coerceIn(-1, 99) }
 
     val includeLearned: Flow<Boolean> = data
         .map { p -> p[Keys.INCLUDE_LEARNED] ?: false }
@@ -142,16 +162,22 @@ class Prefs(private val context: Context) {
         }
     }
 
-    suspend fun setLearned(number: Int, value: Boolean) = write { p ->
-        val current = p[Keys.LEARNED]?.toMutableSet() ?: mutableSetOf()
-        if (value) current.add(number.toString()) else current.remove(number.toString())
-        p[Keys.LEARNED] = current
+    suspend fun setLearned(number: Int, value: Boolean) {
+        if (number !in 1..99) return
+        write { p ->
+            val current = p[Keys.LEARNED]?.toMutableSet() ?: mutableSetOf()
+            if (value) current.add(number.toString()) else current.remove(number.toString())
+            p[Keys.LEARNED] = current
+        }
     }
 
-    suspend fun setBookmarked(number: Int, value: Boolean) = write { p ->
-        val current = p[Keys.BOOKMARKED]?.toMutableSet() ?: mutableSetOf()
-        if (value) current.add(number.toString()) else current.remove(number.toString())
-        p[Keys.BOOKMARKED] = current
+    suspend fun setBookmarked(number: Int, value: Boolean) {
+        if (number !in 1..99) return
+        write { p ->
+            val current = p[Keys.BOOKMARKED]?.toMutableSet() ?: mutableSetOf()
+            if (value) current.add(number.toString()) else current.remove(number.toString())
+            p[Keys.BOOKMARKED] = current
+        }
     }
 
     /** Clears learned names and the quiz score only — bookmarks are not progress. */
@@ -162,20 +188,24 @@ class Prefs(private val context: Context) {
 
     suspend fun setThemeMode(mode: ThemeMode) = write { it[Keys.THEME] = mode.name }
 
-    suspend fun setTextScale(scale: Float) = write { it[Keys.TEXT_SCALE] = scale }
+    suspend fun setTextScale(scale: Float) = write {
+        val safe = (if (scale.isFinite()) scale else 1f).coerceIn(0.85f, 1.4f)
+        it[Keys.TEXT_SCALE] = safe
+    }
 
     suspend fun setDailyEnabled(enabled: Boolean) = write { it[Keys.DAILY_ENABLED] = enabled }
 
     suspend fun setNotificationsAsked() = write { it[Keys.NOTIFICATIONS_ASKED] = true }
 
     suspend fun setDailyTime(hour: Int, minute: Int) = write {
-        it[Keys.DAILY_HOUR] = hour
-        it[Keys.DAILY_MINUTE] = minute
+        it[Keys.DAILY_HOUR] = hour.coerceIn(0, 23)
+        it[Keys.DAILY_MINUTE] = minute.coerceIn(0, 59)
     }
 
     /** Keeps the running maximum; lower scores are ignored. */
     suspend fun setQuizBest(score: Int) = write {
-        if (score > (it[Keys.QUIZ_BEST] ?: -1)) it[Keys.QUIZ_BEST] = score
+        val safe = score.coerceIn(0, 99)
+        if (safe > (it[Keys.QUIZ_BEST] ?: -1)) it[Keys.QUIZ_BEST] = safe
     }
 
     suspend fun setIncludeLearned(include: Boolean) = write { it[Keys.INCLUDE_LEARNED] = include }

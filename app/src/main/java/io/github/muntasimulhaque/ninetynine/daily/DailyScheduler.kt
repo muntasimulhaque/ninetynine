@@ -25,6 +25,7 @@ import io.github.muntasimulhaque.ninetynine.data.NamesRepository
 import io.github.muntasimulhaque.ninetynine.data.Prefs
 import io.github.muntasimulhaque.ninetynine.ui.theme.HeroContainer
 import io.github.muntasimulhaque.ninetynine.util.DailyName
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
@@ -45,7 +46,7 @@ object DailyScheduler {
     private const val OLD_CHANNEL_ID = "name_of_the_day"
 
     /**
-     * Every scheduling call here is wrapped in `runCatching`. These run at app
+     * Every scheduling call here is guarded. These run at app
      * start from coroutines that have no exception handler — `lifecycleScope`
      * in MainActivity, the `applicationScope` in NamesApp — and from the UI.
      * WorkManager and DataStore are both initialised lazily on a cold start, so
@@ -58,7 +59,7 @@ object DailyScheduler {
     /** Creates the notification channel once at app start so users can find it in system settings. */
     fun createNotificationChannel(context: Context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            runCatching {
+            try {
                 val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
                 manager.deleteNotificationChannel(OLD_CHANNEL_ID)
                 manager.createNotificationChannel(
@@ -71,6 +72,7 @@ object DailyScheduler {
                         NotificationManager.IMPORTANCE_LOW,
                     )
                 )
+            } catch (_: Exception) {
             }
         }
     }
@@ -88,7 +90,7 @@ object DailyScheduler {
      * home screen and rarely open the app at all.
      */
     fun ensureScheduled(context: Context, reanchor: Boolean) {
-        runCatching {
+        try {
             val widgetRequest = PeriodicWorkRequestBuilder<WidgetUpdateWorker>(1, TimeUnit.DAYS)
                 .setInitialDelay(minutesUntil(0, 5), TimeUnit.MINUTES)
                 .build()
@@ -98,6 +100,7 @@ object DailyScheduler {
                 else ExistingPeriodicWorkPolicy.KEEP,
                 widgetRequest,
             )
+        } catch (_: Exception) {
         }
     }
 
@@ -111,9 +114,9 @@ object DailyScheduler {
      * fixes a timezone or DST change at the same time.
      */
     suspend fun ensureNotificationScheduled(context: Context, reanchor: Boolean) {
-        runCatching {
+        try {
             val prefs = Prefs(context.applicationContext)
-            if (!prefs.dailyEnabled.first()) return@runCatching
+            if (!prefs.dailyEnabled.first()) return
             val (hour, minute) = prefs.dailyTime.first()
             enqueueNotification(
                 context,
@@ -121,25 +124,32 @@ object DailyScheduler {
                 minute,
                 if (reanchor) ExistingPeriodicWorkPolicy.REPLACE else ExistingPeriodicWorkPolicy.KEEP,
             )
+        } catch (e: CancellationException) {
+            throw e
+        } catch (_: Exception) {
         }
     }
 
     /** Applies the user's current enabled/time settings, replacing any previous schedule. */
     suspend fun rescheduleNotification(context: Context) {
-        runCatching {
+        try {
             val prefs = Prefs(context.applicationContext)
             if (!prefs.dailyEnabled.first()) {
                 cancelNotification(context)
-                return@runCatching
+                return
             }
             val (hour, minute) = prefs.dailyTime.first()
             enqueueNotification(context, hour, minute, ExistingPeriodicWorkPolicy.REPLACE)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (_: Exception) {
         }
     }
 
     fun cancelNotification(context: Context) {
-        runCatching {
+        try {
             WorkManager.getInstance(context).cancelUniqueWork(NOTIFY_WORK)
+        } catch (_: Exception) {
         }
     }
 
@@ -149,11 +159,12 @@ object DailyScheduler {
         minute: Int,
         policy: ExistingPeriodicWorkPolicy,
     ) {
-        runCatching {
+        try {
             val request = PeriodicWorkRequestBuilder<NotificationWorker>(1, TimeUnit.DAYS)
                 .setInitialDelay(minutesUntil(hour, minute), TimeUnit.MINUTES)
                 .build()
             WorkManager.getInstance(context).enqueueUniquePeriodicWork(NOTIFY_WORK, policy, request)
+        } catch (_: Exception) {
         }
     }
 
@@ -167,29 +178,41 @@ object DailyScheduler {
      * of an unconditional one.
      */
     suspend fun reanchorSchedules(context: Context) {
-        runCatching {
+        try {
             if (!isRunning(context, WIDGET_WORK)) ensureScheduled(context, reanchor = true)
             if (!isRunning(context, NOTIFY_WORK)) ensureNotificationScheduled(context, reanchor = true)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (_: Exception) {
         }
     }
 
     /** True when the given unique work is executing right now. */
     suspend fun isRunning(context: Context, uniqueName: String): Boolean =
         withContext(Dispatchers.IO) {
-            runCatching {
+            try {
                 WorkManager.getInstance(context.applicationContext)
                     .getWorkInfosForUniqueWork(uniqueName)
                     .get()
-            }.getOrDefault(emptyList())
+            } catch (e: CancellationException) {
+                throw e
+            } catch (_: Exception) {
+                // Unknown beats wrong: a lookup failure must not read as
+                // "idle" and cancel work that may be mid-run. Callers skip
+                // the re-anchor when this is true, which is the safe side.
+                return@withContext true
+            }
                 .any { it.state == WorkInfo.State.RUNNING }
         }
 
     /** Minutes from now until the next occurrence of hour:minute (local time). */
     private fun minutesUntil(hour: Int, minute: Int): Long {
+        val safeHour = hour.coerceIn(0, 23)
+        val safeMinute = minute.coerceIn(0, 59)
         val now = Calendar.getInstance()
         val next = (now.clone() as Calendar).apply {
-            set(Calendar.HOUR_OF_DAY, hour)
-            set(Calendar.MINUTE, minute)
+            set(Calendar.HOUR_OF_DAY, safeHour)
+            set(Calendar.MINUTE, safeMinute)
             set(Calendar.SECOND, 0)
             set(Calendar.MILLISECOND, 0)
             if (!after(now)) add(Calendar.DAY_OF_YEAR, 1)
@@ -203,15 +226,21 @@ class WidgetUpdateWorker(context: Context, params: WorkerParameters) :
 
     override suspend fun doWork(): Result {
         // The render runs inside a Glance SessionWorker on the main thread,
-        // and a cold-start hiccup can throw outside any runCatching the
+        // and a cold-start hiccup can throw outside any guard the
         // caller can wrap — so a throw must never kill the process. But a
         // skipped refresh is not the end of the story: this worker is the
         // widget's daily refresh, and its audience is the reader who rarely
         // opens the app at all. A transient cold-start race is exactly what
         // WorkManager's backoff retry exists for, so a failure is retried
         // rather than silently lost until tomorrow.
-        return runCatching { DailyNameWidget().updateAll(applicationContext) }
-            .fold(onSuccess = { Result.success() }, onFailure = { Result.retry() })
+        return try {
+            DailyNameWidget().updateAll(applicationContext)
+            Result.success()
+        } catch (e: CancellationException) {
+            throw e
+        } catch (_: Exception) {
+            Result.retry()
+        }
     }
 }
 
@@ -224,7 +253,12 @@ class NotificationWorker(context: Context, params: WorkerParameters) :
         // skipped refresh, never a crash. The widget has its own worker
         // at 00:05, so a failed nudge here is not worth a retry of its
         // own — the notification below is the reason this worker ran.
-        runCatching { DailyNameWidget().updateAll(context) }
+        try {
+            DailyNameWidget().updateAll(context)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (_: Exception) {
+        }
 
         if (Build.VERSION.SDK_INT >= 33 &&
             ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS)
@@ -270,10 +304,15 @@ class NotificationWorker(context: Context, params: WorkerParameters) :
         // A transient posting failure is retried with WorkManager's backoff —
         // the daily notification is the one surface a reader who never opens
         // the app sees, so a silently skipped morning is the worst outcome.
-        return runCatching {
+        return try {
             val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             manager.notify(1, notification)
-        }.fold(onSuccess = { Result.success() }, onFailure = { Result.retry() })
+            Result.success()
+        } catch (e: CancellationException) {
+            throw e
+        } catch (_: Exception) {
+            Result.retry()
+        }
     }
 }
 
