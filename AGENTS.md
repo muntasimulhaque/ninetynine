@@ -80,7 +80,10 @@ release build degrades to unsigned rather than failing.
    release actually touches: the closing "All 99 Names and your progress are
    unchanged" line appears ONLY when content or progress behaviour really
    was at risk and the note reassures about it — an ordinary UI change
-   carries no such line (owner decision, after 1.21).
+   carries no such line (owner decision, after 1.21). Set each bullet as
+   one unbroken line, no mid-sentence wraps: the hand-off paste is VERBATIM,
+   and hard breaks from the source force the owner to rejoin every line in
+   the Console's textbox by hand (owner decision, after 1.25).
 3. **Verify locally**: full CI suite (`:app:testDebugUnitTest :app:lintDebug
    :app:assembleDebug :app:assembleRelease`).
 4. **Commit and push**, verify CI green via the Actions API (full 40-char
@@ -96,8 +99,10 @@ release build degrades to unsigned rather than failing.
    repo's `releases/` folder named with the version (e.g.
    `releases/ninetynine-1.0-vc10.aab`). Hand-off copies live in the repo —
    never on the Desktop or anywhere outside it — so they travel with the
-   checkout to every machine. Paste the notes VERBATIM as a standalone
-   copy-paste block — never just point at `play-listing.md`. Once the user
+   checkout to every machine. Paste the notes VERBATIM as plain flowing
+   text — no code fence, no indentation, no leading spaces, each bullet one
+   unbroken line — never just point at `play-listing.md`. What the owner
+   copies must paste straight into the Console's textbox with no rework. Once the user
    confirms submission to Play, delete the copy from `releases/` (the App
    Bundle Explorer retains the artifact).
 7. **Screenshots: decide explicitly, every time.** Visible UI changed →
