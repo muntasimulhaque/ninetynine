@@ -401,7 +401,20 @@ fun FlashcardsScreen(
                                     onDragCommit = ::commit,
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .heightIn(max = 460.dp)
+                                        // The plate takes a content-proportioned
+                                        // height, centred in what is left (owner
+                                        // decision): 340dp holds the Name with
+                                        // presence, where the old full-deck
+                                        // stretch (460dp) set two lines of ink in
+                                        // an ocean of emerald — vacancy, not
+                                        // calm. One height for BOTH faces: the
+                                        // back's long meanings scroll inside it
+                                        // (the thumb marks when), so the plate
+                                        // never resizes mid-flip. heightIn BEFORE
+                                        // fillMaxHeight: on short viewports the
+                                        // card fills whatever remains below the
+                                        // cap, never past it.
+                                        .heightIn(max = 340.dp)
                                         .fillMaxHeight()
                                         .onSizeChanged { cardWidth = it.width.toFloat() },
                                 )

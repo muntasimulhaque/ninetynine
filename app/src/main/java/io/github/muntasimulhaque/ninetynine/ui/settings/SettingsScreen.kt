@@ -555,10 +555,18 @@ private fun ThemeSwatch(mode: ThemeMode) {
         ThemeMode.DARK, ThemeMode.BLACK -> DarkColors.primary
         ThemeMode.SYSTEM -> MaterialTheme.colorScheme.primary
     }
+    // Dark and Black papers differ by ~8% lightness (#14120D vs #000000),
+    // which a 22dp circle cannot show — side by side the two dark options
+    // read as one choice. The Black swatch takes a firmer ring so the
+    // deeper theme is distinguishable at a glance: true black is the
+    // switched-off display, and the ring marks it.
+    val ringColor = if (mode == ThemeMode.BLACK) MaterialTheme.colorScheme.outline
+    else MaterialTheme.colorScheme.outlineVariant
+    val ringWidth = if (mode == ThemeMode.BLACK) 1.5.dp else 1.dp
     Box(
         modifier = Modifier
             .size(22.dp)
-            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, CircleShape)
+            .border(ringWidth, ringColor, CircleShape)
             .clip(CircleShape),
         contentAlignment = Alignment.Center,
     ) {

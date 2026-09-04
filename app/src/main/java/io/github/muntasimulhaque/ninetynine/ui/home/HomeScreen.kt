@@ -19,10 +19,12 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.imeNestedScroll
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
@@ -104,7 +106,7 @@ import java.util.Locale
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun HomeScreen(
     viewModel: NamesViewModel,
@@ -314,6 +316,10 @@ fun HomeScreen(
                 // the last result rows sit behind the IME. Edge-to-edge is
                 // enabled app-wide, so the inset must be consumed here.
                 .imePadding()
+                // Scrolling away from the top retracts the keyboard with the
+                // drag, and scrolling back re-shows it — the IME becomes part
+                // of the scroll instead of a wall above the results.
+                .imeNestedScroll()
                 .wrapContentWidth(Alignment.CenterHorizontally)
                 .widthIn(max = pageMeasure())
         ) {

@@ -208,7 +208,9 @@ fun ShareSheet(name: Name, onDismiss: () -> Unit) {
                 onClick = {
                     val sent = shareNameText(context, name, wordmark)
                     if (sent) onDismiss()
-                    else Toast.makeText(context, R.string.share_failed, Toast.LENGTH_SHORT).show()
+                    // Its own message: a text-share failure is not an image
+                    // failure, and the toast must name the thing that failed.
+                    else Toast.makeText(context, R.string.share_text_failed, Toast.LENGTH_SHORT).show()
                 },
             ) {
                 Text(stringResource(R.string.share_text))

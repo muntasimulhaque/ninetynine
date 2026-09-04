@@ -105,6 +105,7 @@ import io.github.muntasimulhaque.ninetynine.util.DailyName
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withTimeoutOrNull
 
 class MainActivity : ComponentActivity() {
 
@@ -115,6 +116,18 @@ class MainActivity : ComponentActivity() {
 
     /** False until Compose's first composition has committed; holds the splash. */
     private var contentReady = false
+
+    /**
+     * False until the stored theme and text scale have been read from
+     * DataStore (bounded — see [THEME_SETTLE_TIMEOUT_MILLIS]). The splash
+     * holds past the first frame until this turns true. Without it, the
+     * flows' defaults (SYSTEM / 1.0) compose the first frame while DataStore
+     * is still reading, and a DARK or BLACK reader on a light system saw the
+     * app flash light before its real theme landed — a wrong-theme frame
+     * committed in the open. With the gate, the first frame the reader sees
+     * is the theme they chose.
+     */
+    private var themeSettled = false
 
     /**
      * The local day the widget last got its onResume nudge for. The nudge
@@ -142,16 +155,35 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         val splashScreen = installSplashScreen()
-        // Hold the system splash until the app's first frame is committed.
-        // Without this, a slow device can dismiss the splash a frame or two
+        // Hold the system splash until the app's first frame is committed
+        // AND the stored theme has landed (see [themeSettled]). Without
+        // this, a slow device can dismiss the splash a frame or two
         // before Compose draws — a flash of bare window background between
-        // splash and app. The condition is polled every frame on the main
-        // thread, so a plain boolean is enough; SideEffect fires exactly when
-        // the first composition has been applied, releasing the splash as the
-        // real content lands.
-        splashScreen.setKeepOnScreenCondition { !contentReady }
+        // splash and app — and without the theme gate, the first committed
+        // frame is the flows' defaults, not the reader's choice. The
+        // condition is polled every frame on the main
+        // thread, so plain booleans are enough; SideEffect fires exactly when
+        // the first composition has been applied, and the settle flag turns
+        // when DataStore's first values arrive — the splash releases onto a
+        // frame already in the reader's theme.
+        splashScreen.setKeepOnScreenCondition { !contentReady || !themeSettled }
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        // Read the stored theme and text scale once, bounded: DataStore
+        // normally answers within a few milliseconds of the first read, and
+        // the ViewModel's Eagerly flows share the same store, so this wait
+        // and the first real values arrive together. The bound keeps a
+        // pathological store from holding the splash for ever — past the
+        // timeout the defaults compose, exactly as before this gate existed.
+        lifecycleScope.launch {
+            withTimeoutOrNull(THEME_SETTLE_TIMEOUT_MILLIS) {
+                val prefs = Prefs(applicationContext)
+                prefs.themeMode.first()
+                prefs.textScale.first()
+            }
+            themeSettled = true
+        }
 
         // Re-anchor here, not in Application.onCreate. This runs only when a
         // person actually opens the app, so it cannot cancel a worker that
@@ -292,6 +324,13 @@ class MainActivity : ComponentActivity() {
     }
 
     companion object {
+        /**
+         * The longest the splash may wait for the stored theme. A warm read
+         * lands in tens of milliseconds; four hundred covers cold storage
+         * without ever reading as a hang.
+         */
+        private const val THEME_SETTLE_TIMEOUT_MILLIS = 400L
+
         const val EXTRA_NAME_NUMBER = "nameNumber"
 
         /** Carried by the launcher shortcuts (res/xml/shortcuts.xml). */

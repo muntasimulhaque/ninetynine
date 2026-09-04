@@ -21,6 +21,7 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
@@ -149,7 +150,15 @@ class ScreenshotTest {
     }
 
     @Test
-    fun settings() = render("settings") {
+    fun settings() = render("settings", onNamesReady = { viewModel ->
+        // The reminder is on by default; the capture must show the app's real
+        // resting state, not whatever a reused CI device's DataStore carries —
+        // the listing's settings screenshot once showed the advertised toggle
+        // switched off. Same discipline as the bookmarks scene above: seed the
+        // state, wait for it to reach the flow, then capture.
+        viewModel.setDailyEnabled(true)
+        composeRule.waitUntil(timeoutMillis = 20_000) { viewModel.dailyEnabled.value }
+    }) {
         SettingsScreen(it, onAbout = {})
     }
 
@@ -218,7 +227,7 @@ class ScreenshotTest {
         onNamesReady: (NamesViewModel) -> Unit = {},
         screen: @Composable (NamesViewModel) -> Unit,
     ) {
-        val viewModel = NamesViewModel(app())
+        val viewModel = NamesViewModel(app(), SavedStateHandle())
         composeRule.setContent {
             Names99Theme(themeMode = ThemeMode.LIGHT, textScale = 1f) {
                 screen(viewModel)
@@ -240,7 +249,7 @@ class ScreenshotTest {
         name: String,
         onDeckReady: (FlashcardsViewModel) -> Unit,
     ) {
-        val viewModel = NamesViewModel(app())
+        val viewModel = NamesViewModel(app(), SavedStateHandle())
         composeRule.setContent {
             Names99Theme(themeMode = ThemeMode.LIGHT, textScale = 1f) {
                 FlashcardsScreen(viewModel, onBack = {})

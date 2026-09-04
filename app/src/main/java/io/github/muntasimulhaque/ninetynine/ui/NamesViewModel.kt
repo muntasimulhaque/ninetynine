@@ -2,6 +2,7 @@ package io.github.muntasimulhaque.ninetynine.ui
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import io.github.muntasimulhaque.ninetynine.daily.DailyScheduler
 import io.github.muntasimulhaque.ninetynine.data.Name
@@ -20,7 +21,15 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 /** Activity-scoped state shared by all screens. */
-class NamesViewModel(application: Application) : AndroidViewModel(application) {
+class NamesViewModel(
+    application: Application,
+    // The default factory (SavedStateViewModelFactory) fills this for the
+    // composable `viewModel()` call; the instrumentation test passes one
+    // by hand. Carries the search query, so a process death mid-search
+    // restores the field with its text — the openness is rememberSaveable;
+    // an open field that had lost its query would be a worse half-state.
+    private val savedState: SavedStateHandle,
+) : AndroidViewModel(application) {
 
     private val prefs = Prefs(application)
 
@@ -104,10 +113,18 @@ class NamesViewModel(application: Application) : AndroidViewModel(application) {
      */
     val dailyTimeLoaded: StateFlow<Boolean> = _dailyTimeLoaded.asStateFlow()
 
-    val searchQuery = MutableStateFlow("")
+    /**
+     * The live query, riding the SavedStateHandle: the search field's
+     * openness survives process death through `rememberSaveable`, so the
+     * query must too — a restored empty field under an open search would
+     * lose the reader's work and contradict "the query persists until
+     * cleared". Cleared when set to empty, like every other clear path.
+     */
+    val searchQuery = MutableStateFlow(savedState.get<String>(KEY_SEARCH_QUERY) ?: "")
 
     fun setSearchQuery(query: String) {
         searchQuery.value = query
+        savedState[KEY_SEARCH_QUERY] = query
     }
 
     fun dailyNameNumber(): Int = DailyName.numberFor(System.currentTimeMillis())
@@ -155,5 +172,9 @@ class NamesViewModel(application: Application) : AndroidViewModel(application) {
 
     fun setIncludeLearned(include: Boolean) = viewModelScope.launch {
         prefs.setIncludeLearned(include)
+    }
+
+    private companion object {
+        const val KEY_SEARCH_QUERY = "search.query"
     }
 }

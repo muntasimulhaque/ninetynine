@@ -10,7 +10,7 @@ so do not add a word or a stray space.
 
 - **Application ID (package name):** `io.github.muntasimulhaque.ninetynine`
 - **Privacy policy URL:** `https://muntasimulhaque.github.io/ninetynine/privacy-policy.html`
-- **Version (this release):** versionName `1.26`, versionCode `36`
+- **Version (this release):** versionName `1.27`, versionCode `37`
 
 ---
 
@@ -57,6 +57,17 @@ Made to be read:
 
 Free and open source. May Allah make us among those who learn, memorize,
 understand and act upon His beautiful Names.
+```
+
+## What's new (version 1.27)
+
+```
+Cold starts now land straight in your chosen theme — no light flash for Dark and Black readers. Also:
+
+• A better-balanced flashcard on tall screens.
+• Search text survives an interrupted session.
+• Fixed stray wording on the About page, in the introduction, and in one Name's meaning.
+• A clearer message when sharing cannot start.
 ```
 
 ## What's new (version 1.26)

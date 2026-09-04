@@ -131,6 +131,9 @@
          — a caption, a quote, a note — so the sheet offers the plain text too. -->
     <string name="share_text">Share text</string>
     <string name="share_failed">Couldn\u2019t create the image.</string>
+    <!-- The words path fails separately from the image path, so each failure
+         names the thing that failed. -->
+    <string name="share_text_failed">Couldn\u2019t share the text.</string>
     <string name="link_failed">Couldn\u2019t open the link.</string>
 
     <!-- Memorize -->
@@ -222,7 +225,7 @@
     <!-- Shown only if the bundled intro.txt somehow fails to read; every
          other screen has its own fallback for the same failure. -->
     <string name="about_intro_unavailable">The introduction could not be read.</string>
-    <string name="about_attribution">Based on the lecture of Sheikh Ibn Uthaymeen (\u2066(Rahimahullah)\u2069), as presented in “The Ninety Nine Names of Allah: A Memorisation Tool with Transliteration and Meanings”.</string>
+    <string name="about_attribution">Based on the lecture of Sheikh Ibn Uthaymeen (\u2066Rahimahullah\u2069), as presented in “The Ninety Nine Names of Allah: A Memorisation Tool with Transliteration and Meanings”.</string>
     <string name="about_source_label">Source</string>
     <string name="about_typefaces_label">Typefaces</string>
     <string name="about_contact_label">Contact</string>

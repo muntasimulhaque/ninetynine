@@ -59,7 +59,7 @@ file is read or command run. Do it without asking, without exception.
 ## Versioning
 
 `versionName`/`versionCode` live in `app/build.gradle.kts`; Settings shows
-`BuildConfig.VERSION_NAME`, so they can never disagree. Rule: **+0.1 on versionName, +1 on versionCode per release** (currently **1.26 / 36**; there is no 1.18 — it was skipped, don't go looking for it).
+`BuildConfig.VERSION_NAME`, so they can never disagree. Rule: **+0.1 on versionName, +1 on versionCode per release** (currently **1.27 / 37**; there is no 1.18 — it was skipped, don't go looking for it).
 
 The release keystore path/credentials live in a `keystore.properties` outside
 the repo (Google Play Signing Key folder). When absent (CI, fresh clone) the
@@ -264,7 +264,10 @@ app/src/main/assets/     names.json (99 entries), intro.txt, fonts/ (+licenses).
   text → empty field → out of search — and only past all three does Back
   exit on a top-level tab; never eject a reader who can still see evidence
   of their search. The ✕ clears AND closes in one tap. The query persists
-  until cleared (✕, Back, or the no-results empty's "Clear search").
+  until cleared (✕, Back, or the no-results empty's "Clear search") — and it
+  survives process death too, riding the ViewModel's SavedStateHandle
+  (openness is rememberSaveable; the query must be, or an open field would
+  restore empty).
 - **Settings is the fourth tab; About lives at its foot:** Settings joined
   the bar rightmost and quietest (owner decision, 1.18); top bars carry
   content only. About sits as the gold-chevron `NavRow` at the foot of the
@@ -334,10 +337,14 @@ app/src/main/assets/     names.json (99 entries), intro.txt, fonts/ (+licenses).
   highlight clips to the bar's own capsule register
   (`RoundedCornerShape(50)` before `selectable`) — never a hard-cornered
   rectangle inside the pill plate.
-- **Splash is held until first frame:**
-  `setKeepOnScreenCondition { !contentReady }`, released by a `SideEffect`
-  after the first composition commits — without it a slow device flashes bare
-  window background between splash and app.
+- **Splash is held until first frame AND the theme is known:**
+  `setKeepOnScreenCondition { !contentReady || !themeSettled }` — released by a
+  `SideEffect` after the first composition commits AND once the stored
+  theme/text-scale have been read from DataStore (bounded, 400 ms timeout —
+  MainActivity). Without it a slow device flashes bare window background
+  between splash and app, and without the theme gate the first committed
+  frame is the flows' defaults: a DARK/BLACK reader on a light system saw the
+  app flash light before its real theme landed.
 - **Motion only where meaning changes:** pages turn, counters roll, drags
   answer the hand, and pushed screens arrive through the house push —
   everything else stands still. First frames get no entrance (the hero,
@@ -463,7 +470,9 @@ NFC-normalized Arabic; every Arabic character drawable by the bundled HAFS TTF
 every `meaning` begins with its `title` clause (Detail/Share/flashcard-back
 render the title only inside the meaning — dropping the clause silently loses
 it). Transliteration follows the source's convention, regularised in exactly
-eight places (#28, #32, #44, #48, #80, #87, #94, #95).
+eight places (#28, #32, #44, #48, #80, #87, #94, #95). The honorific is
+spelled "Rahimahullah" (regularised from the source's "Rahimuallah": the
+intro, and #26's meaning).
 
 ## Testing
 
@@ -488,7 +497,9 @@ eight places (#28, #32, #44, #48, #80, #87, #94, #95).
     5. `bookmarks` — the Bookmarks page, POPULATED (the first three loaded
        names are bookmarked through the ViewModel and the capture waits for
        the rows; an empty shelf says nothing)
-    6. `settings` — the Settings page
+    6. `settings` — the Settings page, with the reminder seeded ON first
+       (the app's real default; a reused CI device's DataStore once showed
+       the advertised toggle off, and the capture must not lie)
     7. `name` — a name page (the first in the book; "any name")
     8. `share` — a name's share screen (the first loaded name; the plate
        renders outside the sheet, which the compose root cannot capture)
