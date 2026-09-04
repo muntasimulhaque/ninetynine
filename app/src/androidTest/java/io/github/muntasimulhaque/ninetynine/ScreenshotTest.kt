@@ -33,7 +33,6 @@ import io.github.muntasimulhaque.ninetynine.ui.detail.DetailScreen
 import io.github.muntasimulhaque.ninetynine.ui.home.HomeScreen
 import io.github.muntasimulhaque.ninetynine.ui.memorize.FlashcardsScreen
 import io.github.muntasimulhaque.ninetynine.ui.memorize.FlashcardsViewModel
-import io.github.muntasimulhaque.ninetynine.ui.memorize.MemorizeScreen
 import io.github.muntasimulhaque.ninetynine.ui.memorize.QuizScreen
 import io.github.muntasimulhaque.ninetynine.ui.settings.SettingsScreen
 import io.github.muntasimulhaque.ninetynine.ui.share.ShareCard
@@ -53,10 +52,10 @@ import java.io.File
  * into the build's connected-androidTest additional output folder for the
  * workflow to upload.
  *
- * The canonical set (owner decision, 1.23 — replaces the earlier eight):
+ * The canonical set (owner decision, 1.23; trimmed to eight scenes in 1.27 —
+ * the Memorize page left the set, so a refresh is 24 captures):
  *
  * - home (the Names page)
- * - memorize
  * - flashcards-front AND flashcards-back (both faces of the card)
  * - quiz
  * - bookmarks (a kept shelf, not the empty state)
@@ -133,16 +132,6 @@ class ScreenshotTest {
     @Test
     fun home() = render("home") {
         HomeScreen(it, {}, rememberLazyListState())
-    }
-
-    @Test
-    fun memorize() = render("memorize") {
-        MemorizeScreen(
-            it,
-            onFlashcards = {},
-            onQuiz = {},
-            onLearned = {},
-        )
     }
 
     @Test

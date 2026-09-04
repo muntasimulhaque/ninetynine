@@ -20,7 +20,6 @@ Available on Google Play.
   <img src="docs/screenshots/phone/phone_flashcards-front.png" width="205" alt="Flashcards: the name side of the card">
   <img src="docs/screenshots/phone/phone_flashcards-back.png" width="205" alt="Flashcards: the meaning side of the card">
   <img src="docs/screenshots/phone/phone_quiz.png" width="205" alt="The ten-question quiz">
-  <img src="docs/screenshots/phone/phone_memorize.png" width="205" alt="Memorization progress">
   <img src="docs/screenshots/phone/phone_bookmarks.png" width="205" alt="Bookmarks: the names you kept">
   <img src="docs/screenshots/phone/phone_share.png" width="205" alt="Share a name as a rendered card">
   <img src="docs/screenshots/phone/phone_settings.png" width="205" alt="Settings: theme, text size, and the daily name">

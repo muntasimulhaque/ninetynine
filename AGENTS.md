@@ -159,7 +159,7 @@ The Play sets are whatever `screenshots.yml` captured (phone/7"/10" emulators, A
   every change), uploads the debug APK (7-day retention). Actions SHA-pinned;
   `permissions: contents: read`.
 - **screenshots.yml** (pushes touching UI files, plus manual dispatch):
-  captures the nine ScreenshotTest scenes on phone/7"/10" emulators (API 35)
+  captures the eight ScreenshotTest scenes on phone/7"/10" emulators (API 35)
   and uploads the three `store-screenshots-*` artifacts.
 - Verify green runs with `gh` — installed and authenticated on both machines
   (e.g. `gh run view <run-id> -R muntasimulhaque/ninetynine`). The raw
@@ -486,22 +486,24 @@ intro, and #26's meaning).
   Count grows as guards are added — sum the XMLs in
   `app/build/test-results/testDebugUnitTest/`.
 - Instrumentation (`ScreenshotTest`) renders the CANONICAL PLAY SCENE SET
-  (owner decision, 1.23; no scene targets a particular name — any name will do):
+  (owner decision, 1.23; trimmed to eight scenes in 1.27 — the Memorize page
+  left the set, so a refresh is 8 × 3 sizes = 24 captures, and the phone set
+  now fits Play's 8-per-form-factor cap exactly; no scene targets a
+  particular name — any name will do):
 
     1. `home` — the Names page
-    2. `memorize` — the Memorize page
-    3. `flashcards-front` and `flashcards-back` — BOTH faces of the card
+    2. `flashcards-front` and `flashcards-back` — BOTH faces of the card
        (the back is reached by flipping the deck ViewModel directly, never
        by injecting a tap — the test stays a pure render)
-    4. `quiz` — the Quiz page
-    5. `bookmarks` — the Bookmarks page, POPULATED (the first three loaded
+    3. `quiz` — the Quiz page
+    4. `bookmarks` — the Bookmarks page, POPULATED (the first three loaded
        names are bookmarked through the ViewModel and the capture waits for
        the rows; an empty shelf says nothing)
-    6. `settings` — the Settings page, with the reminder seeded ON first
+    5. `settings` — the Settings page, with the reminder seeded ON first
        (the app's real default; a reused CI device's DataStore once showed
        the advertised toggle off, and the capture must not lie)
-    7. `name` — a name page (the first in the book; "any name")
-    8. `share` — a name's share screen (the first loaded name; the plate
+    6. `name` — a name page (the first in the book; "any name")
+    7. `share` — a name's share screen (the first loaded name; the plate
        renders outside the sheet, which the compose root cannot capture)
 
   rendered to the run's additional test output directory (AGP copies them
@@ -530,12 +532,14 @@ intro, and #26's meaning).
 - **After removing a Text/composable block, re-grep unused imports** — the
   project holds a zero-warning standard.
 - **Changing a screen's signature breaks `ScreenshotTest`** — the
-  instrumentation source renders HomeScreen, DetailScreen, MemorizeScreen,
-  SettingsScreen et al. DIRECTLY, so an argument removed from a screen is a
-  compile error CI only reaches at `:app:compileDebugAndroidTestKotlin`
-  (inside screenshots.yml, all three legs red). The canonical suite does not
-  compile it: after any screen-signature change, run that task locally
-  before pushing.
+  instrumentation source renders HomeScreen, DetailScreen, SettingsScreen et
+  al. DIRECTLY, so an argument removed from a screen is a compile error CI
+  only reaches at `:app:compileDebugAndroidTestKotlin` (inside
+  screenshots.yml, all three legs red). The canonical suite does not compile
+  it: after any screen-signature change, run that task locally before
+  pushing. (MemorizeScreen left the set in 1.27, so its signature is no
+  longer compiled by the instrumentation source — signature changes there
+  now surface only through CI's build legs, not the capture legs.)
 - **`ScrollState.animateScrollTo` kills the app when the animation actually runs.** Declared `Unit`, it passes its `$completion` straight through to `animateScrollBy` (declared `Float`): when the scroll suspends ≥1 frame, the resumption receives a Float where a Unit was promised — `ClassCastException`. Call the Float-typed pair instead — `scrollTo` (jump) / `animateScrollBy` (animated). The lazy/pager equivalents (`scrollToItem`, `animateScrollToItem`, `scrollToPage`, `animateScrollToPage`) are proper state machines and safe.
 - **`FitText` beside a fixed sibling in a `Row` must be measured LAST.** Row measures children left to right against the width that remains: a `FitText` placed BEFORE the sibling sees the full row width, declines to shrink, and the sibling then overflows the slot. Give such a `FitText` `Modifier.weight(1f, fill = false)` so the fixed children are measured first. The same pattern appears in the share wordmark (seal + spacer before it) — already correct, keep it that way.
 - **Modifier order matters:** `heightIn(max=X)` BEFORE `fillMaxHeight()`, or
