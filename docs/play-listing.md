@@ -10,7 +10,7 @@ so do not add a word or a stray space.
 
 - **Application ID (package name):** `io.github.muntasimulhaque.ninetynine`
 - **Privacy policy URL:** `https://muntasimulhaque.github.io/ninetynine/privacy-policy.html`
-- **Version (this release):** versionName `1.27`, versionCode `37`
+- **Version (this release):** versionName `1.28`, versionCode `38`
 
 ---
 
@@ -57,6 +57,12 @@ Made to be read:
 
 Free and open source. May Allah make us among those who learn, memorize,
 understand and act upon His beautiful Names.
+```
+
+## What's new (version 1.28)
+
+```
+Fixed: tapping the home-screen widget could open the wrong Name — the page you had last left the app on — instead of the Name of the Day shown on the widget. Tapping the widget now always opens that day's Name.
 ```
 
 ## What's new (version 1.27)

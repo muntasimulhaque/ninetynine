@@ -1,6 +1,7 @@
 package io.github.muntasimulhaque.ninetynine.daily
 
 import android.content.Context
+import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Paint
@@ -17,10 +18,8 @@ import androidx.glance.GlanceModifier
 import androidx.glance.Image
 import androidx.glance.ImageProvider
 import androidx.glance.LocalSize
-import androidx.glance.action.ActionParameters
-import androidx.glance.action.actionParametersOf
-import androidx.glance.action.actionStartActivity
 import androidx.glance.action.clickable
+import androidx.glance.appwidget.action.actionStartActivity
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.GlanceAppWidgetReceiver
 import androidx.glance.appwidget.SizeMode
@@ -242,11 +241,42 @@ class DailyNameWidget : GlanceAppWidget() {
                 }
                 .padding(horizontal = 16.dp, vertical = 8.dp)
                 .clickable(
-                    actionStartActivity<MainActivity>(
-                        actionParametersOf(
-                            ActionParameters.Key<Int>(MainActivity.EXTRA_NAME_NUMBER) to
-                                (name?.number ?: 1)
-                        )
+                    // A self-built intent with NEW_TASK | CLEAR_TASK, not the
+                    // class-based actionStartActivity<MainActivity>: that builds a
+                    // bare component intent with no launch flags at all, and a tap
+                    // onto a task that still holds a saved activity record — the
+                    // ordinary morning state, after the process died overnight —
+                    // brought the old task forward and RESTORED the screen the
+                    // reader last left the app on instead of delivering today's
+                    // Name. The fresh extra never reached the app, and
+                    // MainActivity's cold-start guard — which exists to keep a
+                    // replayed original intent from force-navigating a restored
+                    // activity — discards it by design. Clearing the task makes
+                    // every widget tap a fresh launch: the extra is always
+                    // honoured, and the tap opens the Name the widget is showing,
+                    // never yesterday's screen. The cost — a warm task's
+                    // in-memory place (list scroll, open search) — is not
+                    // progress: learned and bookmarked names live in DataStore
+                    // and survive. (The notification's tap keeps NEW_TASK |
+                    // CLEAR_TOP, where the warm flow — onNewIntent onto a live
+                    // reader — is worth preserving.)
+                    actionStartActivity(
+                        Intent(context, MainActivity::class.java).apply {
+                            addFlags(
+                                Intent.FLAG_ACTIVITY_NEW_TASK or
+                                    Intent.FLAG_ACTIVITY_CLEAR_TASK
+                            )
+                            putExtra(
+                                MainActivity.EXTRA_NAME_NUMBER,
+                                // Never fall back to 1: a render whose asset read
+                                // failed would otherwise bake "open Allah" into
+                                // the tap for the whole day. Computing the daily
+                                // number keeps the tap pointing at today's Name
+                                // even when this render could not load the list.
+                                name?.number
+                                    ?: DailyName.numberFor(System.currentTimeMillis()),
+                            )
+                        },
                     )
                 )
 
