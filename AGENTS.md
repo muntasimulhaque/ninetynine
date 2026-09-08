@@ -59,7 +59,7 @@ file is read or command run. Do it without asking, without exception.
 ## Versioning
 
 `versionName`/`versionCode` live in `app/build.gradle.kts`; Settings shows
-`BuildConfig.VERSION_NAME`, so they can never disagree. Rule: **+0.1 on versionName, +1 on versionCode per release** (currently **1.28 / 38**; there is no 1.18 — it was skipped, don't go looking for it).
+`BuildConfig.VERSION_NAME`, so they can never disagree. Rule: **+0.1 on versionName, +1 on versionCode per release** (currently **1.29 / 39**; there is no 1.18 — it was skipped, don't go looking for it).
 
 The release keystore path/credentials live in a `keystore.properties` outside
 the repo (Google Play Signing Key folder). When absent (CI, fresh clone) the
