@@ -269,10 +269,22 @@ class NotificationWorker(context: Context, params: WorkerParameters) :
         val name = names.firstOrNull { it.number == DailyName.numberFor(System.currentTimeMillis()) }
             ?: return Result.success()
 
-        // NEW_TASK only: the activity is singleTop and consumes the extra, so
-        // this lands on the name without tearing down whatever was open.
+        // NEW_TASK | CLEAR_TASK, not CLEAR_TOP — the same treatment the
+        // widget's tap got (see DailyNameWidget): a tap onto a task that
+        // still holds a saved activity record — the ordinary morning state,
+        // after the process died overnight — brought the old task forward
+        // and RESTORED the screen the reader last left the app on instead
+        // of delivering today's Name, and MainActivity's cold-start guard
+        // (which keeps a replayed original intent from force-navigating)
+        // discards the fresh extra by design. Clearing the task makes every
+        // notification tap a fresh launch whose extra is always honoured.
+        // The cost — a warm task's in-memory place (list scroll, open
+        // search) — is not progress: learned and bookmarked names live in
+        // DataStore and survive. The per-day requestCode keeps each day's
+        // PendingIntent distinct, so UPDATE_CURRENT never carries a stale
+        // extra between days.
         val intent = Intent(context, MainActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
             putExtra(MainActivity.EXTRA_NAME_NUMBER, name.number)
         }
         val pending = PendingIntent.getActivity(

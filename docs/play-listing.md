@@ -10,7 +10,7 @@ so do not add a word or a stray space.
 
 - **Application ID (package name):** `io.github.muntasimulhaque.ninetynine`
 - **Privacy policy URL:** `https://muntasimulhaque.github.io/ninetynine/privacy-policy.html`
-- **Version (this release):** versionName `1.28`, versionCode `38`
+- **Version (this release):** versionName `1.29`, versionCode `39`
 
 ---
 
@@ -57,6 +57,12 @@ Made to be read:
 
 Free and open source. May Allah make us among those who learn, memorize,
 understand and act upon His beautiful Names.
+```
+
+## What's new (version 1.29)
+
+```
+Fixed: tapping the Name of the Day notification could open the page you had last left the app on, instead of the Name shown in the notification. Tapping the notification now always opens that day's Name.
 ```
 
 ## What's new (version 1.28)
