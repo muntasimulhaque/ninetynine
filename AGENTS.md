@@ -691,11 +691,16 @@ intro, and #26's meaning).
   APK installed, or ScreenshotTest on API ≤ 35 images (the test now saves to
   the AGP additional-test-output dir, not files/screenshots).
 Local adb gotchas:
-- **Two capture nondeterminisms (proven 1.22):** the scenes render the
+- **Three capture nondeterminisms (proven 1.22, 1.30):** the scenes render the
   SCREENS directly, so MainActivity's bottom bar never appears — tab-label
-  changes are invisible to the sets. And flashcards/quiz show SHUFFLED
+  changes are invisible to the sets. Flashcards/quiz show SHUFFLED
   content (unseeded `Random`), so those two PNGs legitimately differ on
-  every run. Diff old/new PNGs before assuming a regression.
+  every run. And the Settings swatches' hairline rings antialias a hair
+  differently on each render: the scene can differ from the committed PNG by a
+  handful of pixels in the left edge of the four circles, each by 1/255 in one
+  channel. Diff old/new PNGs before assuming a regression, and check the
+  magnitude of the difference — a real scene change moves ink across a whole
+  plate, not nine sub-pixel edges.
   - Search lives in the home bar: stop an upward scroll to reveal it (or
     re-tap NAMES), tap the magnifier; a live query
     persists until cleared — tap the bar's ✕ ("Close search") or Back before tapping rows you expected from the full list.
