@@ -31,6 +31,12 @@ class CounterFormatTest {
             "card_x_of_y",
             "question_x_of_y",
             "quiz_score_format",
+            // Numbers inside sentences count too: on an ar/ur phone a %d here
+            // rendered Arabic-Indic digits in the line directly under the big
+            // Western learned count, and beside Western folio numbers. The
+            // “percent” string is the same claim about the text-size slider.
+            "quiz_best",
+            "percent",
         ).forEach { name ->
             val entry = Regex("""<string name="$name">([^<]+)</string>""").find(strings)
                 ?.groupValues?.get(1)
@@ -41,5 +47,18 @@ class CounterFormatTest {
                 localeDigit.containsMatchIn(entry),
             )
         }
+    }
+
+    /** The plural sentence Memorize shows under its count, guarded the same way. */
+    @Test
+    fun remainingCountPluralNeverUsesLocaleDigits() {
+        val block = Regex("""<plurals name="remaining_count">(.+?)</plurals>""", RegexOption.DOT_MATCHES_ALL)
+            .find(strings)?.groupValues?.get(1)
+            ?: error("remaining_count is missing from strings.xml")
+        assertFalse(
+            "remaining_count uses %d, which follows the device locale; " +
+                "the big count above it is Western, so this line must be too",
+            Regex("%\\d*\\$?d").containsMatchIn(block),
+        )
     }
 }

@@ -783,7 +783,15 @@ private fun BottomBarTabs(
                     text = stringResource(item.labelRes),
                     style = tabLabelStyle().copy(fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium),
                     color = tint,
-                    modifier = Modifier.padding(horizontal = 2.dp),
+                    // The gutter is what keeps four labels four labels. FitText
+                    // shrinks a label into its own slot, and at a 2.0 system
+                    // font scale "Bookmarks" fills that slot edge to edge —
+                    // two 2dp paddings then left the row reading "Memorize
+                    // Bookmarks Settings" as one run of words. 6dp a side
+                    // (12dp between neighbours) is a gutter the eye can find
+                    // at any scale, and costs nothing at the default one,
+                    // where every label is a third of its slot wide.
+                    modifier = Modifier.padding(horizontal = 6.dp),
                     minScale = 0.40f,
                 )
             }

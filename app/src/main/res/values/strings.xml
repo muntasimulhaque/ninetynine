@@ -146,12 +146,18 @@
     <string name="progress_of_caption">of 99 learned</string>
     <!-- "1 name still to learn" reads as data, “1 still to learn” as a typo.
          The count is a sentence about the reader’s progress, so it agrees in
-         number like any other sentence. -->
+         number like any other sentence.
+
+         %1$s, not %1$d, like every other number in the app: %d follows the
+         device locale, so on an ar/ur phone this sentence alone rendered
+         Arabic-Indic digits underneath a big Western count and beside
+         Western folio numbers. The call site still passes an Int; %s renders
+         it Western everywhere. Guarded by CounterFormatTest. -->
     <plurals name="remaining_count">
-        <item quantity="one">%1$d name still to learn</item>
-        <item quantity="other">%1$d names still to learn</item>
+        <item quantity="one">%1$s name still to learn</item>
+        <item quantity="other">%1$s names still to learn</item>
     </plurals>
-    <string name="quiz_best">Best quiz score: %1$d of 10</string>
+    <string name="quiz_best">Best quiz score: %1$s of 10</string>
     <!-- Celebrated only when a round beats a best that already existed; a
          first round beats nothing, and saying so would cheapen the moment. -->
     <string name="quiz_new_best">New best score</string>
@@ -206,7 +212,7 @@
     <string name="theme_dark">Dark</string>
     <string name="theme_black">Black (AMOLED)</string>
     <string name="text_size">Text size</string>
-    <string name="percent">%1$d%%</string>
+    <string name="percent">%1$s%%</string>
     <string name="text_size_preview" translatable="false">الْعَلِيم — Al-Aleem</string>
     <string name="daily_section">Daily name</string>
     <string name="daily_reminder">Daily name notification</string>
