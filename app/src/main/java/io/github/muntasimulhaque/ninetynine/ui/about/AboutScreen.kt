@@ -100,7 +100,7 @@ fun AboutScreen(onBack: () -> Unit) {
         },
     ) { padding ->
         // About is a reading page like the name pages, and it runs to several
-        // screens on a phone — so it carries the same quiet edge cue for how
+        // screens on a phone, so it carries the same quiet edge cue for how
         // much front matter lies below, instead of being the one page without.
         val aboutScroll = rememberScrollState()
         Box(
@@ -289,7 +289,7 @@ private fun Colophon(context: Context) {
     // Its own section, not a fourth source link: a way to reach the developer
     // is neither a source nor a typeface. It lives here, at the foot of the
     // one page a reader visits on purpose, rather than in the reading flow of
-    // all 99 name pages — where it interrupted the meaning to offer something
+    // all 99 name pages, where it interrupted the meaning to offer something
     // almost nobody needs.
     Spacer(Modifier.height(34.dp))
     SectionLabel(stringResource(R.string.about_contact_label), Modifier.fillMaxWidth())
@@ -327,7 +327,7 @@ private fun Context.openUrl(url: String) {
 
 /**
  * Hands off to whatever the reader writes mail with. ACTION_SENDTO on a
- * mailto: URI, exactly like the links above open a browser — the app itself
+ * mailto: URI, exactly like the links above open a browser: the app itself
  * still has no way to reach the network.
  *
  * The subject carries the version so that a report about something broken is

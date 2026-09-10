@@ -16,5 +16,5 @@ use, copy, and distribute it unmodified. It is bundled in this app exactly
 as published (byte-for-byte; only the file name differs, as required by
 Android resource naming). It is not sold, and it has not been modified.
 
-Source: King Fahd Glorious Quran Printing Complex — fonts.qurancomplex.gov.sa
+Source: King Fahd Glorious Quran Printing Complex, fonts.qurancomplex.gov.sa
 License reference: https://scancode-licensedb.aboutcode.org/kfgqpc-uthmanic-script-hafs.html

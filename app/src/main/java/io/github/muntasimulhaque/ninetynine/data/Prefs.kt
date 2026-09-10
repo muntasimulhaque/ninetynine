@@ -36,19 +36,19 @@ class Prefs(private val context: Context) {
      * DataStore's `data` flow throws when the file cannot be read. These flows
      * are collected in `stateIn(viewModelScope, …)`, which has no exception
      * handler, so an uncaught throw reaches the thread's default handler and
-     * kills the process — on launch, every launch, with no way out but clearing
+     * kills the process: on launch, every launch, with no way out but clearing
      * app data. That would destroy the one thing this app stores: which of the
      * 99 names the reader has learned.
      *
      * `retryWhen`, not `catch`: `catch` emits and then *completes* the flow, so
      * a single transient read failure would end every derived flow for the rest
      * of the process. `stateIn` would pin the empty value, and Memorize would
-     * read "0 learned" and Bookmarks "nothing kept" — a lie about intact data,
+     * read "0 learned" and Bookmarks "nothing kept": a lie about intact data,
      * until the app was restarted. This lets DataStore try again instead.
      *
      * Nothing is emitted on the way into the retry, and that matters as much
-     * as the retry itself. `emptyPreferences()` here — the obvious "give the
-     * consumer something" — would tell every derived flow that the reader has
+     * as the retry itself. `emptyPreferences()` here (the obvious "give the
+     * consumer something") would tell every derived flow that the reader has
      * learned and kept *nothing*, and the `*Loaded` flags would flip true off
      * that failed read: Memorize would roll its count down to 0, Bookmarks
      * would say "nothing kept yet", and both would roll back a moment later
@@ -62,10 +62,10 @@ class Prefs(private val context: Context) {
      * failure mode is IOException (corruption is already handled by the file's
      * corruptionHandler), but a cold start can surface a transient race while
      * the store initialises; letting a non-IO exception escape would crash the
-     * process on a launch. No new value for one attempt is harmless — the next
+     * process on a launch. No new value for one attempt is harmless: the next
      * retry delivers the stored truth.
      *
-     * The retry backs off — 250ms doubling to a 4s ceiling — so a store that
+     * The retry backs off (250ms doubling to a 4s ceiling), so a store that
      * stays unreadable settles into a slow pulse instead of a 4Hz spin for the
      * life of the process. A transient cold-start race retries almost
      * immediately, exactly as before; only the pathological persistent case
@@ -128,7 +128,7 @@ class Prefs(private val context: Context) {
      * On by default: the daily reminder is the app's rhythm, and its consent
      * lives in the system permission dialog (MainActivity's one-time ask),
      * not in a switch a reader has to go and find. A stored false always
-     * wins — a reader who turned the reminder off keeps it off.
+     * wins: a reader who turned the reminder off keeps it off.
      */
     val dailyEnabled: Flow<Boolean> = data
         .map { p -> p[Keys.DAILY_ENABLED] ?: true }
@@ -156,7 +156,7 @@ class Prefs(private val context: Context) {
      * they crash just as hard. A setting that failed to save is not worth the
      * process; the value simply stays as it was.
      *
-     * Any exception is swallowed, not just IOException — the read side
+     * Any exception is swallowed, not just IOException: the read side
      * retries on any cause for the same reason: a cold start can surface a
      * transient race while the store initialises, and a non-IO failure
      * escaping a `viewModelScope.launch` kills the process over a toggle the
@@ -190,7 +190,7 @@ class Prefs(private val context: Context) {
         }
     }
 
-    /** Clears learned names and the quiz score only — bookmarks are not progress. */
+    /** Clears learned names and the quiz score only, bookmarks are not progress. */
     suspend fun resetLearned() = write {
         it[Keys.LEARNED] = emptySet()
         it.remove(Keys.QUIZ_BEST)

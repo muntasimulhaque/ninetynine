@@ -82,7 +82,7 @@ import java.util.Locale
  */
 
 /**
- * Named page insets — three tiers, documented so screens pick deliberately.
+ * Named page insets: three tiers, documented so screens pick deliberately.
  * Lists are tighter (the eye scans), reading pages are roomier (the eye dwells).
  */
 val ListInset = 20.dp
@@ -92,17 +92,17 @@ val ReadingInset = 28.dp
 /** The floating bottom bar's total occupied height (plate + margins + the
  *  system gesture strip) while it floats OVER content (scroll-under); 0dp when
  *  the bar is hidden. Screens grow their bottom content padding by this so the
- *  last rows clear the plate — measured in MainActivity, never a constant: the
+ *  last rows clear the plate: measured in MainActivity, never a constant: the
  *  bar's height follows the system font scale and the strip follows the
  *  device's navigation mode (24dp gesture, 48dp three-button). */
 val LocalBottomBarOverlay = staticCompositionLocalOf { 0.dp }
 
-/** Small caps in gold, widely tracked — the app's only kind of heading label. */
+/** Small caps in gold, widely tracked, the app's only kind of heading label. */
 @Composable
 fun SectionLabel(text: String, modifier: Modifier = Modifier) {
     Text(
         // Locale.ROOT: the default-locale form renders "MEMORİZE" on
-        // Turkish devices (owner decision, 1.22 — same fix everywhere).
+        // Turkish devices (owner decision, 1.22, same fix everywhere).
         text = text.uppercase(Locale.ROOT),
         style = MaterialTheme.typography.labelMedium,
         color = MaterialTheme.colorScheme.secondary,
@@ -129,7 +129,7 @@ fun ScreenLabel(text: String, modifier: Modifier = Modifier) {
 }
 
 /**
- * Top bars are paper, exactly like the page beneath them — never a tinted
+ * Top bars are paper, exactly like the page beneath them: never a tinted
  * band, and never one that tints itself on scroll.
  */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -142,23 +142,23 @@ fun paperTopBarColors(): TopAppBarColors = TopAppBarDefaults.topAppBarColors(
 /**
  * A tab screen's running head.
  *
- * Set at 0.85 of headlineSmall — about 16sp rather than 19. "The Ninety Nine
+ * Set at 0.85 of headlineSmall: about 16sp rather than 19. "The Ninety Nine
  * Names of Allah" is 14.864 em in Spectral SemiBold, so at 19sp it needed 282dp
  * and shrank to 0.875 on a Pixel 4 once About joined the bar; at 16sp it needs
  * 240dp and renders whole there. A running head is meant to be quieter than the
- * page beneath it — a book sets them smaller than the body — and all three tab
+ * page beneath it (a book sets them smaller than the body), and all three tab
  * screens now wear the same quiet register, instead of one shrinking while the
  * other two shouted.
  *
  * [minScale] is FitText's floor. Names passes 0.25f because its worst case is
  * real: a 320dp screen at the in-app 1.4x on top of a 2.0 system font scale
  * needs 672dp of the 172dp available, and the app's own name must never
- * ellipsize — "…Names of A…" would cut Allah's name. Shorter titles never
+ * ellipsize: "…Names of A…" would cut Allah's name. Shorter titles never
  * reach the floor, so they take the default.
  *
  * [sizeScale] resizes the head itself. With the search field and the About/
  * Settings glyphs gone from the Home bar, its title has an entire row to
- * itself, so Home passes 1f and runs at the full headlineSmall — the one tab
+ * itself, so Home passes 1f and runs at the full headlineSmall: the one tab
  * that reads like a title page rather than a running head. FitText still does
  * the fitting: the size only rises where the measured width allows it, so a
  * large font scale or a narrow screen simply shrinks it back inside the bar,
@@ -177,7 +177,7 @@ fun TabTitle(
         color = MaterialTheme.colorScheme.onSurface,
         minScale = minScale,
         // The tab screens' titles are headings, so heading navigation covers
-        // the whole top level — the running head included.
+        // the whole top level, the running head included.
         modifier = Modifier.semantics { heading() },
     )
 }
@@ -186,8 +186,8 @@ private const val RunningHeadScale = 0.85f
 
 /** The chrome-you-tap voice: the bottom bar's tab labels and the detail
  *  plate's Learned / Bookmark, in mixed case with only a whisper of tracking
- *  (owner decision, 1.22 — tracked wide caps stay with the overlines). The
- *  ramp's labelSmall at the device factor only — chrome never follows the
+ *  (owner decision, 1.22: tracked wide caps stay with the overlines). The
+ *  ramp's labelSmall at the device factor only: chrome never follows the
  *  reader's text-size slider (the clipping guarantee). */
 @Composable
 fun tabLabelStyle(): TextStyle =
@@ -214,13 +214,13 @@ fun BackButton(onBack: () -> Unit) {
  * For the handful of places where the words themselves have to survive at any
  * font scale: the app's own name, which must never be cut mid-"Allah", and the
  * bottom bar's labels, which at a system font scale of 2.0 would otherwise read
- * "MEM…" / "SETTI…". Shrinking still leaves them far larger than the default —
+ * "MEM…" / "SETTI…". Shrinking still leaves them far larger than the default:
  * it only caps growth at what the space can hold. Measured up front, so there
  * is no first-frame flicker the way a layout-feedback loop would have.
  *
  * Tracking steps down with the size, because letter-spacing is part of a type
  * size and not a constant beside it. Held fixed it does two harmful things:
- * shrunken small caps look loose, and — worse — the fixed air sets a hard floor
+ * shrunken small caps look loose, and (worse) the fixed air sets a hard floor
  * on how narrow the line can ever get. The share card's wordmark is 27 tracked
  * characters, so 49dp of its 233dp is air that no amount of shrinking used to
  * remove; the 30-character wordmark it replaced could not render below 210dp
@@ -248,7 +248,7 @@ fun FitText(
 }
 
 /**
- * [FitText] for text that already carries spans — the names list paints the
+ * [FitText] for text that already carries spans: the names list paints the
  * reader's literal search matches inside the transliteration, and a Divine
  * Name must still never lose its tail. The fit measures the styled text, so
  * the highlighted matches are part of the width the line is fitted to.
@@ -297,7 +297,7 @@ fun FitText(
 /**
  * The maker's mark in its hairline ring: the app's own square-Kufic seal.
  *
- * Worn by the share card's foot, and earned — never merely worn — on the
+ * Worn by the share card's foot, and earned (never merely worn) on the
  * quiz's perfect round and the finished flashcard set. One construction, so
  * the three cannot drift: the ring and the mark are both parameters, because
  * the share card sets them in its own plate gold on emerald while the two
@@ -356,8 +356,8 @@ fun PageMessage(text: String) {
  * An empty screen that explains itself: an upright title, an italic line of
  * guidance beneath it, and an optional way out.
  *
- * Used for the empties a reader can act on — nothing kept, none learned, a
- * search with no matches — while [PageMessage] stays for the failure cases
+ * Used for the empties a reader can act on (nothing kept, none learned, a
+ * search with no matches) while [PageMessage] stays for the failure cases
  * that offer no action. Set like the rest of the book: title in the ink,
  * guidance in the quiet italic, and the house TextButton rather than a new
  * kind of control arriving on an empty page.
@@ -403,7 +403,7 @@ fun EmptyState(
  * The width a column of prose is allowed to reach.
  *
  * In ems, not dp, and it moves with the reading scale. Fixed at 560dp it gave
- * **87 characters a line** at the smallest text setting and 53 at the largest —
+ * **87 characters a line** at the smallest text setting and 53 at the largest:
  * Spectral Regular averages 0.4475 em per character across the 99 meanings, so
  * the measure swung by two thirds while the book range is 60–66. The worst of
  * it fell on the reader who *chose* smaller text, often precisely to fit more
@@ -419,8 +419,8 @@ fun readingMeasure(): Dp = (494 * LocalTextScale.current).dp
 /**
  * The widest a screen's content column may run.
  *
- * Where [readingMeasure] caps the prose line, this caps the whole page —
- * lists, flashcards, quiz, settings — so a tablet gets the book's proportions
+ * Where [readingMeasure] caps the prose line, this caps the whole page
+ * (lists, flashcards, quiz, settings), so a tablet gets the book's proportions
  * instead of rows stretched edge to edge. It grows with the reading slider,
  * like [readingMeasure], and never binds on a phone, whose screen is narrower
  * than the cap already.
@@ -431,11 +431,11 @@ fun pageMeasure(): Dp = (560 * LocalTextScale.current).dp
 /**
  * Chrome joins the book's column.
  *
- * The content keeps the centred [pageMeasure] cap — but the bars did not: a
+ * The content keeps the centred [pageMeasure] cap: but the bars did not: a
  * tablet read a title pinned to the screen's edge while its page floated
  * centred, chrome orphaned from the content it serves. This puts any top bar
  * (and the bottom bar's contents) inside the same centred cap, so the whole
- * screen — running head, page, footer — shares one set of margins. It is the
+ * screen (running head, page, footer) shares one set of margins. It is the
  * exact pattern the content uses (fillMaxWidth · wrapContentWidth · widthIn,
  * in that order), so on a phone, where the cap never binds, nothing changes.
  */
@@ -446,18 +446,18 @@ fun Modifier.barMeasure(): Modifier = fillMaxWidth()
 
 /**
  * The floating bar's vessel: the tabs or actions themselves go inside; this
- * owns the floating, scroll-under plate — the capsule, halo and transparent
+ * owns the floating, scroll-under plate: the capsule, halo and transparent
  * gesture strip. Shared verbatim by the main tab bar (MainActivity) and the
  * name page's capsule (DetailScreen) so the two cannot drift. The flat
  * variant that once lived beside it was discarded when the floating capsule
  * was chosen (see plan-of-record). The plate wears the page's own paper
- * colour — a floating sheet, not a separate band — and its ends are true
+ * colour (a floating sheet, not a separate band), and its ends are true
  * capsule/pill arcs ([RoundedCornerShape] at 50%, so the radius is always
- * half the bar's height — semicircular ends, exactly the Uber/Galaxy
+ * half the bar's height: semicircular ends, exactly the Uber/Galaxy
  * register) rather than the superellipse [SquircleShape] the cards wear,
  * whose flatter corners read as a rounded rectangle on a wide short plate.
- * One construction in every theme — a paper plate lifted by a soft halo, no
- * borders anywhere (the hero plates' own symmetry) — with only the colours
+ * One construction in every theme: a paper plate lifted by a soft halo, no
+ * borders anywhere (the hero plates' own symmetry): with only the colours
  * changing: light keeps the page's own paper; dark lifts the plate a
  * container rung above the page, because a shadow is black paint and on
  * near-black paper the tone is what reads; BLACK takes one rung more, its
@@ -474,11 +474,11 @@ fun FloatingBar(modifier: Modifier = Modifier, content: @Composable () -> Unit) 
     // percent corner size of 50% resolves to half the plate's height (the
     // short side), which makes the two ends meet in a true semicircle: a
     // stadium. RoundedCornerShape is correct here precisely because the bar
-    // is NOT a card — cards keep the smooth squircle, the pill is a capsule
+    // is NOT a card, cards keep the smooth squircle, the pill is a capsule
     // by definition.
     val plateShape = RoundedCornerShape(50)
     // The plate's paper, per theme: the page's own in light; a container rung
-    // above it in dark — a shadow is black paint, so on near-black paper the
+    // above it in dark, a shadow is black paint, so on near-black paper the
     // tone is what lifts the plate (Material's own dark-elevation grammar).
     // BLACK needs `surfaceContainerHigh` rather than the rung below it: on a
     // true-black page there is no shadow to read and #100F0C sits so close to
@@ -491,7 +491,7 @@ fun FloatingBar(modifier: Modifier = Modifier, content: @Composable () -> Unit) 
         else -> MaterialTheme.colorScheme.background
     }
     // The Uber halo: not shadowElevation (directional, smudgy on paper)
-    // but the plate's own outline, blurred — see [softHalo]. Softer and a
+    // but the plate's own outline, blurred: see [softHalo]. Softer and a
     // touch stronger than a Material elevation so it reads as a floating
     // sheet, the way Uber's does. The ink is the theme's own shadow colour:
     // the near-black surface ink in light, plain black in dark (at a higher
@@ -506,7 +506,7 @@ fun FloatingBar(modifier: Modifier = Modifier, content: @Composable () -> Unit) 
     )
     Column(modifier.fillMaxWidth()) {
         Box(
-            // fillMaxWidth, then padding, then wrapContentWidth, then the cap —
+            // fillMaxWidth, then padding, then wrapContentWidth, then the cap,
             // barMeasure()'s own order. The squircle spans the padded width,
             // the cap binds only on wide screens, and the 14dp margins are the
             // plate's float (a Box paints nothing of its own).
@@ -534,14 +534,14 @@ fun FloatingBar(modifier: Modifier = Modifier, content: @Composable () -> Unit) 
 }
 
 /**
- * A soft, even halo — the shadow a floating plate wears on paper. Not
+ * A soft, even halo: the shadow a floating plate wears on paper. Not
  * [androidx.compose.material3.Surface]'s shadowElevation, which is directional
  * (it lights from above) and reads smudgy on a flat page; that is the very
  * thing that made the old bar's shadow look heavy. Instead the plate's own
  * [shape] outline is drawn into a [android.graphics.Paint] whose
  * [BlurMaskFilter] spreads it outward evenly, so the plate appears to lift off
  * the page rather than cast a hard shadow. Drawn in every theme: near-black
- * surface ink in light, black in dark — where on the AMOLED Black page it
+ * surface ink in light, black in dark: where on the AMOLED Black page it
  * falls invisible and the elevated plate tone carries the lift alone.
  */
 private fun Modifier.softHalo(
@@ -553,7 +553,7 @@ private fun Modifier.softHalo(
     // The outline lives on the shape at the node's own size. Both outline
     // kinds the app's shapes produce are handled: Generic (SquircleShape's
     // sampled path) is drawn as a path, and Rounded (RoundedCornerShape's
-    // capsule) is drawn as a round rect with its own resolved corner radius —
+    // capsule) is drawn as a round rect with its own resolved corner radius,
     // never a boxy fallback. Drawing into the node's own canvas keeps exact,
     // cache-friendly geometry with no extra allocation.
     val outline = shape.createOutline(size, layoutDirection, this)
@@ -594,7 +594,7 @@ private fun Modifier.softHalo(
  *
  * Every space in the app was a dp constant while only the type responded to the
  * reading slider, so at 1.4x the text was 40% larger and the air between blocks
- * was unchanged — the page tightened exactly when the reader had asked for
+ * was unchanged: the page tightened exactly when the reader had asked for
  * room, and About's paragraphs began to read as one block. For structural gaps
  * only: touch targets and chrome padding stay fixed, because those answer to
  * the finger rather than to the text.
@@ -603,14 +603,14 @@ private fun Modifier.softHalo(
 fun scaledGap(base: Dp): Dp = base * LocalTextScale.current
 
 /**
- * Content that settles into place once — and only once — as it appears: the
+ * Content that settles into place once (and only once) as it appears: the
  * scale rises from [fromScale] on the lively spring the toggles answer with,
  * while alpha fades in QUICK. A rotation replays nothing (the played flag
  * rides saved instance state), and with animations off the content is simply
- * there — every Motion spec collapses to snap at animator scale 0.
+ * there: every Motion spec collapses to snap at animator scale 0.
  *
  * Motion only where meaning changes: this is for arrivals that ARE a change
- * of meaning — the quiz's earned seal, the ٩٩ on the all-learned screen —
+ * of meaning (the quiz's earned seal, the ٩٩ on the all-learned screen)
  * never decoration on a first frame.
  */
 @Composable
@@ -643,7 +643,7 @@ fun SettleOnce(
     )
 }
 
-/** The thinnest rule the screen can draw — separates matter, never decorates. */
+/** The thinnest rule the screen can draw, separates matter, never decorates. */
 @Composable
 fun PageRule(modifier: Modifier = Modifier) {
     HorizontalDivider(

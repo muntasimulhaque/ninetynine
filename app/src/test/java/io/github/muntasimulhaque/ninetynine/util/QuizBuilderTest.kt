@@ -66,7 +66,7 @@ class QuizBuilderTest {
 
     /**
      * A distractor that says everything the answer says, and no less, is not a
-     * harder question — it is an unfair one. "The Guardian" offered against
+     * harder question: it is an unfair one. "The Guardian" offered against
      * "The Ever-Watchful Guardian" marks the reader wrong for being right.
      */
     @Test
@@ -102,7 +102,7 @@ class QuizBuilderTest {
 
     /**
      * The property test above runs on fake names; the real asset is where the
-     * landmines live — a title made entirely of stop words ("The One", #99)
+     * landmines live: a title made entirely of stop words ("The One", #99)
      * used to collapse to an empty set and let subsuming distractors through.
      */
     @Test

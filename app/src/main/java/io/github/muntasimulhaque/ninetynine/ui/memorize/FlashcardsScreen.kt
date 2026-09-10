@@ -124,8 +124,8 @@ class FlashcardsViewModel(private val savedState: SavedStateHandle) : ViewModel(
      *
      * An empty [deck] means two very different things before that: "the build
      * has not happened yet" and "there is nothing left to draw". Mapping the
-     * first onto the second flashed the ٩٩ and "All 99 names learned" — with
-     * the house cross-fade, no less — over the first card of every sitting,
+     * first onto the second flashed the ٩٩ and "All 99 names learned" (with
+     * the house cross-fade, no less) over the first card of every sitting,
      * because the build runs in a LaunchedEffect one frame after the first
      * composition. The screen renders nothing until this turns true. Rides
      * the SavedStateHandle with the rest of the sitting.
@@ -137,7 +137,7 @@ class FlashcardsViewModel(private val savedState: SavedStateHandle) : ViewModel(
      * The name the last card committed, so a mis-swipe can be taken back.
      *
      * A right-swipe writes a learned tick and moves on, and there was no way
-     * back a card — the exact mirror of the guard that stops a left-swipe
+     * back a card: the exact mirror of the guard that stops a left-swipe
      * silently *removing* one. Cleared as soon as the next card is committed,
      * so undo only ever reaches one step.
      */
@@ -172,7 +172,7 @@ class FlashcardsViewModel(private val savedState: SavedStateHandle) : ViewModel(
      *
      * [namesLoaded] is what makes an empty deck unambiguous: the build runs in
      * a LaunchedEffect, a frame after the first composition, and until it
-     * lands an empty deck means "not built yet" — not "everything is
+     * lands an empty deck means "not built yet": not "everything is
      * learned".
      */
     fun ensureDeck(
@@ -260,7 +260,7 @@ class FlashcardsViewModel(private val savedState: SavedStateHandle) : ViewModel(
 }
 
 /**
- * What the deck area means right now — cards in hand, everything learned,
+ * What the deck area means right now: cards in hand, everything learned,
  * or the deck done. The change-key for its house-push switch: only a move
  * between these meanings animates, never a loading state.
  */
@@ -292,7 +292,7 @@ fun FlashcardsScreen(
     Scaffold(
         topBar = {
             // A sequence register, centred over the work like the quiz's and
-            // the name page's — pushed-screen TITLES sit left; position
+            // the name page's, pushed-screen TITLES sit left; position
             // counters sit centre.
             CenterAlignedTopAppBar(
                 modifier = Modifier.barMeasure(),
@@ -343,7 +343,7 @@ fun FlashcardsScreen(
             // own for a first frame, motion only where meaning changes. The
             // deck → all-learned → done turns themselves ride the house push
             // like every other change of state (the quiz's question → result,
-            // the daily card, pushed screens) — this was the when-block that
+            // the daily card, pushed screens); this was the when-block that
             // still hard-cut.
             when {
                 // Blank paper said nothing at all when the asset failed to
@@ -351,8 +351,8 @@ fun FlashcardsScreen(
                 // are reachable without passing it.
                 names.isEmpty() && namesLoaded ->
                     PageMessage(stringResource(R.string.names_unavailable))
-                // Until the deck for this sitting has been built — a frame
-                // after this composition — an empty deck is "not built yet",
+                // Until the deck for this sitting has been built (a frame
+                // after this composition) an empty deck is "not built yet",
                 // not "everything is learned": the all-learned page is
                 // alarming, and wrong for a brand-new reader.
                 !session.ready -> Unit
@@ -445,7 +445,7 @@ fun FlashcardsScreen(
                                         // decision): 340dp holds the Name with
                                         // presence, where the old full-deck
                                         // stretch (460dp) set two lines of ink in
-                                        // an ocean of emerald — vacancy, not
+                                        // an ocean of emerald, vacancy, not
                                         // calm. One height for BOTH faces: the
                                         // back's long meanings scroll inside it
                                         // (the thumb marks when), so the plate
@@ -464,7 +464,7 @@ fun FlashcardsScreen(
                             // TextButton with a 48dp minimum touch target, so without
                             // the fixed-height box the card would shrink ~30dp the
                             // moment the undo appeared. (The swipe instructions that
-                            // once sat here are gone: the drag teaches itself — the
+                            // once sat here are gone: the drag teaches itself, the
                             // card wears the I KNOW IT / STILL LEARNING overline toward
                             // the commit threshold, and the two buttons below name the
                             // same verdicts.)
@@ -542,7 +542,7 @@ private fun DeckMenu(
             expanded = open,
             onDismissRequest = { open = false },
             // Paper on paper: the deck menu reads as a page of the book
-            // lifted over the page — the app's own paper, no tonal lift —
+            // lifted over the page (the app's own paper, no tonal lift)
             // not the stock floating tonal card, which was the last surface
             // in the app that didn't match the paper-on-paper system.
             containerColor = MaterialTheme.colorScheme.background,
@@ -584,7 +584,7 @@ private fun DeckMenu(
 /**
  * An empty box in the same ink as the menu's icons, so the option reads as
  * something you can turn on even while it is off; the tick alone is gold.
- * Purely visual — the row above carries the state for screen readers.
+ * Purely visual: the row above carries the state for screen readers.
  */
 @Composable
 private fun OptionCheck(checked: Boolean) {
@@ -642,7 +642,7 @@ private fun SwipeFlipCard(
         label = "flip",
     )
 
-    // The card is one merged node — `clickable` merges its descendants — so
+    // The card is one merged node (`clickable` merges its descendants) so
     // flipping it swaps the text in place and emits only a content-changed
     // event, which TalkBack does not speak. Without a live region the whole
     // memorisation loop is silent: you tap to reveal the meaning and hear
@@ -697,7 +697,7 @@ private fun SwipeFlipCard(
                     val next = offsetX.value + amount
                     scope.launch { offsetX.snapTo(next) }
                     // One featherweight tick the instant the drag crosses the
-                    // commit threshold — the finger hears the point of no
+                    // commit threshold, the finger hears the point of no
                     // return, so releasing past it stops being a guess.
                     if (!crossedThreshold && next.absoluteValue >= size.width * 0.3f) {
                         crossedThreshold = true
@@ -713,7 +713,7 @@ private fun SwipeFlipCard(
         border = if (rotation <= 90f) null
         // `outline`: this border is the flipped card's entire boundary, and its
         // fill is only 1.06:1 against the page. At outlineVariant's 1.42:1 the
-        // card lost its edge completely on flip — it went from a clearly
+        // card lost its edge completely on flip; it went from a clearly
         // bounded emerald object to a shape with no perceivable outline.
         else BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
     ) {
@@ -722,7 +722,7 @@ private fun SwipeFlipCard(
                 // Front: the name itself, set like the share card. Scrollable like
                 // the back: in landscape, or at a large system font, the card's
                 // height can drop below what the name needs, and the Card clips to
-                // its rounded shape — the one place a supported configuration
+                // its rounded shape, the one place a supported configuration
                 // could otherwise lose the Name entirely.
                 val frontScroll = rememberScrollState()
                 Box(modifier = Modifier.fillMaxSize()) {
@@ -776,7 +776,7 @@ private fun SwipeFlipCard(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.Center,
                     ) {
-                        // Centred like the share card — the reading line, set the
+                        // Centred like the share card, the reading line, set the
                         // same way on every surface that carries the full meaning.
                         Text(
                             text = name.meaning,
@@ -800,7 +800,7 @@ private fun SwipeFlipCard(
             // The verdict the drag is heading toward, fading in as the finger
             // approaches the commit threshold: the same words the two buttons
             // beneath the card carry, set as a tracked overline at the card's
-            // head. Composed only while a drag is live — an invisible merged
+            // head. Composed only while a drag is live, an invisible merged
             // child would still reach TalkBack through the card's merged node,
             // and its graded alpha is read in the draw phase, so a moving
             // finger redraws without recomposing the faces at all.
@@ -844,8 +844,8 @@ private fun AllLearnedContent(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
-        // Reaching this screen IS a change of meaning — the book is finished
-        // — so the numeral settles once, the house way (SettleOnce).
+        // Reaching this screen IS a change of meaning (the book is finished)
+        // so the numeral settles once, the house way (SettleOnce).
         SettleOnce {
             ArabicText(
                 text = "٩٩",
@@ -887,7 +887,7 @@ private fun DeckDoneContent(onStartAgain: () -> Unit) {
     ) {
         // A finished set earns the house seal: the gold hairline circle and
         // mark an answered quiz option's perfect round wears, alone.
-        // Completion is a moment, not a dead end — the button below is
+        // Completion is a moment, not a dead end, the button below is
         // already the way on.
         MarkSeal()
         Spacer(Modifier.height(24.dp))

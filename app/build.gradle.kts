@@ -11,7 +11,7 @@ plugins {
 // shared Google Play Signing Key folder (outside any repo), so no credential
 // ever enters the repository. The folder is on a different drive per machine
 // (D: on the LENOVO box, E: here), so both are probed. When the file is
-// absent — CI, a fresh clone — the release build degrades to unsigned rather
+// absent (CI, a fresh clone) the release build degrades to unsigned rather
 // than failing.
 val keystoreFile = listOf(
     "D:/GDrive/BSCPLC/DM (Development)/Personal Docs/Pers/Google Play Signing Key/keystore.properties",
@@ -50,8 +50,8 @@ android {
         applicationId = "io.github.muntasimulhaque.ninetynine"
         minSdk = 24
         targetSdk = 37
-        versionCode = 40
-        versionName = "1.30"
+        versionCode = 41
+        versionName = "1.31"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -89,8 +89,8 @@ android {
     }
 
     // Play encodes a dependency manifest into every artifact by default. The
-    // app ships nothing it needs to advertise there — and every byte of
-    // metadata an artifact carries is metadata it leaks — so leave the block
+    // app ships nothing it needs to advertise there (and every byte of
+    // metadata an artifact carries is metadata it leaks), so leave the block
     // out of the APK and the AAB entirely.
     dependenciesInfo {
         includeInApk = false

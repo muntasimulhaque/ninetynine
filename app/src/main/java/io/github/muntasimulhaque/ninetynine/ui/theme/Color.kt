@@ -9,7 +9,7 @@ val LightColors = lightColorScheme(
     onPrimary = Color(0xFFFFFFFF),
     primaryContainer = Color(0xFFDAE9E0),
     onPrimaryContainer = Color(0xFF0E2E24),
-    // Deep enough to clear WCAG AA on paper with margin (5.14:1) — this gold
+    // Deep enough to clear WCAG AA on paper with margin (5.14:1); this gold
     // carries the epithets and every tracked section label, not just ornament.
     // (#8C6A1B was 4.61:1, only 0.11 of headroom for the app's tightest
     // normal-text pair; #856216 is imperceptibly deeper.)
@@ -17,8 +17,8 @@ val LightColors = lightColorScheme(
     onSecondary = Color(0xFFFFFFFF),
     secondaryContainer = Color(0xFFF3E7C3),
     onSecondaryContainer = Color(0xFF3D2F05),
-    // Tertiary is the gold again. Material components that reach for it — the
-    // time picker's AM/PM selector is the only one here — would otherwise draw
+    // Tertiary is the gold again. Material components that reach for it (the
+    // time picker's AM/PM selector is the only one here) would otherwise draw
     // baseline lilac-pink in the middle of an emerald and gold palette.
     // Kept literally identical to secondary (the hardened #856216), so the
     // two slots can never drift apart.
@@ -120,7 +120,7 @@ val TransliterationTealLight = Color(0xFF1F6B63)
 val TransliterationTealDark = Color(0xFF8FD0C0)
 
 /**
- * The Name's gold on the name page — the one Arabic set on paper rather
+ * The Name's gold on the name page: the one Arabic set on paper rather
  * than on an emerald plate. Warmer and lighter than `secondary`: at 52sp
  * the Name is WCAG large text, where 3:1 governs, so it can afford to be
  * the app's actual gold instead of the bronze `secondary` must be for
@@ -128,9 +128,9 @@ val TransliterationTealDark = Color(0xFF8FD0C0)
  * - NameGoldLight #A67F1A on paper #FAF5EA = 3.41:1 (large-text AA is 3:1;
  *   `secondary` holds 5.14:1 there for its small text)
  * - NameGoldDark #E2C36A on night #14120D = 10.92:1 (`secondary` 10.09:1)
- * (HeroGold #D4B45A itself is 1.84:1 on paper — plate-only by measure,
- * not just by convention.) Every other gold on paper — epithets, section
- * labels, chevrons, ticks — keeps `secondary`, whose job hasn't changed.
+ * (HeroGold #D4B45A itself is 1.84:1 on paper: plate-only by measure,
+ * not just by convention.) Every other gold on paper (epithets, section
+ * labels, chevrons, ticks) keeps `secondary`, whose job hasn't changed.
  */
 val NameGoldLight = Color(0xFFA67F1A)
 val NameGoldDark = Color(0xFFE2C36A)

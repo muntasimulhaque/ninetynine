@@ -17,7 +17,7 @@ import kotlin.math.pow
 import kotlin.math.sin
 
 /**
- * A rectangle whose corners round off in a single continuous curve — not the
+ * A rectangle whose corners round off in a single continuous curve: not the
  * quarter-circle `RoundedCornerShape` welds onto its straight edges.
  *
  * ## Why this looks smoother
@@ -25,15 +25,15 @@ import kotlin.math.sin
  * A circular-arc corner is a perfect circle joined to a straight line. Where
  * the arc meets the line the curvature jumps from 0 to 1/r in a single instant,
  * and that kink is what makes a circular corner read as "a rectangle with
- * clipped corners" next to a system widget. A superellipse corner — the Lamé
- * curve `|x|^n + |y|^n = r^n` that iOS, Samsung One UI and Material You all use
- * — lets the curvature build up *gradually* from the straight edge into the
+ * clipped corners" next to a system widget. A superellipse corner (the Lamé
+ * curve `|x|^n + |y|^n = r^n` that iOS, Samsung One UI and Material You all use)
+ * lets the curvature build up *gradually* from the straight edge into the
  * apex, so there is no seam to see. The bend is tangent-continuous with the
  * edges at every point, which is the measurable difference behind "smoother".
  *
  * [exponent] is the superellipse power `n`. `n = 2` is a plain circle (identical
  * to `RoundedCornerShape`); values above 2 push the corner toward a squarer,
- * more continuous profile. The default `4f` is a gentle, book-like squircle —
+ * more continuous profile. The default `4f` is a gentle, book-like squircle:
  * clearly smoother than a circle without the aggressive squareness of Apple's
  * `n = 5` icon shape. Tune one number to taste; lower rounds, higher sharpens.
  *
@@ -110,12 +110,12 @@ class SquircleShape(
         val quad = 2f / n
         // Apex at (0, 0): superellipse (r, 0) -> (0, r), then (0, r) -> (r, 0).
         // The loop runs 0..SAMPLES so both ends land exactly on the seams the
-        // straight edges already reached — no diagonal jump where they meet.
+        // straight edges already reached, no diagonal jump where they meet.
         for (i in 0..SAMPLES_PER_CORNER) {
             val theta = i.toFloat() / SAMPLES_PER_CORNER * halfPi
             // Clamp to [0,1]: at the seam theta = π/2 the float32 π/2 rounds a
             // hair above the true value, so cos() is a tiny negative and a
-            // fractional power of a negative base is NaN — which would poison
+            // fractional power of a negative base is NaN, which would poison
             // the whole path and blank the clipped surface. Mathematically
             // cos/sin are in [0,1] here; the clamp only kills the rounding.
             val xs = r * cos(theta).coerceIn(0f, 1f).pow(quad)

@@ -13,9 +13,9 @@ object SearchFilter {
      * vowels that Arabic transliteration spells inconsistently folded together,
      * and runs of a repeated letter collapsed.
      *
-     * So "rahman", "ar rahman" and "a'laa" all find "Ar-Rahmaan", and — because
-     * the same long vowel is written "oo"/"u" and "ee"/"i" by different sources
-     * — "Qayyum" finds "Al-Qayyoom", "Ghafur" finds "Al-Ghafoor", "Quddus"
+     * So "rahman", "ar rahman" and "a'laa" all find "Ar-Rahmaan", and (because
+     * the same long vowel is written "oo"/"u" and "ee"/"i" by different sources)
+     * "Qayyum" finds "Al-Qayyoom", "Ghafur" finds "Al-Ghafoor", "Quddus"
      * finds "Al-Quddoos" and "Wali" finds "Al-Walee". Readers arrive knowing
      * these names from elsewhere; they should not have to guess our spelling.
      */
@@ -40,9 +40,9 @@ object SearchFilter {
      * Matches transliteration, title, meaning, note (case-insensitive),
      * Arabic, or the exact number.
      *
-     * The note is searched because a reader who remembers a detail from one
-     * — the distinction between Ar-Rahmaan and Ar-Raheem is the example
-     * everyone reaches for — has no other way to find that name again. Only a
+     * The note is searched because a reader who remembers a detail from one:
+     * the distinction between Ar-Rahmaan and Ar-Raheem is the example
+     * everyone reaches for: has no other way to find that name again. Only a
      * few of the 99 carry a note (see names.json), and a note is a bound
      * commentary on its own name, so it answers to the same forgiving Latin
      * key as the named fields below it.

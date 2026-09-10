@@ -79,7 +79,7 @@ fun MemorizeScreen(
     // learn five on the name pages, come back and watch 41 become 46. Where
     // the roll starts rides in saved instance state, so even a process death
     // mid-visit lands on a number that then moves. A first-ever composition
-    // starts exactly on target — no theatrical roll up from zero — and with
+    // starts exactly on target (no theatrical roll up from zero), and with
     // animations off it simply is the number.
     var lastSeen by rememberSaveable { mutableIntStateOf(-1) }
     val rolled = remember {
@@ -129,12 +129,12 @@ fun MemorizeScreen(
             } else if (learnedLoaded) {
                 // The count is the screen's centrepiece, so it must not flash
                 // "0 of 99 learned" for the frame or two before DataStore
-                // delivers the real set — the same *Loaded gate every other
+                // delivers the real set, the same *Loaded gate every other
                 // screen applies. Blank paper until then, exactly like the
                 // flashcards and quiz waiting for their own flags.
 
                 // Progress as typography: a big light number, a quiet caption,
-                // and a hairline of gold — no rings, no dashboards. The number is
+                // and a hairline of gold, no rings, no dashboards. The number is
                 // also the way in: it stood for a list the app never let anyone
                 // see, while the newer bookmarks axis had a whole tab.
                 Row(
@@ -210,7 +210,7 @@ fun MemorizeScreen(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-            // Floating bar: the NavRows must clear the plate — the bar's
+            // Floating bar: the NavRows must clear the plate, the bar's
             // measured height plus a little air.
             Spacer(Modifier.height(24.dp + LocalBottomBarOverlay.current))
         }

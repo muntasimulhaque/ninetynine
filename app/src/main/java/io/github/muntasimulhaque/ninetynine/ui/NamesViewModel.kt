@@ -26,7 +26,7 @@ class NamesViewModel(
     // The default factory (SavedStateViewModelFactory) fills this for the
     // composable `viewModel()` call; the instrumentation test passes one
     // by hand. Carries the search query, so a process death mid-search
-    // restores the field with its text — the openness is rememberSaveable;
+    // restores the field with its text, the openness is rememberSaveable;
     // an open field that had lost its query would be a worse half-state.
     private val savedState: SavedStateHandle,
 ) : AndroidViewModel(application) {
@@ -49,7 +49,7 @@ class NamesViewModel(
     }.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
     // Declared before [learned] on purpose: stateIn(Eagerly) starts collecting
-    // immediately, and its onEach fires the flag — if the flag were declared
+    // immediately, and its onEach fires the flag, if the flag were declared
     // after the flow, a cold start that read DataStore during construction
     // would hit a null _learnedLoaded and crash (init-order NPE).
     private val _learnedLoaded = MutableStateFlow(false)
@@ -61,7 +61,7 @@ class NamesViewModel(
     /**
      * False only while DataStore is still delivering its first value. An empty
      * learned set is otherwise indistinguishable from "not read yet", and the
-     * flashcard deck and quiz both need to know the difference — building
+     * flashcard deck and quiz both need to know the difference: building
      * either before DataStore arrives silently drops the learned filter.
      */
     val learnedLoaded: StateFlow<Boolean> = _learnedLoaded.asStateFlow()
@@ -71,7 +71,7 @@ class NamesViewModel(
     /**
      * False only while DataStore is still delivering its first value. An empty
      * bookmark set is otherwise indistinguishable from "not read yet", and a
-     * screen that freezes a page list needs to know the difference — see
+     * screen that freezes a page list needs to know the difference: see
      * DetailScreen, which strands the reader on a blank page if it guesses.
      */
     val bookmarkedLoaded: StateFlow<Boolean> = _bookmarkedLoaded.asStateFlow()
@@ -96,7 +96,7 @@ class NamesViewModel(
     val dailyEnabled: StateFlow<Boolean> = prefs.dailyEnabled
         .stateIn(viewModelScope, SharingStarted.Eagerly, true)
 
-    // Declared before [dailyTime] on purpose — same init-order rule as
+    // Declared before [dailyTime] on purpose, same init-order rule as
     // [learned]: stateIn(Eagerly) can deliver DataStore's first value during
     // construction, and the onEach must not touch an uninitialised flag.
     private val _dailyTimeLoaded = MutableStateFlow(false)
@@ -116,7 +116,7 @@ class NamesViewModel(
     /**
      * The live query, riding the SavedStateHandle: the search field's
      * openness survives process death through `rememberSaveable`, so the
-     * query must too — a restored empty field under an open search would
+     * query must too: a restored empty field under an open search would
      * lose the reader's work and contradict "the query persists until
      * cleared". Cleared when set to empty, like every other clear path.
      */

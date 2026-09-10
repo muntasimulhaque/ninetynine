@@ -88,10 +88,10 @@ fun ShareSheet(name: Name, onDismiss: () -> Unit) {
     // With skipPartiallyExpanded the sheet's only resting place is Expanded,
     // pressed hard against the status bar: an upward drag or fling on the
     // card pushes the sheet into its own bounds' rubber band while the inner
-    // scroller still holds velocity, so the two fight — content scrolls up,
+    // scroller still holds velocity, so the two fight, content scrolls up,
     // the sheet bounces back down, forever (material3 1.4.0; matches the
     // known upstream reports). A nested-scroll connection is the dam that
-    // stops it — but a connection must be an ANCESTOR of the scroller it
+    // stops it, but a connection must be an ANCESTOR of the scroller it
     // guards to sit between that scroller and its parent (the sheet), and
     // this one was first chained AFTER verticalScroll on the same modifier,
     // which makes it a descendant. Leftover from the card's own scroller
@@ -144,19 +144,19 @@ fun ShareSheet(name: Name, onDismiss: () -> Unit) {
                 style = MaterialTheme.typography.titleLarge,
             )
             Spacer(Modifier.height(16.dp))
-            // The card grows to hold the complete meaning — never an ellipsis.
+            // The card grows to hold the complete meaning, never an ellipsis.
             // Long cards scroll in this preview; the export is the full card.
             Column(
                 modifier = Modifier
                     .weight(1f, fill = false)
-                    // Order here is the whole fix — see quenchUpward: the
+                    // Order here is the whole fix: see quenchUpward: the
                     // connection must wrap the scroller (be its ancestor) to
                     // catch what the scroller leaves over before the sheet
                     // ever sees it.
                     .nestedScroll(quenchUpward)
                     .verticalScroll(rememberScrollState()),
             ) {
-                // The exported image is a public artifact — render at the
+                // The exported image is a public artifact, render at the
                 // design-intended scale regardless of the reader's slider.
                 // The theme wraps the recording Box (not the other way round)
                 // so the composition settles before the draw phase records it.
@@ -200,7 +200,7 @@ fun ShareSheet(name: Name, onDismiss: () -> Unit) {
                 Text(stringResource(R.string.share_image))
             }
             // The card is the artifact, but most share contexts want the words
-            // themselves — a caption, a quote, a note — so the sheet offers the
+            // themselves (a caption, a quote, a note), so the sheet offers the
             // plain text beside the plate, set exactly as the card sets it.
             TextButton(
                 onClick = {
@@ -219,7 +219,7 @@ fun ShareSheet(name: Name, onDismiss: () -> Unit) {
 
 /**
  * The exported card: deep emerald + gold, identical to the widget/hero
- * identity, with a fine gold frame inside — like a printed plate.
+ * identity, with a fine gold frame inside: like a printed plate.
  */
 @Composable
 internal fun ShareCard(name: Name, modifier: Modifier = Modifier) {
@@ -291,17 +291,17 @@ internal fun ShareCard(name: Name, modifier: Modifier = Modifier) {
                     Spacer(Modifier.width(9.dp))
                     // The store's name, not the app's own. This image is the
                     // only surface a stranger sees, so it carries the title
-                    // they can type into Play and actually find — see the note
+                    // they can type into Play and actually find: see the note
                     // over store_title in strings.xml.
                     //
                     // Fitted, not fixed: tracked small caps at 11sp put
-                    // "THE NINETY NINE NAMES OF ALLAH" at 262dp — 18.880 em
-                    // plus 30 characters of 1.8sp tracking — against the 246dp
+                    // "THE NINETY NINE NAMES OF ALLAH" at 262dp (18.880 em
+                    // plus 30 characters of 1.8sp tracking) against the 246dp
                     // left beside the seal on a Pixel 4 (which is 393dp wide,
                     // not 411: 1080px at density 440), so it sits at 0.94 even
                     // there. The card follows the screen, so the room is always
-                    // the screen width less 147dp of chrome — 48 sheet, 20 box,
-                    // 44 inner padding, 26 seal, 9 gap — giving 213dp on a
+                    // the screen width less 147dp of chrome (48 sheet, 20 box,
+                    // 44 inner padding, 26 seal, 9 gap) giving 213dp on a
                     // 360dp phone (0.81) and 173dp on a 320dp one (0.66). A
                     // floor of 0.45 clears the last of those with room to
                     // spare, and the system-font-scale-2.0 case as well (it
@@ -328,7 +328,7 @@ private suspend fun shareNameImage(context: Context, bitmap: ImageBitmap, name: 
     val uri = withContext(Dispatchers.IO) {
         val dir = File(context.cacheDir, "shared_images").apply { mkdirs() }
         // One image at a time. Every share wrote a PNG that nothing ever
-        // deleted — one file per name per share, accumulating until the
+        // deleted; one file per name per share, accumulating until the
         // system cleared the cache. Any earlier file is dead by now: the
         // chooser that held it was either completed (stream already read)
         // or abandoned, so pruning it here is safe.
@@ -350,12 +350,12 @@ private suspend fun shareNameImage(context: Context, bitmap: ImageBitmap, name: 
 /**
  * The name as words, for the contexts a picture does not fit: the Arabic, the
  * name and epithet on one line, the full meaning, and the store title where a
- * stranger can find the app — the same hierarchy the exported card sets.
+ * stranger can find the app: the same hierarchy the exported card sets.
  */
 private fun shareNameText(context: Context, name: Name, wordmark: String): Boolean {
     val text = buildString {
         appendLine(name.arabic)
-        appendLine("${name.transliteration} — ${name.title}")
+        appendLine("${name.transliteration} · ${name.title}")
         appendLine()
         appendLine(name.meaning)
         appendLine()

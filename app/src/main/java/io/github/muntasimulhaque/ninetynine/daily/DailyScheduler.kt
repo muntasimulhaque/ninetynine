@@ -47,8 +47,8 @@ object DailyScheduler {
 
     /**
      * Every scheduling call here is guarded. These run at app
-     * start from coroutines that have no exception handler — `lifecycleScope`
-     * in MainActivity, the `applicationScope` in NamesApp — and from the UI.
+     * start from coroutines that have no exception handler (`lifecycleScope`
+     * in MainActivity, the `applicationScope` in NamesApp), and from the UI.
      * WorkManager and DataStore are both initialised lazily on a cold start, so
      * a scheduling call can hit a transient not-yet-ready race; a throw from
      * one of these would kill the process on a launch the reader just opened.
@@ -83,7 +83,7 @@ object DailyScheduler {
      *
      * CANCEL_AND_REENQUEUE, not UPDATE. UPDATE carries the old work's enqueue
      * time and period count across to the replacement, and WorkManager only
-     * honours an initial delay before the first period has completed — so
+     * honours an initial delay before the first period has completed: so
      * after the first run the delay set here is ignored and a schedule that
      * has drifted under Doze stays drifted. The people this matters to are
      * exactly the widget's audience: readers who take the day's name off the
@@ -173,7 +173,7 @@ object DailyScheduler {
      *
      * Opening the app in the seconds a worker is executing must not cancel it
      * (CANCEL_AND_REENQUEUE/REPLACE cancel a running worker, and the
-     * replacement's initial delay is ~24h out) — the same failure the
+     * replacement's initial delay is ~24h out): the same failure the
      * Application.onCreate re-anchor had, with a seconds-wide window instead
      * of an unconditional one.
      */
@@ -227,7 +227,7 @@ class WidgetUpdateWorker(context: Context, params: WorkerParameters) :
     override suspend fun doWork(): Result {
         // The render runs inside a Glance SessionWorker on the main thread,
         // and a cold-start hiccup can throw outside any guard the
-        // caller can wrap — so a throw must never kill the process. But a
+        // caller can wrap, so a throw must never kill the process. But a
         // skipped refresh is not the end of the story: this worker is the
         // widget's daily refresh, and its audience is the reader who rarely
         // opens the app at all. A transient cold-start race is exactly what
@@ -252,7 +252,7 @@ class NotificationWorker(context: Context, params: WorkerParameters) :
         // Same rule as WidgetUpdateWorker: a cold-start hiccup is a
         // skipped refresh, never a crash. The widget has its own worker
         // at 00:05, so a failed nudge here is not worth a retry of its
-        // own — the notification below is the reason this worker ran.
+        // own, the notification below is the reason this worker ran.
         try {
             DailyNameWidget().updateAll(context)
         } catch (e: CancellationException) {
@@ -269,17 +269,17 @@ class NotificationWorker(context: Context, params: WorkerParameters) :
         val name = names.firstOrNull { it.number == DailyName.numberFor(System.currentTimeMillis()) }
             ?: return Result.success()
 
-        // NEW_TASK | CLEAR_TASK, not CLEAR_TOP — the same treatment the
+        // NEW_TASK | CLEAR_TASK, not CLEAR_TOP, the same treatment the
         // widget's tap got (see DailyNameWidget): a tap onto a task that
-        // still holds a saved activity record — the ordinary morning state,
-        // after the process died overnight — brought the old task forward
+        // still holds a saved activity record (the ordinary morning state,
+        // after the process died overnight) brought the old task forward
         // and RESTORED the screen the reader last left the app on instead
         // of delivering today's Name, and MainActivity's cold-start guard
         // (which keeps a replayed original intent from force-navigating)
         // discards the fresh extra by design. Clearing the task makes every
         // notification tap a fresh launch whose extra is always honoured.
-        // The cost — a warm task's in-memory place (list scroll, open
-        // search) — is not progress: learned and bookmarked names live in
+        // The cost, a warm task's in-memory place (list scroll, open
+        // search), is not progress: learned and bookmarked names live in
         // DataStore and survive. The per-day requestCode keeps each day's
         // PendingIntent distinct, so UPDATE_CURRENT never carries a stale
         // extra between days.
@@ -294,14 +294,14 @@ class NotificationWorker(context: Context, params: WorkerParameters) :
 
         val notification = NotificationCompat.Builder(context, DailyScheduler.CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_notification)
-            // Many skins tint the small icon's backdrop circle with this —
+            // Many skins tint the small icon's backdrop circle with this,
             // the app's own emerald, so even the shade carries the identity.
             .setColor(HeroContainer.toArgb())
             // A daily invitation to read, not an alarm or a calendar event.
             .setCategory(NotificationCompat.CATEGORY_REMINDER)
             // System-font surface: use the Noto-safe form of الله (see DailyNameWidget).
             // The middle dot is the same separator the feature graphic's tagline
-            // wears — the shade's one line of typography, set rather than joined.
+            // wears, the shade's one line of typography, set rather than joined.
             .setContentTitle("${DailyNameWidget.systemFontSafeArabic(name.arabic)} · ${name.transliteration}")
             .setContentText(name.title)
             .setStyle(dailyStyle(context, name))
@@ -313,7 +313,7 @@ class NotificationWorker(context: Context, params: WorkerParameters) :
             .build()
 
         // Permission checked above; the channel is created in NamesApp.onCreate.
-        // A transient posting failure is retried with WorkManager's backoff —
+        // A transient posting failure is retried with WorkManager's backoff,
         // the daily notification is the one surface a reader who never opens
         // the app sees, so a silently skipped morning is the worst outcome.
         return try {
@@ -330,7 +330,7 @@ class NotificationWorker(context: Context, params: WorkerParameters) :
 
 /**
  * The expanded form: the emerald plate when it renders, the plain text when
- * it does not. Collapsed, the notification is unchanged either way — the
+ * it does not. Collapsed, the notification is unchanged either way: the
  * picture only appears once the reader pulls the shade down and expands it.
  *
  * With the plate up, the summary is the bare tap hint: the plate already

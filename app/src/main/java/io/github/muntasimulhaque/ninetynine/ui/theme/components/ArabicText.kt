@@ -40,7 +40,7 @@ internal val ArabicLocale = LocaleList("ar")
  * There is a rigorous fifteen-slot scale for Latin and, until this existed,
  * nothing at all for the script the book is actually about: every Arabic size
  * was a bare literal at its call site, and the app had drifted into seven
- * different Arabic-to-Latin ratios — 1.86 on the name page, 1.79 on the share
+ * different Arabic-to-Latin ratios: 1.86 on the name page, 1.79 on the share
  * card, 1.57 on a flashcard, 1.43 on the hero and quiz cards, 1.31 in the list.
  *
  * That reversed the reading order between the two most-seen screens: on a name
@@ -51,11 +51,11 @@ internal val ArabicLocale = LocaleList("ar")
  *
  * The name page's 52:24 is the reference the rest are tuned to. It is not
  * arbitrary: HAFS's body height is 0.346 em against Spectral's 0.450 x-height,
- * so at 2.17 the Arabic body sits above the Latin's cap height — the Name
+ * so at 2.17 the Arabic body sits above the Latin's cap height: the Name
  * dominates its transliteration without stranding the Latin.
  */
 object ArabicSize {
-    /** Pairs `displaySmall` on the name page — the reference pairing, 2.17x. */
+    /** Pairs `displaySmall` on the name page, the reference pairing, 2.17x. */
     val Page = 52.sp
 
     /** Pairs `displaySmall` on the share card. */
@@ -64,19 +64,19 @@ object ArabicSize {
     /** Pairs `displaySmall` on the hero, quiz and flashcard faces. */
     val Panel = 48.sp
 
-    /** The widget's roomy bucket — XTALL. */
+    /** The widget's roomy bucket, XTALL. */
     val Widget = 38.sp
 
     /** Pairs `titleMedium` in the names list, restoring a display-like ratio. */
     val Row = 30.sp
 
-    /** Pairs `titleLarge` — the basmala and other set-apart lines. */
+    /** Pairs `titleLarge`, the basmala and other set-apart lines. */
     val Line = 30.sp
 
-    /** The widget's smallest bucket — Arabic-only. */
+    /** The widget's smallest bucket, Arabic-only. */
     val Compact = 18.sp
 
-    /** Pairs `labelMedium` — the share card's small basmala. */
+    /** Pairs `labelMedium`, the share card's small basmala. */
     val Caption = 15.sp
 }
 
@@ -90,7 +90,7 @@ fun ArabicText(
     // Single-line displays need less leading than multi-line passages. 1.60
     // keeps ~6sp of headroom above the tallest shadda+fatha stack at 52sp
     // while reclaiming the empty descent air (HAFS declares a 0.586em
-    // descent zone, but naskh letters barely use it) — the Name page's
+    // descent zone, but naskh letters barely use it), the Name page's
     // perceived gap between Arabic and transliteration shrinks by ~5sp
     // without touching the spacer. Every current call site renders one
     // line; pass 1.85f if a multi-line passage is ever added.
@@ -106,7 +106,7 @@ fun ArabicText(
         fontSize = size,
         fontFamily = ArabicFamily,
         // Pinned, never inherited: ArabicFamily declares Normal only, so any
-        // heavier ambient style would make Compose synthesise the weight —
+        // heavier ambient style would make Compose synthesise the weight,
         // a fake-bold smear on a face whose licence forbids modification.
         fontWeight = FontWeight.Normal,
         textAlign = textAlign,
@@ -114,8 +114,8 @@ fun ArabicText(
         // 0.586 = 1.758 em of its own clearance, so anything below 1.7
         // shaves the line box exactly where the shadda-and-fatha stacks
         // live. Measured from the file's hhea table, not guessed: at 1.60
-        // the ascent zone (1.067em) still clears the worst stack — lam ink
-        // 0.806em plus ~0.14em of marks — with ~6sp to spare, and the
+        // the ascent zone (1.067em) still clears the worst stack (lam ink
+        // 0.806em plus ~0.14em of marks) with ~6sp to spare, and the
         // saving is all in the empty descent zone below, which is what made
         // the Arabic read as separated from its transliteration.
         lineHeight = size * lineHeightFactor,

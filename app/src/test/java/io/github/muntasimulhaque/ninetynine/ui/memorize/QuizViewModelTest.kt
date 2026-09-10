@@ -221,7 +221,7 @@ class QuizViewModelTest {
     }
 
     /**
-     * The screen renders nothing until [QuizViewModel.ready] turns — that is
+     * The screen renders nothing until [QuizViewModel.ready] turns: that is
      * what keeps a round that has not been built (empty because the build
      * runs in an effect, one frame after the first composition) from reading
      * as a failed asset read, and what keeps the question pager from ever

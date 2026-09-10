@@ -30,8 +30,8 @@ object QuizBuilder {
             .filter { it.isNotBlank() && it !in STOP_WORDS }
             .toSet()
         // A title made entirely of stop words ("The One") yields an empty set,
-        // and an empty answer set makes EVERY other title look ambiguous —
-        // {}.containsAll(other) is always true — so the fallback would offer
+        // and an empty answer set makes EVERY other title look ambiguous,
+        // {}.containsAll(other) is always true, so the fallback would offer
         // subsuming distractors ("The One Who Guides His Servants…" against
         // "The One"). Fall back to the whole title as a single token: "the
         // one" is contained by no other title's word set, so the ambiguity
@@ -40,7 +40,7 @@ object QuizBuilder {
     }
 
     /**
-     * True when one title says everything the other says and no less — "The
+     * True when one title says everything the other says and no less: "The
      * Guardian" against "The Ever-Watchful Guardian", or "The Bestower"
      * against "The Bestower of Mercy".
      *
@@ -57,7 +57,7 @@ object QuizBuilder {
     /**
      * Builds [count] multiple-choice questions: pick the correct title for a name.
      *
-     * [preferred] is asked about first when there are enough of them — the names
+     * [preferred] is asked about first when there are enough of them: the names
      * the reader has marked learned. Without it a reader who opened the quiz on
      * their first day was examined on all 99, scored two or three, and told to
      * keep at it: the least kind moment in an app whose whole register is

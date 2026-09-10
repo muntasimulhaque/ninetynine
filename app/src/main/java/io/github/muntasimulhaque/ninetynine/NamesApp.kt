@@ -20,7 +20,7 @@ class NamesApp : Application() {
         DailyScheduler.createNotificationChannel(this)
 
         // KEEP, never re-anchor. Application.onCreate runs on EVERY process
-        // start — including the one WorkManager itself begins in order to run a
+        // start, including the one WorkManager itself begins in order to run a
         // worker, because Application.onCreate completes before onStartJob. A
         // re-anchor here therefore cancelled the very work that woke the
         // process and pushed it a day out, so on a cold start the widget kept
@@ -30,7 +30,7 @@ class NamesApp : Application() {
         // and rarely opens the app.
         //
         // Re-anchoring belongs to a genuine user launch, which is what its
-        // rationale actually describes — see MainActivity.onCreate.
+        // rationale actually describes: see MainActivity.onCreate.
         DailyScheduler.ensureScheduled(this, reanchor = false)
         applicationScope.launch {
             DailyScheduler.ensureNotificationScheduled(this@NamesApp, reanchor = false)

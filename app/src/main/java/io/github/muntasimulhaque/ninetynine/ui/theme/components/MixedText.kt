@@ -26,7 +26,7 @@ private val ARABIC_RUN = Regex(
  * HAFS's body letters are already level with Spectral's x-height at matched
  * nominal sizes (measured: HAFS sxHeight 0.507em, reh ink 0.478em, beh ink
  * 0.551em against Spectral's 0.450em x-height), so no uplift is needed for
- * optical balance — 1.20 is a conventional Latin/Arabic mixing ratio that
+ * optical balance: 1.20 is a conventional Latin/Arabic mixing ratio that
  * keeps the Arabic present without dominating the line. (The earlier 1.30
  * rested on a "0.346em body height" that was itself derived from 1.30, a
  * circular argument; 1.20 also trims the line-box inflation it caused:
@@ -53,7 +53,7 @@ fun MixedText(
             ARABIC_RUN.findAll(shaped).forEach { match ->
                 // The weight must be pinned, not inherited. Both call sites
                 // that matter set a SemiBold slot, and ArabicFamily declares
-                // only Normal — so Compose's default FontSynthesis.All was
+                // only Normal, so Compose's default FontSynthesis.All was
                 // synthesising the missing weight, which on API 28+ means
                 // Typeface.create(tf, 600) and a fakeBold smear. That thickens
                 // harakat toward the base letter, and a machine-widened
@@ -63,7 +63,7 @@ fun MixedText(
                 // The size is raised because HAFS's body letters are level
                 // with Spectral's x-height at matched nominal sizes (0.507em
                 // sxHeight vs 0.450em), and 1.20 keeps the Arabic present in
-                // a run of Latin without dominating it — the name page's
+                // a run of Latin without dominating it, the name page's
                 // 2.17 is a display pairing and would shout here.
                 addStyle(
                     SpanStyle(
@@ -83,7 +83,7 @@ fun MixedText(
     // A span set larger than its line needs the line to grow with it, or the
     // enlarged Arabic collides with the line above. HAFS declares 1.758 em of
     // ascender-plus-descender, so an Arabic run at [ArabicSpanScale] needs
-    // that much of its own size — anything less shaves the harakat.
+    // that much of its own size, anything less shaves the harakat.
     val grownLineHeight = remember(style, hasArabic) {
         if (!hasArabic || !style.fontSize.isSpecified) {
             style.lineHeight

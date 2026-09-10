@@ -1,6 +1,6 @@
 <resources>
     <!-- The launch follows the reader's choice: a Dark or Black reader must
-         not be flashed cream at cold start — the one second the theme used to
+         not be flashed cream at cold start, the one second the theme used to
          be ignored. The emerald plate and gold mark are the identity and stay;
          only the paper around them turns to night paper. Light status-bar
          icons on the near-black, mirroring the day theme's dark-on-cream. -->

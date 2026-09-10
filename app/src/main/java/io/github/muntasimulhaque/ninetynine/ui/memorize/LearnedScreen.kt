@@ -42,8 +42,8 @@ import io.github.muntasimulhaque.ninetynine.ui.theme.components.paperTopBarColor
  *
  * Memorize showed the count as a large, beautiful and completely inert number:
  * there was no way anywhere in the app to see *which* names it stood for,
- * short of scrolling all 99 looking for gold ticks. Bookmarks — the newer and
- * lighter of the two axes — had a whole tab. This is the same list in the same
+ * short of scrolling all 99 looking for gold ticks. Bookmarks (the newer and
+ * lighter of the two axes) had a whole tab. This is the same list in the same
  * rows, so a statistic becomes somewhere to go.
  */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -68,7 +68,7 @@ fun LearnedScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                // Chrome joins the book's column like every other top bar —
+                // Chrome joins the book's column like every other top bar,
                 // this was the one of nine call-sites left outside it.
                 modifier = Modifier.barMeasure(),
                 colors = paperTopBarColors(),
@@ -92,7 +92,7 @@ fun LearnedScreen(
                 state = listState,
                 contentPadding = PaddingValues(
                     top = padding.calculateTopPadding(),
-                    // Floating bar: the last rows must clear the plate — the
+                    // Floating bar: the last rows must clear the plate, the
                     // bar's measured height plus a little air.
                     bottom = padding.calculateBottomPadding() +
                         LocalBottomBarOverlay.current + 16.dp,

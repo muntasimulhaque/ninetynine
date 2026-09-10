@@ -122,7 +122,7 @@ fun HomeScreen(
 
     // The daily name rolls over at local midnight. The recompute runs once a
     // minute while the screen is resumed, and repeatOnLifecycle re-enters the
-    // block on the way back to the foreground — so the hero card never shows
+    // block on the way back to the foreground, so the hero card never shows
     // yesterday's name after the widget has already turned, while a phone
     // left sitting on Home in the background is not woken every minute to
     // update a card nobody is looking at.
@@ -140,14 +140,14 @@ fun HomeScreen(
     val dailyName = remember(names, dailyNumber) { names.firstOrNull { it.number == dailyNumber } }
 
     // Search is a place in the bar: a magnifier swaps the running head for a
-    // field wherever the reader already is — mid-list after an upward pull,
+    // field wherever the reader already is, mid-list after an upward pull,
     // not only at the head of the content. The plate this replaces scrolled
     // WITH the list, so from row sixty there was no path to search except
     // scrolling all the way home.
     //
     // Openness survives process death (rememberSaveable) and it re-derives
     // from a live query: returning to this tab with results showing must find
-    // the field open — a filtered list without its visible field would be a
+    // the field open, a filtered list without its visible field would be a
     // lie about where those rows came from.
     var searchOpen by rememberSaveable { mutableStateOf(false) }
     val focusManager = LocalFocusManager.current
@@ -159,7 +159,7 @@ fun HomeScreen(
     // press while there are layers to step out of: with text typed, Back
     // clears it (the ✕'s job, for a thumb still resting on the gesture);
     // with the field empty, Back leaves search. Only past both does Back do
-    // what it has always done on a top-level tab — leave the app. So a
+    // what it has always done on a top-level tab, leave the app. So a
     // reader mid-search can never be ejected by the gesture that everywhere
     // else retreats, and nothing outside search changed at all.
     //
@@ -170,7 +170,7 @@ fun HomeScreen(
         PredictiveBackHandler { events ->
             // The unwinding work happens on the gesture's COMMIT (the flow
             // completes); a release before commit cancels the collection and
-            // search stays exactly as it was. Progress events are unused —
+            // search stays exactly as it was. Progress events are unused,
             // search has no preview of its own to morph.
             try {
                 events.collect { }
@@ -191,14 +191,14 @@ fun HomeScreen(
 
     // The bar must never stay tucked when the list itself has come home.
     // Re-tapping NAMES animates item 0 back into view, but the enter-always
-    // offset survived the journey — landing at the head with no bar left the
+    // offset survived the journey, landing at the head with no bar left the
     // reader staring at the hero card believing they were short of the top.
     // Arrival at item 0 (the re-tap, or a reader who flung back themselves)
     // reveals the chrome beside it.
     //
     // Edge-triggered deliberately: parked AT the top, the index stays 0
     // through the first upward push while the enter-always connection hides
-    // the bar before the list even moves — a continuous watch would snap it
+    // the bar before the list even moves, a continuous watch would snap it
     // straight back and the bar would never tuck. Only a false→true arrival
     // fires; who caused it (tab re-tap or a hand) is irrelevant.
     var wasAtTop by remember { mutableStateOf(true) }
@@ -224,14 +224,14 @@ fun HomeScreen(
                     // both cross-fading on the house QUICK fade so the two
                     // slots read as one switch rather than two movements.
                     //
-                    // Home is the book's title page — with only the
+                    // Home is the book's title page, with only the
                     // magnifier beside it (or, searching, none) its title
                     // keeps the full headlineSmall register (sizeScale 1f)
                     // where the other tabs run quieter heads. Settings joined
                     // the bottom bar (1.18), so the corner the gear once took
                     // is freed and FitText renders the title larger in it; it
                     // still holds inside the narrower space the magnifier
-                    // costs. 0.25f floor: see TabTitle — the app's own name
+                    // costs. 0.25f floor: see TabTitle, the app's own name
                     // must survive the narrowest bar at the largest scales.
                     Crossfade(
                         targetState = searchOpen,
@@ -254,7 +254,7 @@ fun HomeScreen(
                 },
                 actions = {
                     // The two arms of the switch share the actions edge so the
-                    // magnifier's position becomes the close button's — the
+                    // magnifier's position becomes the close button's, the
                     // thumb learns one corner of the screen.
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         AnimatedVisibility(
@@ -298,7 +298,7 @@ fun HomeScreen(
             start = 0.dp,
             end = 0.dp,
             top = padding.calculateTopPadding(),
-            // Clears the floating plate plus its margins — the bar's measured
+            // Clears the floating plate plus its margins, the bar's measured
             // height (it follows font scale and the device's navigation mode)
             // plus a little air; the scrim needs none for the list itself.
             bottom = padding.calculateBottomPadding() +
@@ -317,7 +317,7 @@ fun HomeScreen(
                 // enabled app-wide, so the inset must be consumed here.
                 .imePadding()
                 // Scrolling away from the top retracts the keyboard with the
-                // drag, and scrolling back re-shows it — the IME becomes part
+                // drag, and scrolling back re-shows it, the IME becomes part
                 // of the scroll instead of a wall above the results.
                 .imeNestedScroll()
                 .wrapContentWidth(Alignment.CenterHorizontally)
@@ -334,7 +334,7 @@ fun HomeScreen(
                     // a pushed screen arrives. Motion.spec, not tween: a
                     // transitionSpec is not a composable context, so the
                     // scale-aware specs build from the hoisted scale exactly
-                    // like the NavHost's do. The card itself is simply there —
+                    // like the NavHost's do. The card itself is simply there,
                     // no entrance of its own; motion belongs to changes of
                     // meaning, not to first frames.
                     item {
@@ -417,14 +417,14 @@ fun HomeScreen(
  * The bar's search field, standing where the running head stood.
  *
  * One quiet input set in the app's own ink: no plate, no chrome of its
- * own — the bar is the field while search is open, the way a system app's
+ * own: the bar is the field while search is open, the way a system app's
  * toolbar simply becomes what it is doing. Typing filters the list beneath
  * live through the shared ViewModel query; the query persists until cleared,
  * whether by Back (one layer per press, see [HomeScreen]'s handler), by the
  * corner ✕, or by an empty result page offering "Clear search".
  *
  * The hint rides on the field only while it is empty, and serves as its
- * accessible label in that state — no separate contentDescription: set
+ * accessible label in that state: no separate contentDescription: set
  * unconditionally it would replace the field's text, and a screen reader
  * would never read the query back.
  */
@@ -458,7 +458,7 @@ private fun HomeSearchField(
                 .weight(1f)
                 // The field's own box is one text line (~24dp); without this
                 // the app's only search entry point offers a sub-48dp target
-                // to fingers and TalkBack alike. The bar slot is already tall —
+                // to fingers and TalkBack alike. The bar slot is already tall,
                 // this hands that height to the control.
                 .heightIn(min = 48.dp)
                 .focusRequester(focusRequester),
@@ -469,7 +469,7 @@ private fun HomeSearchField(
             singleLine = true,
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
             // Filtering is live, so the action key's only job
-            // is to dismiss the keyboard — it must not be dead.
+            // is to dismiss the keyboard; it must not be dead.
             keyboardActions = KeyboardActions(onSearch = { focusManager.clearFocus() }),
             decorationBox = { inner ->
                 Box(contentAlignment = Alignment.CenterStart) {
@@ -489,7 +489,7 @@ private fun HomeSearchField(
 
 @Composable
 private fun DailyHeroCard(name: Name, onClick: () -> Unit) {
-    // The card yields slightly under the finger — paper, not glass.
+    // The card yields slightly under the finger, paper, not glass.
     val interaction = remember { MutableInteractionSource() }
     val pressed by interaction.collectIsPressedAsState()
     val scale by animateFloatAsState(
@@ -498,8 +498,8 @@ private fun DailyHeroCard(name: Name, onClick: () -> Unit) {
         label = "heroPress",
     )
     // clickable on the modifier rather than Card(onClick): M3's clickable card
-    // takes no onClickLabel, and its content — a Name, an epithet, some Arabic
-    // — never says what tapping it does. This way TalkBack offers "Open
+    // takes no onClickLabel, and its content (a Name, an epithet, some Arabic)
+    // never says what tapping it does. This way TalkBack offers "Open
     // today's name" instead of its bare "double-tap to activate", exactly as
     // the list rows already do. The card's own press ripple is preserved by
     // feeding clickable the same interaction source the scale animation reads.
@@ -544,8 +544,8 @@ private fun DailyHeroCard(name: Name, onClick: () -> Unit) {
             )
             Spacer(Modifier.height(6.dp))
             // The name is a proper noun and gets set whole. Left to wrap, a
-            // long one at a large font scale breaks mid-word — "Al-Wa / asi'"
-            // — which is the one thing the app is careful never to do.
+            // long one at a large font scale breaks mid-word ("Al-Wa / asi'")
+            // which is the one thing the app is careful never to do.
             FitText(
                 text = name.transliteration,
                 style = MaterialTheme.typography.displaySmall.copy(
@@ -557,7 +557,7 @@ private fun DailyHeroCard(name: Name, onClick: () -> Unit) {
             Spacer(Modifier.height(2.dp))
             // Three lines: the hero and the notification's plate below both
             // wrap the epithet to at most three. On one line this cut the
-            // meaning of the day in half — several of the 99 epithets do not
+            // meaning of the day in half, several of the 99 epithets do not
             // fit a phone at default size, so roughly one morning in eight the
             // app opened on "The Perfect Lord And Master Upon Whom Th…". The
             // card has the height to spare, and only the longest handful of

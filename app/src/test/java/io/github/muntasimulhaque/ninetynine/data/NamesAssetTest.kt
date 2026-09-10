@@ -12,8 +12,8 @@ import java.text.Normalizer
  * Guards the one file the whole app is made of.
  *
  * Every other test runs against fixtures. `assets/names.json` itself was
- * unguarded: a bad edit — a dropped entry, a duplicated number, a letter the
- * bundled Mushaf font has no glyph for — would sail through a green build and
+ * unguarded: a bad edit (a dropped entry, a duplicated number, a letter the
+ * bundled Mushaf font has no glyph for) would sail through a green build and
  * only show up on somebody's phone. It is also the file most likely to change,
  * being where another language would land.
  *
@@ -72,7 +72,7 @@ class NamesAssetTest {
     /**
      * Every Arabic character must be one the bundled typeface can actually
      * draw. KFGQPC Uthmanic HAFS has no precomposed U+0622, which is why
-     * `ArabicText.forArabicFont()` decomposes it — so that one is allowed here
+     * `ArabicText.forArabicFont()` decomposes it: so that one is allowed here
      * and everything else must have a real glyph. Catches a new name, or a new
      * translation, that quietly renders as an empty box.
      */
@@ -89,7 +89,7 @@ class NamesAssetTest {
 
     /**
      * The app no longer renders the short meaning (title) on the surfaces
-     * that show the full meaning — the detail page, the share card and the
+     * that show the full meaning: the detail page, the share card and the
      * flashcard back all rely on `meaning` itself opening with the title
      * clause. A future edit that drops the clause silently removes the
      * epithet from all three surfaces with a green build.

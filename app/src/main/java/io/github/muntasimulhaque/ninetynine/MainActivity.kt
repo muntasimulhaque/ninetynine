@@ -116,11 +116,11 @@ class MainActivity : ComponentActivity() {
 
     /**
      * False until the stored theme and text scale have been read from
-     * DataStore (bounded — see [THEME_SETTLE_TIMEOUT_MILLIS]). The splash
+     * DataStore (bounded: see [THEME_SETTLE_TIMEOUT_MILLIS]). The splash
      * holds past the first frame until this turns true. Without it, the
      * flows' defaults (SYSTEM / 1.0) compose the first frame while DataStore
      * is still reading, and a DARK or BLACK reader on a light system saw the
-     * app flash light before its real theme landed — a wrong-theme frame
+     * app flash light before its real theme landed: a wrong-theme frame
      * committed in the open. With the gate, the first frame the reader sees
      * is the theme they chose.
      */
@@ -138,7 +138,7 @@ class MainActivity : ComponentActivity() {
     private var widgetNudgeDay: Int = Int.MIN_VALUE
 
     /**
-     * The one-time ask for POST_NOTIFICATIONS. Registered at construction —
+     * The one-time ask for POST_NOTIFICATIONS. Registered at construction:
      * the contract requires that to happen before the activity is STARTED.
      * The reminder itself is on by default (see [maybeAskForNotifications]);
      * a denial writes the pref off, so the Settings switch, the scheduler and
@@ -155,13 +155,13 @@ class MainActivity : ComponentActivity() {
         // Hold the system splash until the app's first frame is committed
         // AND the stored theme has landed (see [themeSettled]). Without
         // this, a slow device can dismiss the splash a frame or two
-        // before Compose draws — a flash of bare window background between
-        // splash and app — and without the theme gate, the first committed
+        // before Compose draws (a flash of bare window background between
+        // splash and app), and without the theme gate, the first committed
         // frame is the flows' defaults, not the reader's choice. The
         // condition is polled every frame on the main
         // thread, so plain booleans are enough; SideEffect fires exactly when
         // the first composition has been applied, and the settle flag turns
-        // when DataStore's first values arrive — the splash releases onto a
+        // when DataStore's first values arrive, the splash releases onto a
         // frame already in the reader's theme.
         splashScreen.setKeepOnScreenCondition { !contentReady || !themeSettled }
         super.onCreate(savedInstanceState)
@@ -171,7 +171,7 @@ class MainActivity : ComponentActivity() {
         // normally answers within a few milliseconds of the first read, and
         // the ViewModel's Eagerly flows share the same store, so this wait
         // and the first real values arrive together. The bound keeps a
-        // pathological store from holding the splash for ever — past the
+        // pathological store from holding the splash for ever, past the
         // timeout the defaults compose, exactly as before this gate existed.
         lifecycleScope.launch {
             withTimeoutOrNull(THEME_SETTLE_TIMEOUT_MILLIS) {
@@ -185,7 +185,7 @@ class MainActivity : ComponentActivity() {
         // Re-anchor here, not in Application.onCreate. This runs only when a
         // person actually opens the app, so it cannot cancel a worker that
         // WorkManager just started the process to run. Doze deferrals still get
-        // corrected — every launch pins both schedules back to their times.
+        // corrected; every launch pins both schedules back to their times.
         // The running-check keeps even the seconds-wide window from cancelling
         // a worker that is mid-run at the instant the app opens.
         lifecycleScope.launch { DailyScheduler.reanchorSchedules(this@MainActivity) }
@@ -224,7 +224,7 @@ class MainActivity : ComponentActivity() {
     /**
      * The home screen recomputes the daily name on every resume; the widget
      * only refreshes when its worker runs. Nudging it here keeps the two
-     * surfaces from showing different names after midnight — gated to a real
+     * surfaces from showing different names after midnight: gated to a real
      * day change, so an ordinary return to the app costs no render (see
      * [widgetNudgeDay]).
      */
@@ -253,11 +253,11 @@ class MainActivity : ComponentActivity() {
      * of these hold:
      *
      * - API 33+: below that there is no runtime permission to ask for, and
-     *   the reminder simply works — the platform's own default for every
+     *   the reminder simply works: the platform's own default for every
      *   installed app.
      * - the permission is not already granted (via system settings or a
      *   restore).
-     * - it has never been asked before, on any launch — the flag is written
+     * - it has never been asked before, on any launch: the flag is written
      *   before the dialog opens, so a process death mid-dialog never nags.
      * - the reminder is actually wanted: a reader whose pref says off
      *   (toggled off, or a denial from an earlier ask) is never asked.
@@ -355,12 +355,12 @@ private data class TopLevelRoute(
  * Four destinations: read the names, practise them, keep the ones you turn to,
  * and set the book. Settings joined the bar as a full tab (owner decision,
  * 1.18), taking the rightmost, quietest slot; the corner gear every bar
- * carried is gone, so the top bars hold content only — Home's title renders
+ * carried is gone, so the top bars hold content only: Home's title renders
  * larger in the freed corner, still fitted by FitText. The labels went mixed
  * case with the two-voice register (owner decision, 1.22), which also
  * softened the measured cost the owner accepted in 1.18: at a 2.0 system
  * font scale on a 320dp phone the longest label ("Bookmarks") renders at
- * FitText scale ~0.69 — caps measured ~0.49 — above the 0.40 floor and
+ * FitText scale ~0.69 (caps measured ~0.49) above the 0.40 floor and
  * never clipping; at the default scale on every phone all four labels
  * render whole.
  */
@@ -389,7 +389,7 @@ private fun App(
         val showBottomBar = currentRoute in topLevelRoutes.map { it.route }
 
         // The floating bar overlays the lists (scroll-under), so the screens
-        // grow their bottom content padding by the bar's occupied height —
+        // grow their bottom content padding by the bar's occupied height,
         // measured, not guessed: the bar's own height follows the system font
         // scale and the gesture strip follows the device's navigation mode
         // (24dp gesture, 48dp three-button), so no constant fits every
@@ -404,7 +404,7 @@ private fun App(
         // used to be to fling through 79 rows; there is no fast-scroller, by
         // an earlier and correct decision. The contract is one contract, so
         // every tab answers it: the two lazy lists hoist their LazyListState,
-        // and the two scroll-driven tabs (Memorize, Settings — Columns that
+        // and the two scroll-driven tabs (Memorize, Settings, Columns that
         // do scroll at large font scales and on short phones) hoist their
         // ScrollState the same way. All hoisted here so the bar can reach
         // them.
@@ -416,8 +416,8 @@ private fun App(
         LaunchedEffect(startNumber) {
             if (startNumber in 1..99) {
                 onStartNumberConsumed()
-                // Without this, tapping the widget on successive mornings —
-                // without pressing Back in between — stacks a name page on top
+                // Without this, tapping the widget on successive mornings
+                // (without pressing Back in between) stacks a name page on top
                 // of a name page, and Back then lands on an identical screen.
                 navController.navigate("detail/$startNumber") { launchSingleTop = true }
             }
@@ -457,7 +457,7 @@ private fun App(
             val motionScale = LocalMotionScale.current
             // The provider MUST reach the screens: scoped to the bar alone it
             // tells them nothing, and the last rows then sit behind the plate
-            // (shipped that way once — 1.15/1.16 hid name 99 behind the bar).
+            // (shipped that way once, 1.15/1.16 hid name 99 behind the bar).
             CompositionLocalProvider(
                 LocalBottomBarOverlay provides if (showBottomBar) bottomBarClearance else 0.dp,
             ) {
@@ -486,7 +486,7 @@ private fun App(
                     }
                     // The scope says which list the reader arrived from, and so
                     // which list the chevrons walk. Optional, so every existing
-                    // entry point — the names list, the widget, the notification —
+                    // entry point (the names list, the widget, the notification)
                     // keeps landing on all 99 without saying anything.
                     composable(
                         "detail/{number}?scope={scope}",
@@ -601,7 +601,7 @@ private fun App(
     }
 }
 
-/** Tab switches crossfade — only pushed detail screens use the rising motion. */
+/** Tab switches crossfade, only pushed detail screens use the rising motion. */
 private fun tabFade(motionScale: Float):
     (androidx.compose.animation.AnimatedContentTransitionScope<androidx.navigation.NavBackStackEntry>.() ->
     androidx.compose.animation.EnterTransition?) = {
@@ -616,7 +616,7 @@ private fun tabFadeOut(motionScale: Float):
 
 /**
  * The bottom bar's vessel: the four tabs themselves ([BottomBarTabs]) inside
- * the floating, scroll-under plate — [FloatingBar]'s capsule, halo and
+ * the floating, scroll-under plate: [FloatingBar]'s capsule, halo and
  * transparent gesture strip (shared with the name page's capsule, in
  * PageParts).
  */
@@ -637,7 +637,7 @@ private fun QuietBottomBar(
  * The three tabs, shared verbatim between the two vessels. The Row's own
  * modifier is the group semantics plus the padding the vessels agree on;
  * [barMeasure] keeps the page's column cap so screens may keep sizing against
- * the bar — the vessel above it owns the inset, the plate and the
+ * the bar: the vessel above it owns the inset, the plate and the
  * gesture-strip spacing.
  */
 @Composable
@@ -675,7 +675,7 @@ private fun BottomBarTabs(
                     // A tap's highlight wears the bar's own capsule register:
                     // the selectable's ripple is bounded to the tab's
                     // rectangle, and this clip crops it to a stadium before it
-                    // flashes — nothing on a tab reaches the corners, so the
+                    // flashes, nothing on a tab reaches the corners, so the
                     // clip costs no content. Same 50% corner as the plate.
                     .clip(RoundedCornerShape(50))
                     .selectable(
@@ -708,7 +708,7 @@ private fun BottomBarTabs(
                                         // delegates to animateScrollBy passing its
                                         // own completion straight through, so a
                                         // real animation delivers a Float to a
-                                        // Unit-expecting frame — ClassCastException,
+                                        // Unit-expecting frame, ClassCastException,
                                         // app killed (shipped 1.19: re-tapping
                                         // Memorize or Settings here crashed on
                                         // some devices). The Float-typed pair
@@ -734,7 +734,7 @@ private fun BottomBarTabs(
                 Icon(
                     // Shape carries selection beside colour and weight:
                     // the chosen tab's glyph fills, the resting ones
-                    // stand open — Google's own bar grammar, still no
+                    // stand open, Google's own bar grammar, still no
                     // pill and no motion. Greyscale screens and the
                     // ~8% who cannot trust hue get a third channel.
                     if (selected) item.icon else item.iconResting,
@@ -744,7 +744,7 @@ private fun BottomBarTabs(
                 )
                 Spacer(Modifier.height(3.dp))
                 // Chrome, not reading matter: the reader's slider
-                // cannot move it — 9sp × the device factor only —
+                // cannot move it (9sp × the device factor only)
                 // so it can never clip. The device factor DOES
                 // apply: a 7-inch bar gives each tab 200dp and a
                 // 10-inch 427dp, room enough for the wider labels,
@@ -752,20 +752,20 @@ private fun BottomBarTabs(
                 // does still apply, so the labels fit themselves
                 // rather than ellipsizing to "MEM…".
                 //
-                // Mixed case — the chrome-you-tap voice of the two-voice
+                // Mixed case, the chrome-you-tap voice of the two-voice
                 // register (owner decision, 1.22); tracked caps stay with
                 // the overlines. "Bookmarks" is the longest label the bar
-                // carries — 5.178 em in Spectral SemiBold (the selected
+                // carries, 5.178 em in Spectral SemiBold (the selected
                 // weight, the wider one), so 93.2dp of ink at a system
-                // font scale of 2.0, plus 8 tracking gaps × 0.5sp = 8dp
-                // — ~101dp, against Memorize's ~90dp. At four tabs a
+                // font scale of 2.0, plus 8 tracking gaps × 0.5sp = 8dp,
+                // ~101dp, against Memorize's ~90dp. At four tabs a
                 // 320dp phone gives each one 70.0dp, so the worst case
-                // is ~0.69 — and the 0.40 floor is never approached. At
+                // is ~0.69, and the 0.40 floor is never approached. At
                 // the default font scale every phone, down to 320dp,
                 // renders all four labels whole. On the 7-inch class
                 // the labels start 1.125× wider and the tab slots are
                 // 200dp; on the 10-inch class 1.25× wider against
-                // 427dp — the room grows faster than the ink on every
+                // 427dp, the room grows faster than the ink on every
                 // device the bar serves.
                 //
                 // That worst case is the measured cost the owner
@@ -775,7 +775,7 @@ private fun BottomBarTabs(
                 // well as colour.
                 // Colour alone failed WCAG 1.4.1: primary against
                 // onSurfaceVariant is 1.22:1 in light and 1.20:1 in
-                // dark — the two differ almost purely in hue, so a
+                // dark, the two differ almost purely in hue, so a
                 // deuteranope or protanope (~8% of men), a greyscale
                 // screen or a high-contrast mode could not tell which
                 // tab was active at all.
@@ -785,7 +785,7 @@ private fun BottomBarTabs(
                     color = tint,
                     // The gutter is what keeps four labels four labels. FitText
                     // shrinks a label into its own slot, and at a 2.0 system
-                    // font scale "Bookmarks" fills that slot edge to edge —
+                    // font scale "Bookmarks" fills that slot edge to edge,
                     // two 2dp paddings then left the row reading "Memorize
                     // Bookmarks Settings" as one run of words. 6dp a side
                     // (12dp between neighbours) is a gutter the eye can find

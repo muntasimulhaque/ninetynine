@@ -40,7 +40,7 @@ import io.github.muntasimulhaque.ninetynine.ui.theme.components.paperTopBarColor
 /**
  * The names the reader has kept.
  *
- * Set exactly like the names list — same rows, same divider, same indent — so a
+ * Set exactly like the names list (same rows, same divider, same indent), so a
  * name looks the same wherever it is met. There is no search here and no count:
  * a kept list is short by its nature, and unlike memorization it has no total to
  * be measured against.
@@ -89,7 +89,7 @@ fun BookmarksScreen(
                 state = listState,
                 contentPadding = PaddingValues(
                     top = padding.calculateTopPadding(),
-                    // Floating bar: the last rows must clear the plate — the
+                    // Floating bar: the last rows must clear the plate, the
                     // bar's measured height plus a little air.
                     bottom = padding.calculateBottomPadding() +
                         LocalBottomBarOverlay.current + 16.dp,
@@ -99,7 +99,7 @@ fun BookmarksScreen(
                 if (kept.isEmpty() && bookmarkedLoaded && namesLoaded) {
                     // Which emptiness this is matters. Saying "nothing kept yet"
                     // when the asset failed to read tells the reader their kept
-                    // names are gone, which is false and alarming — the names
+                    // names are gone, which is false and alarming, the names
                     // simply could not be loaded at all.
                     if (namesLoaded && names.isEmpty()) {
                         item { PageMessage(stringResource(R.string.names_unavailable)) }
@@ -107,7 +107,7 @@ fun BookmarksScreen(
                         item(key = "empty") {
                             // Centred in the viewport: an empty shelf is the whole
                             // content of the screen while it lasts. And an empty
-                            // screen that can act should act — the way to start
+                            // screen that can act should act, the way to start
                             // keeping names is one tap away, so the state offers it.
                             Box(
                                 modifier = Modifier.fillParentMaxSize(),
@@ -140,7 +140,7 @@ fun BookmarksScreen(
                 listState = listState,
                 modifier = Modifier
                     .align(Alignment.TopEnd)
-                    // Track ends above the floating plate — see HomeScreen.
+                    // Track ends above the floating plate: see HomeScreen.
                     .padding(
                         top = padding.calculateTopPadding() + 8.dp,
                         bottom = 16.dp + LocalBottomBarOverlay.current,

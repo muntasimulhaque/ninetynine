@@ -1,4 +1,4 @@
-# Privacy Policy — Ninety Nine
+# Privacy Policy: Ninety Nine
 
 Effective date: 1 August 2026
 
@@ -7,13 +7,13 @@ This app collects no data. Period.
 - No personal information is collected, stored, or transmitted.
 - No analytics, advertising, or tracking SDKs are included.
 - **The app has no INTERNET permission.** It cannot open a network connection
-  at all — not to the developer, not to anyone.
+  at all, not to the developer, not to anyone.
 - The optional daily notification is generated locally on your device.
 
 **About the permission list.** If you inspect the app you will see five
 permissions rather than one. `POST_NOTIFICATIONS` is the app's own, and it is
-only used if you turn the daily name on. The other four — `WAKE_LOCK`,
-`ACCESS_NETWORK_STATE`, `RECEIVE_BOOT_COMPLETED` and `FOREGROUND_SERVICE` —
+only used if you turn the daily name on. The other four (`WAKE_LOCK`,
+`ACCESS_NETWORK_STATE`, `RECEIVE_BOOT_COMPLETED` and `FOREGROUND_SERVICE`)
 come from Android's own WorkManager library, which is what schedules the daily
 reminder and survives a reboot. A sixth, signature-level permission named
 `DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION`, is added automatically by AndroidX;
@@ -24,7 +24,7 @@ not have.
 
 **On your device.** Your learned-names progress, your bookmarked names, theme,
 text size, notification time, best quiz score and practice settings are kept in
-the app's own storage. The app never sends them anywhere — it has no INTERNET
+the app's own storage. The app never sends them anywhere; it has no INTERNET
 permission, so it cannot.
 
 **Android's backup.** If you have Android's system backup switched on, Android

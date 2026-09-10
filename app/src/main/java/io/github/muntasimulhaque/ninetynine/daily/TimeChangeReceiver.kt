@@ -9,7 +9,7 @@ import androidx.work.WorkManager
 
 /**
  * The daily name rolls over at local midnight (DailyName.numberFor), so a
- * timezone or DST change shifts what "today" means mid-flight — and this
+ * timezone or DST change shifts what "today" means mid-flight: and this
  * app's audience is exactly the traveller: the reader who takes the name
  * off the home screen and rarely opens the app. Without this receiver the
  * widget would show yesterday's name until the next worker run or app open.
@@ -31,12 +31,12 @@ class TimeChangeReceiver : BroadcastReceiver() {
         // Enqueue an immediate one-time widget update via WorkManager.
         // WorkManager persists the request to its database, so even if the
         // process is killed after this receiver returns, the update will
-        // execute when the process restarts — unlike goAsync() which has a
+        // execute when the process restarts, unlike goAsync() which has a
         // 10-second lease and no persistence across process death.
         //
         // Guarded, like every other scheduler call site: WorkManager
         // initialises lazily, and a transient init race throwing from inside
-        // onReceive would kill the process mid-broadcast — at exactly the
+        // onReceive would kill the process mid-broadcast, at exactly the
         // moments (clock change, app update) a refresh is least affordable.
         // A skipped refresh retries on the next worker run; a crash does not.
         val request = OneTimeWorkRequestBuilder<WidgetUpdateWorker>()

@@ -13,7 +13,7 @@ object DailyName {
         // floorDiv, not /: plain division truncates toward zero, so for a
         // (hypothetical) pre-epoch instant the day count would skip a day.
         // floorDiv always rounds down, making the day count correct for
-        // every representable instant. floorMod pairs with it — % is a
+        // every representable instant. floorMod pairs with it, % is a
         // remainder, so a negative day would otherwise map to a negative
         // slot and wrap to the wrong name.
         val localDays = Math.floorDiv(nowMillis + timeZone.getOffset(nowMillis), DAY_MILLIS)

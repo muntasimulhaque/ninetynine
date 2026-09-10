@@ -1,4 +1,4 @@
-# Play Store listing — copy these in
+# Play Store listing: copy these in
 
 Updated each release (version field and What's-new notes included). Everything
 below is ready to paste into the Play Console. The **app name is exactly 30 characters** (Play's limit),
@@ -10,7 +10,7 @@ so do not add a word or a stray space.
 
 - **Application ID (package name):** `io.github.muntasimulhaque.ninetynine`
 - **Privacy policy URL:** `https://muntasimulhaque.github.io/ninetynine/privacy-policy.html`
-- **Version (this release):** versionName `1.30`, versionCode `40`
+- **Version (this release):** versionName `1.31`, versionCode `41`
 
 ---
 
@@ -20,24 +20,24 @@ so do not add a word or a stray space.
 The Ninety Nine Names of Allah
 ```
 
-## Short description (≤ 80 characters — 69 here)
+## Short description (≤ 80 characters: 69 here)
 
 ```
-Memorize the 99 Names — Asma ul Husna — offline. No ads, no tracking.
+Memorize the 99 Names (Asma ul Husna) offline. No ads, no tracking.
 ```
 
 ## Full description
 
 ```
-Meet the ninety-nine Names of Allah, one every morning — in the Arabic of the Madinah Mushaf, with the meaning in plain English.
+Meet the ninety-nine Names of Allah, one every morning, in the Arabic of the Madinah Mushaf, with the meaning in plain English.
 
 Open the app and today's Name is already on the page. Tomorrow it is the next one. In ninety-nine days you have met them all, and you decided almost nothing: the app does the choosing and the counting.
 
-Nothing here arrives over a network. All ninety-nine Names, both typefaces and every meaning live inside the app, and the app asks Android for no Internet permission at all — so it cannot send anything anywhere, not your progress, not a crash report. Airplane mode changes nothing: every screen still works.
+Nothing here arrives over a network. All ninety-nine Names, both typefaces and every meaning live inside the app, and the app asks Android for no Internet permission at all, so it cannot send anything anywhere, not your progress, not a crash report. Airplane mode changes nothing: every screen still works.
 
 WHAT IS IN IT
 
-Each Name is fully vocalized Arabic set in KFGQPC Uthmanic Script HAFS, the typeface of the Madinah Mushaf published by the King Fahd Glorious Quran Printing Complex, with its transliteration and its meaning drawn from the lecture of Sheikh Ibn Uthaymeen (Rahimahullah). Where a distinction needs care, the note is there — three of the 99 carry one, among them the difference between Ar-Rahmaan and Ar-Raheem.
+Each Name is fully vocalized Arabic set in KFGQPC Uthmanic Script HAFS, the typeface of the Madinah Mushaf published by the King Fahd Glorious Quran Printing Complex, with its transliteration and its meaning drawn from the lecture of Sheikh Ibn Uthaymeen (Rahimahullah). Where a distinction needs care, the note is there, three of the 99 carry one, among them the difference between Ar-Rahmaan and Ar-Raheem.
 
 READING
 
@@ -57,7 +57,7 @@ Your progress is a count of the Names you have marked as learned, and nothing el
 
 SEARCHING
 
-A name, a word from a meaning, a note, or a number. Spelling is forgiven — Qayyum finds Al-Qayyoom — and a match is shown in the row that earned it, so you can see why the list answered.
+A name, a word from a meaning, a note, or a number. Spelling is forgiven (Qayyum finds Al-Qayyoom), and a match is shown in the row that earned it, so you can see why the list answered.
 
 SHARING
 
@@ -65,13 +65,19 @@ Any Name can leave as a card with the Arabic, the name and the meaning on it, or
 
 TYPE AND THEMES
 
-Light, dark and true-black (AMOLED) themes, and a text size you set yourself — the Arabic grows with the English, so both stay comfortable together.
+Light, dark and true-black (AMOLED) themes, and a text size you set yourself, the Arabic grows with the English, so both stay comfortable together.
 
 FREE, AND PRIVATE
 
-No ads. No accounts. No in-app purchases. No analytics, no tracking, no third party libraries. Plenty of apps that call themselves private mean they promise not to look; this one cannot look — it has no way to reach the network at all. The code is open source under the MIT license, so anyone can read exactly what it does.
+No ads. No accounts. No in-app purchases. No analytics, no tracking, no third party libraries. Plenty of apps that call themselves private mean they promise not to look; this one cannot look; it has no way to reach the network at all. The code is open source under the MIT license, so anyone can read exactly what it does.
 
 May Allah make us among those who learn, memorize, understand and act upon His beautiful Names.
+```
+
+## What's new (version 1.31)
+
+```
+Typesetting and wording refinements throughout: the app's sentences now use ordinary punctuation (commas, colons, semicolons, parentheses) in place of long dashes, in the interface, the introduction and the listing copy.
 ```
 
 ## What's new (version 1.30)
@@ -95,13 +101,13 @@ Fixed: tapping the Name of the Day notification could open the page you had last
 ## What's new (version 1.28)
 
 ```
-Fixed: tapping the home-screen widget could open the wrong Name — the page you had last left the app on — instead of the Name of the Day shown on the widget. Tapping the widget now always opens that day's Name.
+Fixed: tapping the home-screen widget could open the wrong Name (the page you had last left the app on) instead of the Name of the Day shown on the widget. Tapping the widget now always opens that day's Name.
 ```
 
 ## What's new (version 1.27)
 
 ```
-Cold starts now land straight in your chosen theme — no light flash for Dark and Black readers. Also:
+Cold starts now land straight in your chosen theme, no light flash for Dark and Black readers. Also:
 
 • A better-balanced flashcard on tall screens.
 • Search text survives an interrupted session.
@@ -121,8 +127,8 @@ The GitHub front page now describes the whole app, including the quiz's revisit 
 ```
 Quieter under the hood:
 
-• Bad saved data — a corrupted setting,
-backup or quiz round — now falls back
+• Bad saved data (a corrupted setting,
+backup or quiz round) now falls back
 safely instead of closing the app.
 • Reminders, text size, flashcards and
 quiz all validate what they are given.
@@ -143,7 +149,7 @@ screenshots and a tidier README.
 ## What's new (version 1.23)
 
 ```
-Our first public release — welcome!
+Our first public release, welcome!
 
 Read and memorize the Ninety Nine Names of
 Allah at your own pace: a Name of the Day,
@@ -160,8 +166,8 @@ the hood for a calmer, more reliable read.
 ```
 Small labels, easier to read:
 
-• The bottom bar's tabs — Names,
-  Memorize, Bookmarks, Settings —
+• The bottom bar's tabs (Names,
+  Memorize, Bookmarks, Settings)
   and the name page's Learned and
   Bookmark labels are now set in
   normal case, easier to recognise
@@ -181,7 +187,7 @@ like the main tab bar:
 
 • On a long meaning, the text scrolls
   beneath the bar at the foot of the
-  page — the same floating read as the
+  page, the same floating read as the
   lists, instead of stopping above it.
 • The end of the page still lifts fully
   clear of the bar, and the bar itself
@@ -200,7 +206,7 @@ Two fixes on the pages you read most:
   Bookmarks or Settings in the bottom
   bar now always returns you to the
   top of the page. On some devices it
-  could close the app instead — that
+  could close the app instead; that
   crash is gone.
 • On a name page the next Name's
   label now shrinks to fit, exactly
@@ -219,7 +225,7 @@ use most:
 
 • Re-tap Memorize, Bookmarks or
   Settings in the bottom bar and the
-  page returns to its top — the same
+  page returns to its top, the same
   answer Names has always given.
 • On a name page, the learned and
   bookmark acts now carry short
@@ -227,7 +233,7 @@ use most:
   grey, matching the share icon.
 • The previous and next Names on
   the page foot shrink to fit
-  instead of cutting off — both
+  instead of cutting off, both
   arrows always stay visible.
 
 All 99 Names and your progress are
@@ -238,7 +244,7 @@ unchanged.
 
 ```
 Settings now lives in the bottom bar,
-beside Names, Memorize and Bookmarks —
+beside Names, Memorize and Bookmarks;
 one tap, in the same place on every
 screen. The name page gains a floating
 capsule: previous and next, Mark as
@@ -257,7 +263,7 @@ your progress are unchanged.
 The page now ends the way it reads:
 
 • The bottom of every list clears the
-  tab bar — the 99th Name is fully
+  tab bar, the 99th Name is fully
   visible when you scroll to the end.
 • The bar rests the same way in every
   theme: a soft shadow in dark and
@@ -272,8 +278,8 @@ The page now ends the way it reads:
 ```
 A tidier fit at the foot of the page:
 
-• The tab bar — its pill, icons and
-  labels — is a little smaller, so it
+• The tab bar (its pill, icons and
+  labels) is a little smaller, so it
   sits quietly under the book.
 • Tapping a tab now answers with a
   capsule highlight, matching the pill
@@ -289,8 +295,8 @@ A tidier fit at the foot of the page:
 The tab bar now floats as a smooth
 pill:
 
-• The bar lifts off the page as a capsule
-  — same colour as the paper, a soft
+• The bar lifts off the page as a capsule,
+  same colour as the paper, a soft
   shadow, rounded ends.
 • The quiz options and the deck menu
   match the book's own corners.
@@ -340,8 +346,8 @@ The corner of every tab is simpler:
 
 • The ⋮ menu is gone. One tap on the gear
 opens Settings directly.
-• About — the hadith, the source, the
-colophon — now sits at the foot of
+• About (the hadith, the source, the
+colophon) now sits at the foot of
 Settings, one tap after it.
 • Screen readers speak each control more
 clearly.
@@ -355,8 +361,8 @@ All 99 Names are unchanged.
 The book now prints in a larger format on
 tablets:
 
-• On 7-inch and 10-inch devices, all type — the
-Names, the meanings, the bar — scales up with
+• On 7-inch and 10-inch devices, all type (the
+Names, the meanings, the bar) scales up with
 the screen, so the page reads comfortably at
 tablet distance.
 • Phones are unchanged, and your text-size
@@ -371,8 +377,8 @@ All 99 Names are unchanged.
 The book now prints in a larger format on
 tablets:
 
-• On 7-inch and 10-inch devices, all type — the
-Names, the meanings, the bar — scales up with
+• On 7-inch and 10-inch devices, all type (the
+Names, the meanings, the bar) scales up with
 the screen, so the page reads comfortably at
 tablet distance.
 • Phones are unchanged, and your text-size
@@ -386,7 +392,7 @@ All 99 Names are unchanged.
 ```
 A quieter morning, a clearer page:
 
-• The daily reminder now comes with the app — one
+• The daily reminder now comes with the app: one
 "allow" and the Name of the Day arrives each
 morning. It stays silent, and Settings turns it
 off any time.
@@ -404,7 +410,7 @@ All 99 Names are unchanged.
 Care where you meet the book:
 
 • The daily notification now opens into the Name's
-emerald card — the same plate as the app and widget.
+emerald card, the same plate as the app and widget.
 • On tablets, every screen keeps the book's page
 proportions instead of stretching edge to edge.
 • TalkBack reads the Names in an Arabic voice, and
@@ -420,12 +426,12 @@ All 99 Names are unchanged.
 Search moves to the app bar:
 
 • Stop a scroll with an upward pull, tap the magnifier,
-and search from anywhere — no scrolling back needed.
+and search from anywhere, no scrolling back needed.
 • Back now steps out of search one layer at a time
 instead of leaving the app.
 • The share card no longer trembles when pushed upward.
-• On a name page, long-press copies the Name itself —
-Arabic and transliteration — alongside the meaning.
+• On a name page, long-press copies the Name itself
+(Arabic and transliteration) alongside the meaning.
 • Re-tapping Names lands at the very top, bar included.
 
 All 99 Names are unchanged.
@@ -437,10 +443,10 @@ All 99 Names are unchanged.
 Polish where the hands and eyes rest:
 
 • The share sheet no longer keeps shaking if you push
-the preview upward a few times — it settles.
+the preview upward a few times; it settles.
 • A larger title on the home screen, kept neatly within
 its bar at every text size.
-• The search field is now a quiet rounded plate — its own
+• The search field is now a quiet rounded plate: its own
 space above and below, set apart from the list.
 
 All 99 Names are unchanged.
@@ -451,12 +457,12 @@ All 99 Names are unchanged.
 ```
 A quieter room for the same book:
 
-• Search is now a quiet field at the head of the list —
+• Search is now a quiet field at the head of the list:
 always there, no icon to find.
 • Name pages carry both keeps in one place: a gold check
 marks a Name learned, beside the bookmark.
 • List rows lose their numbers; flashcards lose their
-instructions — the gestures teach themselves.
+instructions, the gestures teach themselves.
 • Calmer motion throughout.
 • The widget's Arabic now renders in the Madinah Mushaf's
 HAFS script.
@@ -469,7 +475,7 @@ All 99 Names are unchanged.
 ```
 A small, warm correction:
 
-• The Name on each Name page now wears a warmer, brighter gold — closer
+• The Name on each Name page now wears a warmer, brighter gold: closer
 to the hero card's emerald-and-gold, and easier on the eye at every
 text size.
 
@@ -481,7 +487,7 @@ All 99 Names are unchanged.
 ```
 A quieter, more exacting coat of paint:
 
-• Every corner icon — search, ⓘ, share, the gear, back — now wears one
+• Every corner icon (search, ⓘ, share, the gear, back) now wears one
 lighter weight.
 • Tab titles sit at a book's running-head size on all three tabs.
 • Finer progress line; the disabled quiz button no longer sits like mud.
@@ -514,7 +520,7 @@ All 99 Names are unchanged.
 A round of motion and moments, everywhere you felt a cut:
 
 • Quiz questions turn like pages now, and your score
-counts itself up — a perfect round earns the app's gold seal.
+counts itself up, a perfect round earns the app's gold seal.
 • The learned count rolls to meet you when you return having learned more.
 • A fruitless search offers "Clear search" right there.
 • Long lists carry the reading pages' quiet position thumb.
@@ -540,10 +546,10 @@ All 99 Names are unchanged.
 
 ## Category, content & data
 
-- **Category:** Education (or Books & Reference — either fits)
+- **Category:** Education (or Books & Reference; either fits)
 - **Ads:** None
 - **In-app purchases:** None
-- **Data safety:** "No data collected" — the app has **no INTERNET permission**
+- **Data safety:** "No data collected". The app has **no INTERNET permission**
   in its manifest, so this is provable and safe to declare.
 - **Content rating (IARC):** answer the questionnaire honestly (educational /
   devotional content; no violence, sexual, or mature content).
@@ -562,8 +568,8 @@ personal data.
 
 The app works fully offline. It has no network access, no advertising, no
 analytics, no account system, and no third-party services. Everything you do in
-the app — the Names you bookmark, mark as learned, your theme and text-size
-preferences — is stored only on your own device and never leaves it.
+the app (the Names you bookmark, mark as learned, your theme and text-size
+preferences) is stored only on your own device and never leaves it.
 
 If you have any questions, contact muntasim.haque@gmail.com.
 ```

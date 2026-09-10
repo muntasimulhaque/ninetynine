@@ -22,15 +22,15 @@ import kotlinx.coroutines.CancellationException
 /**
  * The expanded daily notification wears the same plate as the hero card, the
  * share card and the widget: deep emerald, the Name in gold HAFS drawn by
- * Canvas — which shapes the vocalized text correctly through the platform's
- * text stack — via the same [arabicBitmap] fit the widget uses, the
+ * Canvas (which shapes the vocalized text correctly through the platform's
+ * text stack) via the same [arabicBitmap] fit the widget uses, the
  * transliteration in Spectral Light, and the epithet in Spectral Medium
  * Italic beneath, over the "NAME OF THE DAY" overline the hero card wears.
  *
  * The stack mirrors [DailyHeroCard] measure for measure, at fixed dp (the
  * plate is a 3px/dp design space and does not ride scaledGap's reading
  * scale): the 11sp tracked overline, 14dp to the Arabic, 6dp to the name,
- * 2dp to the epithet — titleMedium's 16sp on its 24sp line, up to three
+ * 2dp to the epithet: titleMedium's 16sp on its 24sp line, up to three
  * lines, ellipsized, exactly as the hero sets it.
  *
  * Drawn in a fixed 16:9 design space at 3px per dp; the system scales the
@@ -44,7 +44,7 @@ internal object DailyPlate {
     private const val WIDTH = 1080
     private const val HEIGHT = 608
 
-    /** The design space is 360dp wide at 3px per dp — sp sizes multiply by this. */
+    /** The design space is 360dp wide at 3px per dp, sp sizes multiply by this. */
     private const val PX_PER_SP = 3f
 
     private const val PAD = 84f
@@ -60,7 +60,7 @@ internal object DailyPlate {
         val mediumItalic = ResourcesCompat.getFont(context, R.font.spectral_mediumitalic)
             ?: return null
 
-        // The Name, stepped down until its whole line box — HAFS runs tall —
+        // The Name, stepped down until its whole line box (HAFS runs tall)
         // fits the plate: the widget's own fit logic, reused verbatim. The
         // height share leaves room for the overline above and the
         // transliteration and epithet below even in their worst case: with
@@ -76,7 +76,7 @@ internal object DailyPlate {
             color = HeroGold.toArgb(),
         ) ?: return null
 
-        // Overline — the hero card's "NAME OF THE DAY", tracked small caps
+        // Overline, the hero card's "NAME OF THE DAY", tracked small caps
         // (labelMedium's 1.8sp on 11sp, in em units for Paint).
         val overline = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             typeface = medium
@@ -88,7 +88,7 @@ internal object DailyPlate {
         val overlineText = context.getString(R.string.notification_title).uppercase(Locale.ROOT)
         val overlineBox = overline.fontMetrics.let { it.bottom - it.top }
 
-        // Transliteration — Spectral Light, stepping down like FitText so the
+        // Transliteration, Spectral Light, stepping down like FitText so the
         // longest name never clips. The 0.45 floor is FitText's own.
         val namePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             typeface = light
@@ -106,10 +106,10 @@ internal object DailyPlate {
         }
         val nameBox = namePaint.fontMetrics.let { it.bottom - it.top }
 
-        // Epithet — up to three lines, centred, ellipsized like the hero
+        // Epithet, up to three lines, centred, ellipsized like the hero
         // card. titleMedium is 16sp on a 24sp line: the 24sp line box is
-        // pinned here through StaticLayout's font pitch — Spectral's own is
-        // 1.522em, so 74px at 48px — by adding −2px between lines
+        // pinned here through StaticLayout's font pitch (Spectral's own is
+        // 1.522em, so 74px at 48px) by adding −2px between lines
         // (setLineSpacing(add, mult) scales the font's pitch, not the size).
         val titleLayout = StaticLayout.Builder.obtain(
             name.title,

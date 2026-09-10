@@ -26,8 +26,8 @@ val LocalTextScale = staticCompositionLocalOf { 1f }
 
 /**
  * The device factor: how far this device sits from the phone the type was set
- * on. sp type is physically identical on every screen — a 16sp line is ~2.5mm
- * on a phone and on a 10-inch tablet — which is right at hand-held phone
+ * on. sp type is physically identical on every screen (a 16sp line is ~2.5mm
+ * on a phone and on a 10-inch tablet) which is right at hand-held phone
  * distance and small at the distance a large tablet is held. The factor
  * scales the whole book with the device: typography, Arabic, column caps and
  * gaps all multiply by [LocalTextScale], which carries the reader's scale ×
@@ -48,10 +48,10 @@ private fun deviceFactorFor(smallestWidthDp: Int): Float = when {
 }
 
 /**
- * Whether the theme actually renders dark — the reader's choice, not the
+ * Whether the theme actually renders dark: the reader's choice, not the
  * system's (BLACK on a light phone must still draw light-mode system bars).
  * The fixed hero plates (hero card, quiz card, flashcard front, share card)
- * draw the same emerald in every theme, with no border — a deliberate
+ * draw the same emerald in every theme, with no border: a deliberate
  * symmetry across the app's plates.
  */
 val LocalDarkTheme = staticCompositionLocalOf { false }
@@ -59,7 +59,7 @@ val LocalDarkTheme = staticCompositionLocalOf { false }
 /**
  * Whether the reader chose the AMOLED Black theme specifically. DARK and BLACK
  * both render dark ([LocalDarkTheme]), but BLACK's true-black page gives a
- * shadow nothing to darken, so a plate that lifts by tone — the bottom bar —
+ * shadow nothing to darken, so a plate that lifts by tone (the bottom bar)
  * takes one container rung more there to read at the same perceived height.
  */
 val LocalPureBlackTheme = staticCompositionLocalOf { false }
@@ -82,7 +82,7 @@ fun Names99Theme(
     }
 
     // The status-bar icons follow the theme the reader chose, not the one the
-    // system is in — otherwise choosing Black on a light phone paints dark
+    // system is in, otherwise choosing Black on a light phone paints dark
     // icons onto a black bar and the clock disappears.
     val view = LocalView.current
     if (!view.isInEditMode) {
@@ -125,7 +125,7 @@ fun Names99Theme(
 
 /**
  * The system's animator duration scale, observed for as long as the theme
- * composes — not read once.
+ * composes: not read once.
  *
  * The setting changes with no signal to a running app: the reader can flip
  * the accessibility "Remove animations" toggle, or step the developer-options

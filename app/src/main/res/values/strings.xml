@@ -3,18 +3,18 @@
       Three strings for three surfaces. Two of them now hold the same words,
       and they are still three strings on purpose. Do not merge them.
 
-      launcher_name — the app itself, kept short because a launcher gives an
+      launcher_name; the app itself, kept short because a launcher gives an
         icon label very little room, and with no Divine Name in it there is
         nothing a launcher can truncate badly. It is a subset of the title
         below, the way "Maps" is of "Google Maps".
-      app_title — what the app is about, for a reader already inside it: the
+      app_title, what the app is about, for a reader already inside it: the
         home screen's running head, and the English title of Ibn Uthaymeen's
         book. A running head names its subject; it does not advertise.
-      store_title — the Play listing's title, verbatim. It appears on the
+      store_title, the Play listing's title, verbatim. It appears on the
         shared image, which is the one surface someone who has never installed
         the app will see, so whoever receives it can type what is written there
         into Play and find it. This one is kept in step with the Play Console
-        BY HAND: if the listing is ever retitled, retitle it here too — which
+        BY HAND: if the listing is ever retitled, retitle it here too, which
         is exactly why it stays a separate string from app_title even while
         the two read alike. The listing can move; the running head should not
         follow it by accident.
@@ -63,7 +63,7 @@
 
     <!-- Detail -->
     <!--
-      Position in the list being paged through, not the name's own number —
+      Position in the list being paged through, not the name's own number,
       the two are the same when reading all 99, and differ when the reader
       arrived from Bookmarks and is paging through those.
 
@@ -84,7 +84,7 @@
     <string name="not_learned">Not learned</string>
     <string name="mark_learned">Mark as learned</string>
     <!-- The name page's floating plate labels: short chrome in the tab bar's
-         label register — mixed case, never tracked caps (owner decision,
+         label register, mixed case, never tracked caps (owner decision,
          1.22: caps are the register of ANNOTATION, and these are words the
          reader taps). The full actions stay in the screen-reader names
          (mark_learned, cd_bookmark); these are for the eye only, so they
@@ -129,8 +129,8 @@
     <string name="cd_share">Share this name</string>
     <string name="share_title">Share this name</string>
     <string name="share_image">Share image</string>
-    <!-- The plate is for framing; plenty of contexts want the words themselves
-         — a caption, a quote, a note — so the sheet offers the plain text too. -->
+    <!-- The plate is for framing; plenty of contexts want the words themselves,
+         a caption, a quote, a note, so the sheet offers the plain text too. -->
     <string name="share_text">Share text</string>
     <string name="share_failed">Couldn\u2019t create the image.</string>
     <!-- The words path fails separately from the image path, so each failure
@@ -164,7 +164,7 @@
     <string name="learned_names">Learned names</string>
     <string name="undo_card">Undo last card</string>
     <string name="all_learned_title">All 99 names learned</string>
-    <string name="all_learned_text">Masha\'Allah — you have marked every name as learned. Keep reviewing to keep them fresh.</string>
+    <string name="all_learned_text">Masha\'Allah, you have marked every name as learned. Keep reviewing to keep them fresh.</string>
     <string name="review_learned">Review learned names</string>
 
     <!-- Flashcards -->
@@ -177,9 +177,9 @@
     <string name="card_x_of_y">%1$s of %2$s</string>
 
     <!-- Quiz -->
-    <string name="quiz_perfect">Masha\'Allah — a perfect round.</string>
+    <string name="quiz_perfect">Masha\'Allah, a perfect round.</string>
     <string name="quiz_good">Well done. Keep going.</string>
-    <string name="quiz_keep_trying">Keep at it — the flashcards will help.</string>
+    <string name="quiz_keep_trying">Keep at it. The flashcards will help.</string>
     <string name="try_another_round">Try another round</string>
     <string name="question_x_of_y">%1$s of %2$s</string>
     <string name="next">Next</string>
@@ -190,9 +190,9 @@
 
     <!-- Search -->
     <string name="no_results_title">No names match your search.</string>
-    <!-- The hint teaches what search covers — meanings, notes and numbers
-         too — so an empty result becomes a lesson instead of a dead end. -->
-    <string name="no_results_body">Try a meaning, like \u201Cmercy\u201D — or a number.</string>
+    <!-- The hint teaches what search covers, meanings, notes and numbers
+         too, so an empty result becomes a lesson instead of a dead end. -->
+    <string name="no_results_body">Try a meaning like \u201Cmercy\u201D, or a number.</string>
     <string name="action_clear_search">Clear search</string>
     <string name="names_unavailable">The names could not be loaded. Reinstalling the app should put this right.</string>
 
@@ -213,7 +213,7 @@
     <string name="theme_black">Black (AMOLED)</string>
     <string name="text_size">Text size</string>
     <string name="percent">%1$s%%</string>
-    <string name="text_size_preview" translatable="false">الْعَلِيم — Al-Aleem</string>
+    <string name="text_size_preview" translatable="false">الْعَلِيم · Al-Aleem</string>
     <string name="daily_section">Daily name</string>
     <string name="daily_reminder">Daily name notification</string>
     <string name="reminder_time">Notification time</string>
@@ -239,12 +239,12 @@
     <string name="about_contact_label">Contact</string>
     <string name="send_feedback">Send feedback</string>
     <string name="contact_email" translatable="false">muntasim.haque@gmail.com</string>
-    <!-- %1$s is the app's name, %2$s its version — so a report about something
+    <!-- %1$s is the app's name, %2$s its version, so a report about something
          broken says which build it was. -->
-    <string name="feedback_subject">%1$s %2$s — feedback</string>
+    <string name="feedback_subject">%1$s %2$s: feedback</string>
     <string name="source_pdf">Source document (PDF)</string>
     <string name="read_blog">Read on the blog</string>
     <string name="source_code">Source code on GitHub</string>
-    <string name="foss_line">Free &amp; open source — no ads, no tracking</string>
+    <string name="foss_line">Free &amp; open source: no ads, no tracking</string>
     <string name="about_fonts">Arabic set in KFGQPC Uthmanic Script HAFS, the typeface of the Madinah Mushaf (King Fahd Glorious Quran Printing Complex). Latin set in Spectral (SIL Open Font License).</string>
 </resources>

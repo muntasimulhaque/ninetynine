@@ -41,7 +41,7 @@ import io.github.muntasimulhaque.ninetynine.util.Highlight
 
 /**
  * The list's inset from both page edges. The folio numbers are the leftmost
- * ink on the home screen, so this is the left margin the reader actually sees —
+ * ink on the home screen, so this is the left margin the reader actually sees:
  * it is the same on the right, where the Arabic ends.
  */
 val NameRowInset = 20.dp
@@ -68,7 +68,7 @@ private fun folioWidth(): Dp {
 }
 
 /**
- * Where the names begin — the indent a divider needs to meet them rather than
+ * Where the names begin: the indent a divider needs to meet them rather than
  * cutting under the folio numbers. Derived from the same parts as the row, so
  * the two cannot drift.
  */
@@ -80,12 +80,12 @@ fun nameRowTextInset(): Dp = NameRowInset + folioWidth() + FolioGap
  * tick, Arabic.
  *
  * Deliberately says nothing about bookmarks. A row carried a gold margin rule
- * for one version and it was redundant twice over — the name's own page shows a
+ * for one version and it was redundant twice over: the name's own page shows a
  * filled bookmark, and the Bookmarks tab is the list of them. A third indicator
  * only added ink to the surface the app opens on.
  *
  * The folio number is back by decision, after a quiet-season removal: it is
- * not lookup scaffolding — search already matches the exact number — but the
+ * not lookup scaffolding (search already matches the exact number), but the
  * list's coordinate system, the way memorization speaks ("I've memorized up
  * to 19") and the anchor the learned ticks and kept names are scattered
  * across. Set as a book's folio rather than a badge: quiet
@@ -93,7 +93,7 @@ fun nameRowTextInset(): Dp = NameRowInset + folioWidth() + FolioGap
  * page, in a measured column so nothing shifts.
  *
  * [query], when given, paints the spans where it literally matches the
- * transliteration or the title in the app's gold — search shows its work the
+ * transliteration or the title in the app's gold: search shows its work the
  * way a system search does, instead of handing back a list and asking the
  * reader to find the reason themselves. Only Home passes one; everywhere else
  * a row is met without context, exactly as before.
@@ -132,7 +132,7 @@ fun NameListItem(
                 .padding(horizontal = NameRowInset, vertical = 15.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            // A quiet folio number instead of a badge — typography, not chrome.
+            // A quiet folio number instead of a badge, typography, not chrome.
             // Right-aligned so the units digits line up down the page; 1-9 sit
             // one digit further in, as they would in a book's index.
             Text(
@@ -148,7 +148,7 @@ fun NameListItem(
             Column(Modifier.weight(1f)) {
                 // FitText, not a bare Text: a row is the app's most repeated
                 // surface and the longest transliterations (Al-Muta'aalee,
-                // Al-Mutakabbir, Al-Mu'akhkhir — 13 characters each) are the
+                // Al-Mutakabbir, Al-Mu'akhkhir, 13 characters each) are the
                 // ones a narrow phone at a large font scale cannot hold
                 // beside the folio, the tick and the Arabic. Shrinking beats
                 // ellipsizing for a Divine Name, which is never allowed to

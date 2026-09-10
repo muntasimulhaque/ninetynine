@@ -13,7 +13,7 @@ package io.github.muntasimulhaque.ninetynine.util
  */
 object Highlight {
 
-    /** Shorter queries paint noise — half of every row answers to "a". */
+    /** Shorter queries paint noise, half of every row answers to "a". */
     private const val MIN_QUERY_LENGTH = 2
 
     /**

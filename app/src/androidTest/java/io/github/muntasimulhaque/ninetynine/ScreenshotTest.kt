@@ -52,7 +52,7 @@ import java.io.File
  * into the build's connected-androidTest additional output folder for the
  * workflow to upload.
  *
- * The canonical set (owner decision, 1.23; trimmed to eight scenes in 1.27 —
+ * The canonical set (owner decision, 1.23; trimmed to eight scenes in 1.27:
  * the Memorize page left the set, so a refresh is 24 captures):
  *
  * - home (the Names page)
@@ -63,7 +63,7 @@ import java.io.File
  * - name (a name page)
  * - share (a name's share screen)
  *
- * No scene targets a particular name — any name will do. The name page takes
+ * No scene targets a particular name: any name will do. The name page takes
  * the first in the book, the share card the first loaded, the quiz whatever
  * the round draws; nothing downstream keys on a specific name.
  *
@@ -79,7 +79,7 @@ class ScreenshotTest {
 
     // The Android variant exposes the host ComponentActivity, whose
     // ViewModelStore the flashcard scenes reach to flip the card directly
-    // (renderFlashcards) — the same instance FlashcardsScreen finds.
+    // (renderFlashcards), the same instance FlashcardsScreen finds.
     @get:Rule
     val composeRule = createAndroidComposeRule<ComponentActivity>()
 
@@ -142,7 +142,7 @@ class ScreenshotTest {
     @Test
     fun settings() {
         // The settings screen's own consent logic (LifecycleResumeEffect)
-        // turns the reminder off whenever POST_NOTIFICATIONS is missing —
+        // turns the reminder off whenever POST_NOTIFICATIONS is missing,
         // correct on a real device whose reader said no, but on the test app
         // nobody ever asks, so it silently un-toggled the advertised switch
         // and the capture showed it off (1.27's first set did). Grant the
@@ -185,7 +185,7 @@ class ScreenshotTest {
 
     @Test
     fun bookmarks() = render("bookmarks", onNamesReady = { viewModel ->
-        // Populate the shelf with the first few loaded names — a kept-shelf
+        // Populate the shelf with the first few loaded names, a kept-shelf
         // screenshot says what the tab is for, an empty one says nothing, and
         // which names are kept is deliberately arbitrary. The capture waits
         // until the writes have reached the flow, so the rows are on screen.
@@ -199,7 +199,7 @@ class ScreenshotTest {
 
     @Test
     fun share() = render("share") { viewModel ->
-        // Any name will do — the first loaded one. The plate renders directly,
+        // Any name will do, the first loaded one. The plate renders directly,
         // not inside ShareSheet: the sheet lives in its own window, which the
         // compose test root cannot PixelCopy. Scrollable + Centre arrangement
         // = centred when the card fits, top-anchored and scrollable when it
@@ -222,7 +222,7 @@ class ScreenshotTest {
 
     /**
      * The shared render: mount the screen, wait for the names, let the scene
-     * do any last settling ([onNamesReady] — populating the bookmarks shelf,
+     * do any last settling ([onNamesReady]: populating the bookmarks shelf,
      * say), and save.
      */
     private fun render(
@@ -243,8 +243,8 @@ class ScreenshotTest {
 
     /**
      * The two flashcard scenes, front and back, from one deck. The session
-     * ViewModel is resolved from the test host's own store — the same
-     * instance FlashcardsScreen finds via viewModel() — so [onDeckReady] can
+     * ViewModel is resolved from the test host's own store: the same
+     * instance FlashcardsScreen finds via viewModel(): so [onDeckReady] can
      * drive the deck's state directly (flip for the back face) without any
      * input injection.
      */

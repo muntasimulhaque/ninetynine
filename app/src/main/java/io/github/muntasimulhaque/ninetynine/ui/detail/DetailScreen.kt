@@ -122,18 +122,18 @@ fun DetailScreen(
     val bookmarkedLoaded by viewModel.bookmarkedLoaded.collectAsStateWithLifecycle()
     var showShare by rememberSaveable { mutableStateOf(false) }
 
-    // The reader pages through the list they arrived from — all 99 from the
+    // The reader pages through the list they arrived from, all 99 from the
     // names list, or just the kept ones from Bookmarks. Taken once and then
     // held: un-bookmarking a name while reading it should un-fill the mark,
     // not pull pages out from under the reader and shift everything along.
     //
     // `rememberSaveable`, and it must be. A plain `remember` was wiped by every
     // Activity recreation, and the effect then rebuilt from the CURRENT
-    // bookmarks — which, if the reader had just un-bookmarked the name they
+    // bookmarks, which, if the reader had just un-bookmarked the name they
     // were on, no longer contained it. The guard never passed again and the
     // screen spun for ever, escapable only by Back. Stored through the
     // List<Int> interface (an ArrayList under the hood, so it survives the
-    // bundle the same way a bare ArrayList did) — the type is immutable so
+    // bundle the same way a bare ArrayList did), the type is immutable so
     // the state can only ever be replaced whole, never mutated in place,
     // keeping every write a visible recomposition.
     var pageNumbers by rememberSaveable { mutableStateOf(listOf<Int>()) }
@@ -145,7 +145,7 @@ fun DetailScreen(
 
         val scoped = if (bookmarksOnly) names.filter { it.number in bookmarked } else names
         // The name being read always belongs in its own pager, even if it has
-        // since been un-bookmarked — it was in the list when the screen opened,
+        // since been un-bookmarked; it was in the list when the screen opened,
         // and rebuilding without it is what used to strand the reader.
         val withStart =
             if (scoped.any { it.number == startNumber }) scoped
@@ -157,7 +157,7 @@ fun DetailScreen(
     }
 
     if (pages.isEmpty()) {
-        // Blank paper while the asset is still being read — quieter than a
+        // Blank paper while the asset is still being read, quieter than a
         // spinner, and this screen is reachable straight from the notification
         // and the widget, so it is the app's first impression that morning.
         // Once the read has finished and there is still nothing, say so: this
@@ -205,7 +205,7 @@ fun DetailScreen(
     val scope = rememberCoroutineScope()
     val motionScale = LocalMotionScale.current
 
-    // A featherweight tick as each page settles — like a bead slipping past.
+    // A featherweight tick as each page settles, like a bead slipping past.
     LaunchedEffect(pagerState) {
         var first = true
         snapshotFlow { pagerState.currentPage }.collect {
@@ -250,12 +250,12 @@ fun DetailScreen(
             )
         },
     ) { padding ->
-        // The capsule overlays the pager — the same scroll-under float the
+        // The capsule overlays the pager, the same scroll-under float the
         // tab bar gives the lists (the Scaffold no longer reserves a bottom
         // slot, so only the top bar's padding is applied and the meaning
-        // passes beneath the plate). The plate reports its laid-out height —
+        // passes beneath the plate). The plate reports its laid-out height,
         // measured, not guessed: it follows the system font scale and the
-        // navigation mode (24dp gesture, 48dp three-button) — and that
+        // navigation mode (24dp gesture, 48dp three-button), and that
         // clearance is what NamePage scrolls its tail above.
         val density = LocalDensity.current
         var plateHeightPx by remember { mutableIntStateOf(0) }
@@ -286,7 +286,7 @@ fun DetailScreen(
                 )
             }
             // The name page's floating capsule: previous and next, then the
-            // two acts of keeping. Fixed, unlike the footer it replaced —
+            // two acts of keeping. Fixed, unlike the footer it replaced,
             // see [DetailNavPlate].
             DetailNavPlate(
                 current = current,
@@ -318,13 +318,13 @@ fun DetailScreen(
 /**
  * Learning a name, in the bar.
  *
- * The page is one scroll container, so a footer control travels with the text —
+ * The page is one scroll container, so a footer control travels with the text:
  * on a long meaning it is well below the fold at exactly the moment a name
  * strikes you. The bar does not move, and the learned axis now sits beside the
  * bookmark: two acts of keeping, one place, the same feel.
  *
  * The unfilled check-circle rests in the page's ink; learned, it fills and
- * wears the app's gold — the same filled-and-gold treatment the bookmark has.
+ * wears the app's gold: the same filled-and-gold treatment the bookmark has.
  * TalkBack hears the button once ("Mark as learned") and the state after it
  * ("Learned" / "Not learned"), never a label that changes under it.
  */
@@ -354,13 +354,13 @@ private fun LearnedAction(learned: Boolean, number: Int, onToggle: () -> Unit) {
     // how the deck menu's checkbox row already behaves.
     //
     // An explicit column, NOT an IconButton: the icon+label pair sits below
-    // the centre line, where a 48dp circle's inscribed width is ~44dp — and
+    // the centre line, where a 48dp circle's inscribed width is ~44dp, and
     // the IconButton CLIPS to that circle, so the first capture cut LEARNED
     // mid-glyph. Here the press highlight clips to the bar's own stadium
     // register (the same RoundedCornerShape(50) the tab bar clips to, set
     // before clickable), and minimumInteractiveComponentSize keeps the 48dp
     // touch floor. The full action lives in the contentDescription and the
-    // state in stateDescription — exactly what the merged IconButton node
+    // state in stateDescription, exactly what the merged IconButton node
     // read before; the visible label is silent to TalkBack.
     val cd = stringResource(R.string.mark_learned)
     Column(
@@ -382,7 +382,7 @@ private fun LearnedAction(learned: Boolean, number: Int, onToggle: () -> Unit) {
         Icon(
             imageVector = if (learned) Icons.Filled.CheckCircle else Icons.Outlined.CheckCircle,
             contentDescription = null,
-            // Resting, it wears the top bar's grey — the same ink the
+            // Resting, it wears the top bar's grey, the same ink the
             // share icon carries, not the page's near-black. Learned, it
             // fills with the app's gold, as before.
             tint = if (learned) MaterialTheme.colorScheme.secondary
@@ -395,7 +395,7 @@ private fun LearnedAction(learned: Boolean, number: Int, onToggle: () -> Unit) {
                 },
         )
         Spacer(Modifier.height(2.dp))
-        // The eye gets the tab bar's short chrome label — same register,
+        // The eye gets the tab bar's short chrome label, same register,
         // and the same mixed-case voice: chrome you tap reads as words;
         // tracked caps stay with the overlines (owner decision, 1.22).
         // 9sp x the device factor, never the reader's slider. The ear
@@ -413,7 +413,7 @@ private fun LearnedAction(learned: Boolean, number: Int, onToggle: () -> Unit) {
 /**
  * Keeping a name, in the bar.
  *
- * The page is one scroll container, so a footer control travels with the text —
+ * The page is one scroll container, so a footer control travels with the text:
  * on a long meaning it is well below the fold at exactly the moment a name
  * strikes you. The bar does not move.
  *
@@ -491,14 +491,14 @@ private fun BookmarkAction(bookmarked: Boolean, number: Int, onToggle: () -> Uni
 }
 
 /**
- * The name page's floating capsule — the same [FloatingBar] plate the tab
+ * The name page's floating capsule: the same [FloatingBar] plate the tab
  * screens float, carrying everything a reader does to a name: previous and
  * next (wearing the neighbour's transliteration, so the bar says what turning
  * the page brings), and the two acts of keeping, learned and bookmarked,
  * adjacent in the centre. Share stays in the top bar: a send-away act reads
  * at the page's edge, and five slots would crowd a 320dp phone.
  *
- * It replaces the footer that used to scroll with the text — on a long
+ * It replaces the footer that used to scroll with the text: on a long
  * meaning the chevrons sat below the fold at exactly the moment a name
  * strikes you. The bar does not move, so turning is always one tap away; its
  * labels change as the pager settles, the same moment the counter above does.
@@ -509,7 +509,7 @@ private fun BookmarkAction(bookmarked: Boolean, number: Int, onToggle: () -> Uni
  * clips the page's text at the plate's top edge, and a floating sheet with
  * nothing passing beneath it is just a panel. The caller measures this
  * composable's height and hands it to [NamePage] as the clearance its tail
- * scrolls above — the same trick the tab bar uses in MainActivity.
+ * scrolls above: the same trick the tab bar uses in MainActivity.
  */
 @Composable
 private fun DetailNavPlate(
@@ -530,7 +530,7 @@ private fun DetailNavPlate(
             // floor the tab bar's slots wear, so the two capsules read as one
             // register. Each weighted slot caps its label at the space it
             // owns, so two long transliterations can never overlap at any
-            // font scale — the labels shrink through FitText instead of
+            // font scale, the labels shrink through FitText instead of
             // wrapping mid-word, and the 20dp chevron survives every name.
             modifier = Modifier
                 .barMeasure()
@@ -563,8 +563,8 @@ private fun DetailNavPlate(
                             modifier = Modifier.size(20.dp),
                         )
                         // Roman, not italic. Italic means epithet, gloss or
-                        // quote everywhere else in the app — the page above
-                        // has just taught the reader that — so setting a
+                        // quote everywhere else in the app (the page above
+                        // has just taught the reader that), so setting a
                         // Name in it says the wrong thing. titleSmall also
                         // rescues these from TextButton's labelLarge, which
                         // made the app's main keep-reading affordance the
@@ -580,7 +580,7 @@ private fun DetailNavPlate(
                         // the text is fitted to the space LEFT AFTER its own
                         // chevron. Without it the NEXT button's FitText was
                         // measured first, saw the whole slot, declined to
-                        // shrink — and the chevron then overflowed the slot and
+                        // shrink, and the chevron then overflowed the slot and
                         // was cut off at any decent font scale, while the
                         // PREVIOUS button (icon first) always fitted.
                         FitText(
@@ -654,7 +654,7 @@ private fun NamePage(
     // below (DetailNavPlate), and the page grows its scroll extent by that
     // plate's measured clearance so its tail can lift above it. A page
     // shorter than the screen does not scroll at all.
-    // The page keeps the book's measure on wide screens — the Name, the
+    // The page keeps the book's measure on wide screens, the Name, the
     // meaning, the note and the footer all hold `readingMeasure`'s column,
     // and the thumb hugs that column's edge. Phones never reach the cap.
     BoxWithConstraints(
@@ -679,19 +679,19 @@ private fun NamePage(
                 Spacer(Modifier.height(30.dp))
                 // The transliteration belongs to the Name: 8dp is the share
                 // card's pairing (50sp Arabic), one step from the hero's 6dp
-                // (48sp) — this 52sp page sits in the 8dp family. The Arabic
+                // (48sp); this 52sp page sits in the 8dp family. The Arabic
                 // line box at 1.60 leading no longer adds ~5sp of empty
                 // descent air on top of the spacer, so the pair reads as one
                 // unit while the meaning below keeps its clear step.
                 //
                 // A clear step below the Arabic, set in the same displaySmall
-                // slot the share card, hero and flashcard faces use — the Name
+                // slot the share card, hero and flashcard faces use, the Name
                 // leads its transliteration at the same ratio everywhere. FitText
                 // keeps the proper noun whole: a Name split across lines reads
                 // as two words, and this page must survive a large system font
                 // the same way the hero card does.
                 //
-                // The Name and its transliteration are one selectable unit —
+                // The Name and its transliteration are one selectable unit,
                 // long-press copies either whole, exactly as the meaning below
                 // copies. A name worth keeping travels further than the page,
                 // and every serious reading surface answers a held finger with
@@ -703,7 +703,7 @@ private fun NamePage(
                         ArabicText(
                             text = name.arabic,
                             fontSize = ArabicSize.Page,
-                            // The Name wears the app's gold — as close to the hero
+                            // The Name wears the app's gold, as close to the hero
                             // plates' #D4B45A as paper contrast allows at large-text
                             // 3:1 (see NameGoldLight). Theme-aware: the warmed gold
                             // on paper, the brighter gold on the night page. It stands
@@ -718,7 +718,7 @@ private fun NamePage(
                                 textAlign = TextAlign.Center,
                             ),
                             // The transliteration is set apart from the meaning
-                            // by its teal as well as its size — the meaning below
+                            // by its teal as well as its size, the meaning below
                             // stays in the page's ink. Theme-aware: dark ink on
                             // light paper, pale mint on the night page.
                             color = if (LocalDarkTheme.current) TransliterationTealDark
@@ -729,7 +729,7 @@ private fun NamePage(
                 }
                 Spacer(Modifier.height(scaledGap(20.dp)))
                 // Long-press copies: a meaning worth keeping travels further
-                // than the page — alongside the Name's own selectable unit
+                // than the page, alongside the Name's own selectable unit
                 // above, and every serious reading surface answers a held
                 // finger with selection. The flashcard faces stay swipe
                 // surfaces on purpose.
@@ -753,7 +753,7 @@ private fun NamePage(
                     ) {
                         // SectionLabel, not a bare Text: the identical styling,
                         // plus the heading semantics every other overline
-                        // carries — heading navigation anchors on the note too.
+                        // carries, heading navigation anchors on the note too.
                         SectionLabel(stringResource(R.string.note_label))
                         Spacer(Modifier.height(scaledGap(8.dp)))
                         MixedText(
@@ -767,13 +767,13 @@ private fun NamePage(
                 // The scroll-under room: this is inside the min-height
                 // column, so short pages absorb it in the weighted spacer
                 // (no phantom scroll) while long pages gain exactly the
-                // extent needed to clear the plate — the same +16dp of air
+                // extent needed to clear the plate, the same +16dp of air
                 // the list screens leave above their bar.
                 Spacer(Modifier.height(bottomClearance + 16.dp))
             }
         }
 
-        // A quiet scrollbar thumb on the page's right edge — the platform's
+        // A quiet scrollbar thumb on the page's right edge, the platform's
         // own signal for "more of the meaning lies below", with its size
         // telling a reader at a glance how many screens the page runs to.
         // Only present while it does lie below.
@@ -787,7 +787,7 @@ private fun NamePage(
 }
 
 /**
- * Moves the pager one page — snapped instantly when the user has disabled
+ * Moves the pager one page: snapped instantly when the user has disabled
  * animations (animator scale 0), the same respect `Motion.*` gives every
  * other animation in the app. The pager's own animate call has no spec
  * parameter, so the choice has to be made here.

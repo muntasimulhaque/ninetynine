@@ -11,7 +11,7 @@ import androidx.compose.ui.unit.sp
 import io.github.muntasimulhaque.ninetynine.R
 
 /**
- * Arabic everywhere in the app: KFGQPC Uthmanic Script HAFS — the typeface of
+ * Arabic everywhere in the app: KFGQPC Uthmanic Script HAFS: the typeface of
  * the Madinah Mushaf, published free by the King Fahd Glorious Quran Printing
  * Complex (license in assets/fonts/). Single weight; bundled unmodified.
  */
@@ -45,8 +45,8 @@ private val BaseTypography = Typography(
     /**
      * The card transliteration.
      *
-     * Was 34sp and completely unused — a dead slot at the top of the display
-     * ramp — while the hero, quiz, flashcard and share cards all needed a Light
+     * Was 34sp and completely unused (a dead slot at the top of the display
+     * ramp) while the hero, quiz, flashcard and share cards all needed a Light
      * face *between* titleLarge's 18 and displayMedium's 28, and the scale did
      * not have one. Setting those cards at displayMedium left the Arabic only
      * 1.43x the Latin, so on the home card the eye landed on the
@@ -128,7 +128,7 @@ private val BaseTypography = Typography(
         letterSpacing = 0.4.sp,
     ),
     // Tracked small caps: use with .uppercase(Locale.ROOT) for overlines
-    // like "NAME OF THE DAY" (ROOT — the default-locale form renders a
+    // like "NAME OF THE DAY" (ROOT, the default-locale form renders a
     // dotted İ on Turkish devices).
     labelMedium = TextStyle(
         fontFamily = SpectralFamily,

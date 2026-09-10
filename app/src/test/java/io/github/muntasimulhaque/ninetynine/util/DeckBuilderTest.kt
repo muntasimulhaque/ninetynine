@@ -48,7 +48,7 @@ class DeckBuilderTest {
 
     @Test
     fun deckIsCappedToOneSitting() {
-        // A deck used to be every unlearned name — "1 OF 97", which nobody
+        // A deck used to be every unlearned name, "1 OF 97", which nobody
         // finishes, so the done screen was never seen and the progress
         // hairline barely moved.
         val ninetyNine = (1..99).map { Name(it, "arabic$it", "Name-$it", "Title $it", "Meaning $it") }

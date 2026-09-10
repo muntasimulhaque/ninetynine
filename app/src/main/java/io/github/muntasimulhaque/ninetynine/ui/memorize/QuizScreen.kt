@@ -113,7 +113,7 @@ class QuizViewModel(private val savedState: SavedStateHandle) : ViewModel() {
      * [next] deliberately does not clear the selection: the outgoing question
      * keeps its answered state for the length of its turn-away animation, so
      * the green verdict never blinks off mid-fade. What any question reads as
-     * ITS answer is derived — see [chosenFor].
+     * ITS answer is derived: see [chosenFor].
      */
     var selectedAt by mutableIntStateOf(savedState.get<Int>(KEY_SELECTED_AT) ?: -1); private set
     var finished by mutableStateOf(savedState.get<Boolean>(KEY_FINISHED) ?: false); private set
@@ -124,8 +124,8 @@ class QuizViewModel(private val savedState: SavedStateHandle) : ViewModel() {
      * An empty [questions] list means two very different things before that:
      * "the build has not happened yet" and "the bundled asset could not be
      * read". Mapping the first onto the second flashed the failure message on
-     * every entry to this screen — the build runs in a LaunchedEffect, one
-     * frame after the first composition — and it is also what keeps the
+     * every entry to this screen (the build runs in a LaunchedEffect, one
+     * frame after the first composition), and it is also what keeps the
      * question pager from ever indexing an empty round: the screen renders
      * nothing at all until this turns true (see [QuizScreen]). Rides the
      * SavedStateHandle with the rest of the round, so a process death on the
@@ -149,7 +149,7 @@ class QuizViewModel(private val savedState: SavedStateHandle) : ViewModel() {
      * The names answered wrongly, in the order they came up.
      *
      * The round used to keep only a score, so a reader saw "4 / 10" and had no
-     * way to find out which four — the information existed a second earlier and
+     * way to find out which four: the information existed a second earlier and
      * was thrown away. A book of exercises has an answers page.
      */
     var missed by mutableStateOf<List<Int>>(
@@ -199,7 +199,7 @@ class QuizViewModel(private val savedState: SavedStateHandle) : ViewModel() {
      * Records the standing best exactly once, and only for a finished round:
      * the caller's effect re-runs on every rotation while the result page is
      * up, by which time the round's own write may already have raised the
-     * stored best — capturing again would compare the score against itself
+     * stored best: capturing again would compare the score against itself
      * and the "new best" moment would silently never fire.
      */
     fun noteBestBefore(currentBest: Int) {
@@ -214,7 +214,7 @@ class QuizViewModel(private val savedState: SavedStateHandle) : ViewModel() {
      *
      * [namesLoaded] is what makes an empty round unambiguous: the build runs
      * in a LaunchedEffect, a frame after the first composition, and until it
-     * lands an empty list means "not built yet" — never "the asset failed",
+     * lands an empty list means "not built yet": never "the asset failed",
      * and never something the pager may index.
      */
     fun ensureQuiz(namesLoaded: Boolean, names: List<Name>, learned: Set<Int>) {
@@ -345,7 +345,7 @@ fun QuizScreen(
     Scaffold(
         topBar = {
             // A sequence register, centred over the plate like the name page's
-            // "3 of 99" — pushed-screen TITLES sit left (Settings, About);
+            // "3 of 99", pushed-screen TITLES sit left (Settings, About);
             // position counters sit centre. One system, no drift.
             CenterAlignedTopAppBar(
                 modifier = Modifier.barMeasure(),
@@ -382,14 +382,14 @@ fun QuizScreen(
         ) {
             // The question → result turn rides the house push like every other
             // change of state (question→question turns below, daily card,
-            // pushed screens) — the one when-block that used to hard-cut.
+            // pushed screens), the one when-block that used to hard-cut.
             // Loading guards stay outside the animation: no entrance of its
             // own for a first frame, motion only where meaning changes.
             when {
                 // Blank paper until the round exists. One guard covers both
                 // hazards: the round is built a frame after this composition
                 // (so an empty list here is "not yet", not "failed"), and
-                // nothing below may index a list that has no questions — the
+                // nothing below may index a list that has no questions, the
                 // pager indexes it directly. [QuizViewModel.ready] is only set
                 // once a settled input has been read, so an empty round past
                 // this point really does mean the asset could not be read.
@@ -456,7 +456,7 @@ private fun QuizQuestionContent(
                 )
                 Spacer(Modifier.height(20.dp))
                 // Questions TURN like pages instead of cutting: each new one
-                // rises gently into place while the last fades away — exactly
+                // rises gently into place while the last fades away, exactly
                 // how a pushed screen arrives everywhere else in the app. The
                 // frame around them (progress hairline, Next button) never
                 // moves. The outgoing question keeps its verdict through the
@@ -617,7 +617,7 @@ private fun OptionButton(
         OptionState.CORRECT -> colors.onPrimaryContainer to colors.primary
         OptionState.WRONG -> colors.onErrorContainer to colors.error
         // Quiet, not unreadable. These options stay deliberately enabled (see
-        // below) and on screen, so they are content — WCAG's inactive-component
+        // below) and on screen, so they are content, WCAG's inactive-component
         // exemption does not apply. At 45% alpha the text was 2.84:1 and the
         // border 1.68:1, which is unreadable in sunlight and to anyone with low
         // vision, exactly when a reader most wants to compare the answers.
@@ -631,7 +631,7 @@ private fun OptionButton(
     }
     Surface(
         onClick = onClick,
-        // Stays enabled after answering — select() already ignores the second
+        // Stays enabled after answering, select() already ignores the second
         // tap, and a disabled Surface would have the correct answer announced
         // as unavailable. stateDescription appends to the option's own text
         // instead of replacing it, the way contentDescription did.
@@ -697,13 +697,13 @@ private fun QuizResultContent(
         verticalArrangement = Arrangement.Top,
     ) {
         // A perfect round earns the app's seal: the square-Kufic mark inside
-        // the share card's gold hairline circle, popping in softly — once.
+        // the share card's gold hairline circle, popping in softly, once.
         if (score == total) {
             PerfectSeal()
             Spacer(Modifier.height(20.dp))
         }
         ScoreCount(score = score, total = total)
-        // A round that beat the standing best says so, once, quietly — the
+        // A round that beat the standing best says so, once, quietly, the
         // tracked gold overline the app reserves for what matters. First
         // rounds stay silent: everything beats nothing, and saying so would
         // cheapen the moment a real best falls.
@@ -773,7 +773,7 @@ private fun QuizResultContent(
 
 /**
  * The score settles like everything else in the app: it counts up once,
- * calmly, instead of appearing already over. Plays once per result —
+ * calmly, instead of appearing already over. Plays once per result:
  * rememberSaveable keeps a rotation from replaying it, the way the name
  * page's entrance fade does not replay.
  */
@@ -806,7 +806,7 @@ private fun ScoreCount(score: Int, total: Int) {
 }
 
 /**
- * The share card's maker mark in its hairline gold circle — earned here,
+ * The share card's maker mark in its hairline gold circle: earned here,
  * not worn. The pop is the same lively spring the bookmark and the learned
  * pill answer with, so the reward speaks the app's own tactile language.
  */

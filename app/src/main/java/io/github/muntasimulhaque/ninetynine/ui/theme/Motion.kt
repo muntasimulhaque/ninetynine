@@ -20,10 +20,10 @@ val LocalMotionScale = staticCompositionLocalOf { 1f }
 
 /**
  * One motion vocabulary for the whole app: nothing snaps, nothing bounces
- * hard — everything settles, like a page being laid down.
+ * hard: everything settles, like a page being laid down.
  *
  * When the system's animator scale is 0 (the user asked to remove
- * animations), every spec collapses to [snap] — the final state appears
+ * animations), every spec collapses to [snap]: the final state appears
  * instantly, with no intermediate frames.
  */
 object Motion {

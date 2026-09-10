@@ -11,7 +11,7 @@ import java.io.File
  * formatted with `%1$s` on Int arguments, never `%1$d`. `%d` follows the
  * device locale, so on an ar/ur phone the numbers rendered in Arabic-Indic
  * digits and the bidi algorithm reversed the pair visually, while every other
- * number the app draws — the folio numbers, the learned count — is
+ * number the app draws (the folio numbers, the learned count) is
  * `Int.toString()` and stayed Western. `%s` formats the Ints with
  * `String.valueOf`, which is Western digits everywhere, so the counters match
  * the rest of the UI on every device.

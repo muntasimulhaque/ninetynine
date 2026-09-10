@@ -5,7 +5,7 @@
 
   A still life, not the widget itself: Glance renders the real thing, and this
   only has to look like it. Set in the system serif (RemoteViews text cannot
-  wear a bundled font), it shows the fully vocalized Ar-Rahmaan — whose marks
+  wear a bundled font), it shows the fully vocalized Ar-Rahmaan, whose marks
   Noto Naskh places correctly; only the word الله misplaces them there, and
   the preview does not carry it. The previewImage PNG beside this (what
   pickers below Android 12 show) draws the same name in the bundled HAFS.

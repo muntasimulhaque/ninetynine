@@ -33,7 +33,7 @@ class SearchFilterTest {
                 note = "Everything He does is with wisdom."),
         )
         // A detail remembered from a note, with none of the named fields
-        // matching — the note is the only way to this name.
+        // matching, the note is the only way to this name.
         assertEquals(listOf(noted[2]), SearchFilter.filter(noted, "with wisdom"))
         // The note must not reach names whose note does not contain it.
         assertTrue(noted[0] in SearchFilter.filter(noted, "difference between"))

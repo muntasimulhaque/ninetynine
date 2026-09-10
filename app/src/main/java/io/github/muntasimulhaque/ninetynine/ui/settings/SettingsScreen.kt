@@ -135,7 +135,7 @@ fun SettingsScreen(
     // Set when the reader tries to turn the reminder on and the permission is
     // blocked: the dialog takes them to system settings, and if they grant it
     // there, resuming this screen completes the flip they originally asked
-    // for — otherwise the switch would silently need a second toggle.
+    // for, otherwise the switch would silently need a second toggle.
     var pendingEnable by rememberSaveable { mutableStateOf(false) }
 
     val notificationPermission = rememberLauncherForActivityResult(
@@ -170,7 +170,7 @@ fun SettingsScreen(
     Scaffold(
         topBar = {
             // A tab since 1.18, so it wears the same quiet running head as
-            // Memorize and Bookmarks and carries no back button — the tab
+            // Memorize and Bookmarks and carries no back button, the tab
             // grammar and system Back carry the leaving.
             TopAppBar(
                 modifier = Modifier.barMeasure(),
@@ -196,7 +196,7 @@ fun SettingsScreen(
             Spacer(Modifier.height(10.dp))
             Column(Modifier.selectableGroup()) {
                 // A featherweight tick on choice, matching every other
-                // meaningful toggle in the app — the switch, the bookmark,
+                // meaningful toggle in the app, the switch, the bookmark,
                 // the quiz answer all speak to the finger.
                 ThemeOption(ThemeMode.SYSTEM, R.string.theme_system, themeMode) {
                     haptics.tick()
@@ -219,12 +219,12 @@ fun SettingsScreen(
             SectionBreak()
             SectionLabel(stringResource(R.string.text_size))
             Spacer(Modifier.height(16.dp))
-            // The specimen itself is the preview — no box around it — and it
+            // The specimen itself is the preview (no box around it), and it
             // answers the bead mid-drag, not only after release: set at the
             // slider's CURRENT value × the device factor (absolute, via
             // appTypography, not the theme's committed scale), so the reader
-            // sees exactly the size they are choosing — at the size this
-            // device sets the book — before it is written to DataStore.
+            // sees exactly the size they are choosing (at the size this
+            // device sets the book) before it is written to DataStore.
             val deviceFactor = LocalDeviceFactor.current
             val previewStyle = remember(sliderValue, deviceFactor) {
                 appTypography(sliderValue * deviceFactor).headlineMedium
@@ -338,10 +338,10 @@ fun SettingsScreen(
 
             // About has lived at the foot of Settings since it left the
             // tab-bar corner (first as two permanent icons, then as one ⋮
-            // menu, then as one corner gear — all chrome a reader meets every
+            // menu, then as one corner gear, all chrome a reader meets every
             // hour for a page they meet twice; Settings is a fourth tab
             // now). About, the book's front matter (the hadith, the source,
-            // the typefaces), sits at the foot of configuration — one hop
+            // the typefaces), sits at the foot of configuration; one hop
             // from the tab, where a reader already pausing on the app's own
             // questions finds it. The gold chevron marks it as the page's one
             // navigation row.
@@ -352,7 +352,7 @@ fun SettingsScreen(
                 titleStyle = MaterialTheme.typography.bodyLarge,
                 onClickLabel = stringResource(R.string.cd_open_about),
             )
-            // Air between the row above and the datum below — everything else
+            // Air between the row above and the datum below, everything else
             // on this page breathes, and the version line hugging the About
             // row's padding read as cramped (shipped once without it).
             Spacer(Modifier.height(12.dp))
@@ -361,7 +361,7 @@ fun SettingsScreen(
             // string to go stale one release after somebody forgets it.
             // A datum, not a heading. SectionLabel is the app's heading style, so
             // this rendered "VERSION 3.3" as a gold section label with no
-            // section under it — and the only gold on the page announcing
+            // section under it, and the only gold on the page announcing
             // nothing. Same treatment as the closing line on About.
             Text(
                 text = stringResource(R.string.version, BuildConfig.VERSION_NAME),
@@ -369,14 +369,14 @@ fun SettingsScreen(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             // The floating bar overlays the page now that Settings is a tab,
-            // so the last line clears the plate — the bar's measured height,
+            // so the last line clears the plate, the bar's measured height,
             // the same channel the lists grow by.
             Spacer(Modifier.height(28.dp + LocalBottomBarOverlay.current))
         }
     }
 
     if (showTimePicker) {
-        // Material 3 time picker, themed with the app — not the legacy dialog.
+        // Material 3 time picker, themed with the app, not the legacy dialog.
         // Coerced: TimePicker throws on out-of-range hours from a restored backup.
         val timeState = rememberTimePickerState(
             initialHour = dailyTime.first.coerceIn(0, 23),
@@ -508,7 +508,7 @@ private fun ThemeOption(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            // selectable() is a foundation modifier — it applies no M3
+            // selectable() is a foundation modifier; it applies no M3
             // minimum-target size, and the row's height is computed from its
             // text: at the reader slider's 0.85 floor it computes to ~44dp.
             // No-op at the default scale; a guarantee everywhere below it.
@@ -543,7 +543,7 @@ private fun ThemeOption(
 }
 
 /**
- * A theme in miniature: its paper, and its ink as a bead — the eye picks
+ * A theme in miniature: its paper, and its ink as a bead: the eye picks
  * before the mind reads. System wears both papers split, because it is
  * whichever the device is in; its bead follows the theme actually rendering.
  * Purely visual: the row above carries the name and the state for readers.
@@ -556,7 +556,7 @@ private fun ThemeSwatch(mode: ThemeMode) {
         ThemeMode.SYSTEM -> MaterialTheme.colorScheme.primary
     }
     // Dark and Black papers differ by ~8% lightness (#14120D vs #000000),
-    // which a 22dp circle cannot show — side by side the two dark options
+    // which a 22dp circle cannot show, side by side the two dark options
     // read as one choice. The Black swatch takes a firmer ring so the
     // deeper theme is distinguishable at a glance: true black is the
     // switched-off display, and the ring marks it.
@@ -581,7 +581,7 @@ private fun ThemeSwatch(mode: ThemeMode) {
         }
         // A 1dp mat of the page's own surface around the bead: the ink never
         // touches either paper directly, so it reads cleanly even on System's
-        // split circle — where the bead straddles light and dark halves at once.
+        // split circle, where the bead straddles light and dark halves at once.
         Box(
             modifier = Modifier
                 .size(10.dp)
@@ -594,7 +594,7 @@ private fun ThemeSwatch(mode: ThemeMode) {
     }
 }
 
-/** A gold bead on a hairline — the Material slider stripped to the app's line. */
+/** A gold bead on a hairline, the Material slider stripped to the app's line. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun HairlineSlider(
@@ -609,7 +609,7 @@ private fun HairlineSlider(
     val label = stringResource(R.string.text_size)
     val percent = stringResource(R.string.percent, (value * 100).roundToInt())
     // The custom thumb below replaces Material's whole thumb slot, which is
-    // where its focus ring was drawn — so the ring has to be drawn by hand
+    // where its focus ring was drawn, so the ring has to be drawn by hand
     // here, or keyboard users get no indication at all on the one control
     // in the app that takes keyboard input.
     var focused by remember { mutableStateOf(false) }

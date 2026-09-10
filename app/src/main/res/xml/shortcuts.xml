@@ -4,7 +4,7 @@
       Long-press the launcher icon: straight into the practice screens that
       otherwise sit two taps in. Both routes carry their startRoute extra to
       MainActivity, which consumes it exactly the way it consumes the
-      widget's nameNumber — removeExtra, savedInstanceState guard — so a
+      widget's nameNumber (removeExtra, savedInstanceState guard), so a
       process death can never replay the navigation.
     -->
     <shortcut

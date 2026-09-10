@@ -33,8 +33,8 @@ import io.github.muntasimulhaque.ninetynine.ui.theme.Motion
  * Exactly-proportional thumbs betray the metaphor on a book of short pages:
  * a meaning only 1.2 screens long yields a thumb covering ~90% of the edge,
  * which reads as the long line the fill bar was, not as a scrollbar. Capping
- * the length keeps it always reading as a thumb while position — the part
- * readers actually steer by — stays exact. The floor in [ScrollbarThumb] is
+ * the length keeps it always reading as a thumb while position (the part
+ * readers actually steer by) stays exact. The floor in [ScrollbarThumb] is
  * applied after this cap, so very short tracks still get the 24dp minimum.
  */
 private const val THUMB_MAX_FRACTION = 0.40f
@@ -43,7 +43,7 @@ private const val THUMB_MAX_FRACTION = 0.40f
  * A whisper of a progress bar: a hairline gold fill on a paper track.
  * Used for memorization progress, flashcard decks, and the quiz.
  *
- * At 2dp the empty track reads as a track rather than a dirty rule — at rest
+ * At 2dp the empty track reads as a track rather than a dirty rule: at rest
  * (a new reader at 0%) most of what shows IS track, and it must stay quiet.
  */
 @Composable
@@ -91,7 +91,7 @@ fun HairlineProgress(
                 // Not `secondary`: the gold fill at 1.30:1 (light) / 2.26:1
                 // (dark) against the track fails WCAG 1.4.11. The scheme's own
                 // onSecondaryContainer is a deep bronze in light (3.38:1 vs
-                // outline) and a pale gold in dark (3.42:1) — same family,
+                // outline) and a pale gold in dark (3.42:1), same family,
                 // readable boundary, no new colours.
                 .background(MaterialTheme.colorScheme.onSecondaryContainer),
         )
@@ -99,7 +99,7 @@ fun HairlineProgress(
 }
 
 /**
- * The same thumb as [ScrollbarThumb], drawn off a [LazyListState] — the
+ * The same thumb as [ScrollbarThumb], drawn off a [LazyListState]: the
  * lists' rows have no single scroll position to read, so the geometry is
  * estimated from the visible window: average row height × total count.
  * Row heights vary by a few points of text, well inside what a position cue
@@ -108,7 +108,7 @@ fun HairlineProgress(
  *
  * Display-only, exactly like [ScrollbarThumb]: dragging it would make it a
  * fast-scroller, rejected earlier as wrong for a book of short pages. And it
- * hides entirely when every row fits — a thumb on a screen with nothing
+ * hides entirely when every row fits: a thumb on a screen with nothing
  * below it lies.
  */
 @Composable
@@ -165,19 +165,19 @@ fun LazyScrollbarThumb(
 }
 
 /**
- * A quiet scrollbar thumb on the page's right edge — the platform's own shape
+ * A quiet scrollbar thumb on the page's right edge: the platform's own shape
  * for "there is more below".
  *
  * Replaces an earlier fill bar (a 2dp sliver that filled downward). The thumb
  * was chosen over it because it is the one scroll signal every Android reader
- * has already learned — Settings lists, WebViews and RecyclerViews all show
- * one while flinging — and because it says more at a glance: its position is
+ * has already learned (Settings lists, WebViews and RecyclerViews all show
+ * one while flinging), and because it says more at a glance: its position is
  * where you are, and its size says how much of the page one screen holds, so
  * a short thumb says "several screens to go" without a word.
  *
  * Persistent by decision, not the hide-until-scroll kind: a reader sitting at
  * the top of a long meaning is exactly the person who needs telling. It fades
- * away only when there is nothing to tell — `canScrollForward` is false once
+ * away only when there is nothing to tell: `canScrollForward` is false once
  * the content fits, so it never covers a word.
  *
  * Display-only. Dragging it would make it a fast-scroller, rejected earlier
@@ -186,7 +186,7 @@ fun LazyScrollbarThumb(
  * Geometry is computed in the draw phase straight off the [ScrollState], so
  * scrolling redraws the thumb without recomposing anything. The thumb travels
  * the track minus its own height, the way every OS scrollbar behaves. Its
- * length is the honest viewport-to-content fraction, clamped both ways — see
+ * length is the honest viewport-to-content fraction, clamped both ways: see
  * [THUMB_MAX_FRACTION] for why the top clamp exists.
  *
  * Decorative: carries no semantics, so TalkBack reads the text and not the

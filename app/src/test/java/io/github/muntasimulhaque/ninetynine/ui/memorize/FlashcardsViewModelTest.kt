@@ -184,8 +184,8 @@ class FlashcardsViewModelTest {
     /**
      * The screen renders nothing until [FlashcardsViewModel.ready] turns:
      * an empty deck that has not been built yet must never be shown as the
-     * all-learned page, which is what it used to flash — with the house
-     * cross-fade — over the first card of every sitting.
+     * all-learned page, which is what it used to flash (with the house
+     * cross-fade) over the first card of every sitting.
      */
     @Test
     fun deckIsNotReadyUntilTheAssetReadHasSettled() {
