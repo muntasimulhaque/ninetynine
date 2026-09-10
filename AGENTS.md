@@ -198,9 +198,30 @@ app/src/main/assets/     names.json (99 entries), intro.txt, fonts/ (+licenses).
 
 ## State & crash-proofing rules
 
+- **A list that is still being built is not an empty list.** Both practice
+  screens build their round a frame after the first composition, inside a
+  `LaunchedEffect`, so on the frame the screen first draws, the list is empty
+  and *nothing has been decided yet*. Reading that as "there is no round"
+  flashed the failure message over the first card of every sitting — and in
+  the quiz it was worse: the screen indexed its question list directly, so an
+  empty round met an out-of-bounds read and killed the app (fixed 1.30).
+  `QuizViewModel.ready` and `FlashcardsViewModel.ready` are the fix: set only
+  once an input that has SETTLED has been read (`namesLoaded`), never on the
+  empty-list case that precedes it, and carried in the SavedStateHandle with
+  the rest of the round.
+- **Never index a list a screen composes straight.** Even with the gate above,
+  `AnimatedContent` keeps an outgoing copy of a branch alive through its turn:
+  read with `getOrNull` and return early, so a state change mid-animation can
+  never index past the end (the flashcard deck already did this; the quiz
+  question turn does now too).
 - **DataStore emits a frame or two late.** Gate `stateIn(…)` flows on a
   `*Loaded` flag before building UI, or you flash
-  "0 learned"/"nothing kept"/a spinner over real data.
+  "0 learned"/"nothing kept"/a spinner over real data. **And never emit a
+  fallback into the read stream on failure**: `emptyPreferences()` inside
+  `retryWhen` turns a failed read into "the reader has learned nothing", and
+  the `*Loaded` flags then flip true off it, so the flash the flags exist to
+  prevent comes back through the side door. `Prefs` lets the retry pass
+  without emitting; the screens' own initial values are the loading state.
 - **ViewModel flags must be declared BEFORE their eager flow.**
   `stateIn(Eagerly)` collects immediately; an `.onEach` touching a
   later-declared flag crashes cold start with an init-order NPE.
@@ -461,6 +482,23 @@ app/src/main/assets/     names.json (99 entries), intro.txt, fonts/ (+licenses).
   `fromScale` on the lively spring plus a QUICK fade, played once per arrival
   (saved-instance-state guarded; snap at animator scale 0). PerfectSeal uses
   it at 0.6; the all-learned ٩٩ at the default 0.85.
+- **One maker's mark:** `MarkSeal` (PageParts) is the ring and the square-Kufic
+  glyph it holds, with the two inks as parameters — the share card's plate gold
+  at 26dp/12dp, the earned seals' `secondary` at 52dp/22dp. The share card's
+  foot, the quiz's perfect round and the finished flashcard set all wear it;
+  never re-draw the circle + `ic_mark` pair at a call site.
+- **A Divine Name is never truncated in a list row either:** `NameListItem`
+  sets the transliteration through `FitText`, because the longest three
+  (Al-Muta'aalee, Al-Mutakabbir, Al-Mu'akhkhir — 13 characters each) do not
+  fit beside the folio, the tick and the Arabic on a narrow phone at a large
+  system font scale. The epithet beneath keeps its ellipsis: it is a sentence,
+  not a Name. `FitText` has an `AnnotatedString` overload so the search-
+  highlight spans are measured with the text.
+- **Scroll thumbs stop above the floating bar:** the lists scroll UNDER the
+  plate, so `LazyScrollbarThumb` in Home and Bookmarks ends its track at
+  `16.dp + LocalBottomBarOverlay.current` rather than at the paper's edge —
+  otherwise the thumb walks behind the bar in exactly the last stretch of the
+  list, where the reader is steering by it.
 
 ## Content invariants (guarded by NamesAssetTest)
 
@@ -476,12 +514,13 @@ intro, and #26's meaning).
 
 ## Testing
 
-- **80 unit tests** (JUnit4, `app/src/test`): daily rotation, quiz generation
+- **87 unit tests** (JUnit4, `app/src/test`): daily rotation, quiz generation
   + subsuming-distractor guards, search and the literal highlight ranges,
   deck building (incl. 10-card cap),
   ViewModels (incl. the tagged-selection contract that keeps a turning
   question's verdict and the best-before capture, plus corrupted-restore
-  guards for the quiz and deck), NamesAssetTest over the
+  guards for the quiz and deck, and the *ready gates that keep an unbuilt
+  round from reading as a failed asset read), NamesAssetTest over the
   real asset, CounterFormatTest.
   Count grows as guards are added — sum the XMLs in
   `app/build/test-results/testDebugUnitTest/`.

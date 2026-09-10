@@ -146,12 +146,19 @@ fun NameListItem(
             )
             Spacer(Modifier.width(FolioGap))
             Column(Modifier.weight(1f)) {
-                Text(
+                // FitText, not a bare Text: a row is the app's most repeated
+                // surface and the longest transliterations (Al-Muta'aalee,
+                // Al-Mutakabbir, Al-Mu'akhkhir — 13 characters each) are the
+                // ones a narrow phone at a large font scale cannot hold
+                // beside the folio, the tick and the Arabic. Shrinking beats
+                // ellipsizing for a Divine Name, which is never allowed to
+                // lose its tail; at every ordinary size the fitted line is
+                // the plain one and nothing changes. The epithet below keeps
+                // its ellipsis: it is a sentence, not a Name.
+                FitText(
                     text = translitText,
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurface,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
                 )
                 Text(
                     text = titleText,

@@ -58,7 +58,8 @@ import kotlin.math.sin
 
 class DailyNameWidget : GlanceAppWidget() {
 
-    companion object {        // Responsive height buckets: show only as many lines as fit completely.
+    companion object {
+        // Responsive height buckets: show only as many lines as fit completely.
         // The longest title (#39, 71 chars) wraps to three lines and ellipsizes
         // at the minimum 110dp width — the Arabic + transliteration above carry
         // the day's name, and the title's full sense is one tap away.

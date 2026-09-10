@@ -24,7 +24,6 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
@@ -90,6 +89,7 @@ import io.github.muntasimulhaque.ninetynine.ui.theme.components.ArabicText
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.BackButton
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.FitText
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.HairlineProgress
+import io.github.muntasimulhaque.ninetynine.ui.theme.components.MarkSeal
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.PageMessage
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.PageInset
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.SettleOnce
@@ -118,6 +118,19 @@ class FlashcardsViewModel(private val savedState: SavedStateHandle) : ViewModel(
     ); private set
     var flipped by mutableStateOf(savedState.get<Boolean>(KEY_FLIPPED) ?: false); private set
     var done by mutableStateOf(savedState.get<Boolean>(KEY_DONE) ?: false); private set
+
+    /**
+     * True once this sitting's deck has been built from a settled input.
+     *
+     * An empty [deck] means two very different things before that: "the build
+     * has not happened yet" and "there is nothing left to draw". Mapping the
+     * first onto the second flashed the ٩٩ and "All 99 names learned" — with
+     * the house cross-fade, no less — over the first card of every sitting,
+     * because the build runs in a LaunchedEffect one frame after the first
+     * composition. The screen renders nothing until this turns true. Rides
+     * the SavedStateHandle with the rest of the sitting.
+     */
+    var ready by mutableStateOf(savedState.get<Boolean>(KEY_READY) ?: false); private set
     private var lastInclude: Boolean? = savedState.get<Boolean>(KEY_LAST_INCLUDE)
 
     /**
@@ -148,23 +161,45 @@ class FlashcardsViewModel(private val savedState: SavedStateHandle) : ViewModel(
         savedState[KEY_FLIPPED] = flipped
         savedState[KEY_DONE] = done
         savedState[KEY_LAST_INCLUDE] = lastInclude
+        savedState[KEY_READY] = ready
         val undo = undoable
         savedState[KEY_UNDO_NUMBER] = undo?.first
         savedState[KEY_UNDO_MARKED] = undo?.second
     }
 
-    fun ensureDeck(names: List<Name>, learned: Set<Int>, includeLearned: Boolean) {
-        if (names.isEmpty()) return
-        if (deck.isNotEmpty() && lastInclude == includeLearned) return
-        deck = DeckBuilder.build(names, learned, includeLearned)
-        lastInclude = includeLearned
-        index = 0
-        flipped = false
-        done = false
-        // A rebuilt deck is a new sitting: the previous deck's last commit no
-        // longer exists, so undoing it would silently un-learn a card that is
-        // not even in this set.
-        undoable = null
+    /**
+     * Builds the deck once the input has settled.
+     *
+     * [namesLoaded] is what makes an empty deck unambiguous: the build runs in
+     * a LaunchedEffect, a frame after the first composition, and until it
+     * lands an empty deck means "not built yet" — not "everything is
+     * learned".
+     */
+    fun ensureDeck(
+        namesLoaded: Boolean,
+        names: List<Name>,
+        learned: Set<Int>,
+        includeLearned: Boolean,
+    ) {
+        // Nothing is decided until the asset read has finished: building from
+        // an empty list would look exactly like a failed read.
+        if (!namesLoaded) return
+        // A rebuild is needed whenever the deck is not already this sitting's:
+        // never built, or built under the other include-learned setting.
+        if (names.isNotEmpty() && !(deck.isNotEmpty() && lastInclude == includeLearned)) {
+            deck = DeckBuilder.build(names, learned, includeLearned)
+            lastInclude = includeLearned
+            index = 0
+            flipped = false
+            done = false
+            // A rebuilt deck is a new sitting: the previous deck's last commit no
+            // longer exists, so undoing it would silently un-learn a card that is
+            // not even in this set.
+            undoable = null
+        }
+        // Settled either way: with no unlearned names left this is the
+        // all-learned page, and with an unreadable asset the screen says so.
+        ready = true
         saveSession()
     }
 
@@ -197,7 +232,8 @@ class FlashcardsViewModel(private val savedState: SavedStateHandle) : ViewModel(
     fun restart(names: List<Name>, learned: Set<Int>, includeLearned: Boolean) {
         deck = emptyList()
         lastInclude = null
-        ensureDeck(names, learned, includeLearned)
+        ready = false
+        ensureDeck(namesLoaded = true, names, learned, includeLearned)
     }
 
     override fun onCleared() {
@@ -206,6 +242,7 @@ class FlashcardsViewModel(private val savedState: SavedStateHandle) : ViewModel(
         savedState.remove<Boolean>(KEY_FLIPPED)
         savedState.remove<Boolean>(KEY_DONE)
         savedState.remove<Boolean>(KEY_LAST_INCLUDE)
+        savedState.remove<Boolean>(KEY_READY)
         savedState.remove<Int>(KEY_UNDO_NUMBER)
         savedState.remove<Boolean>(KEY_UNDO_MARKED)
     }
@@ -216,6 +253,7 @@ class FlashcardsViewModel(private val savedState: SavedStateHandle) : ViewModel(
         const val KEY_FLIPPED = "deck.flipped"
         const val KEY_DONE = "deck.done"
         const val KEY_LAST_INCLUDE = "deck.lastInclude"
+        const val KEY_READY = "deck.ready"
         const val KEY_UNDO_NUMBER = "deck.undoNumber"
         const val KEY_UNDO_MARKED = "deck.undoMarked"
     }
@@ -246,9 +284,9 @@ fun FlashcardsScreen(
     // be captured outside it (same hoist as the quiz screen).
     val motionScale = LocalMotionScale.current
 
-    LaunchedEffect(names, learned, learnedLoaded, includeLearned) {
+    LaunchedEffect(names, learned, learnedLoaded, includeLearned, namesLoaded) {
         if (!learnedLoaded) return@LaunchedEffect
-        session.ensureDeck(names, learned, includeLearned)
+        session.ensureDeck(namesLoaded, names, learned, includeLearned)
     }
 
     Scaffold(
@@ -311,12 +349,13 @@ fun FlashcardsScreen(
                 // Blank paper said nothing at all when the asset failed to
                 // read. Home has explained this case since v2.6; these screens
                 // are reachable without passing it.
-                names.isEmpty() ->
-                    if (namesLoaded) PageMessage(stringResource(R.string.names_unavailable))
-                // Until DataStore delivers, an empty deck is "not built yet",
-                // not "everything is learned": the all-learned state is
+                names.isEmpty() && namesLoaded ->
+                    PageMessage(stringResource(R.string.names_unavailable))
+                // Until the deck for this sitting has been built — a frame
+                // after this composition — an empty deck is "not built yet",
+                // not "everything is learned": the all-learned page is
                 // alarming, and wrong for a brand-new reader.
-                !learnedLoaded -> Unit
+                !session.ready -> Unit
                 else -> AnimatedContent(
                     targetState = when {
                         session.deck.isEmpty() -> DeckState.AllLearned
@@ -847,21 +886,10 @@ private fun DeckDoneContent(onStartAgain: () -> Unit) {
         verticalArrangement = Arrangement.Center,
     ) {
         // A finished set earns the house seal: the gold hairline circle and
-        // check an answered quiz option wears, scaled up and alone. Completion
-        // is a moment, not a dead end — the button below is already the way on.
-        Box(
-            modifier = Modifier
-                .size(52.dp)
-                .border(1.dp, MaterialTheme.colorScheme.secondary.copy(alpha = 0.45f), CircleShape),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                Icons.Filled.Check,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.secondary,
-                modifier = Modifier.size(22.dp),
-            )
-        }
+        // mark an answered quiz option's perfect round wears, alone.
+        // Completion is a moment, not a dead end — the button below is
+        // already the way on.
+        MarkSeal()
         Spacer(Modifier.height(24.dp))
         Text(
             text = stringResource(R.string.deck_done),

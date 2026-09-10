@@ -4,7 +4,6 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.widget.Toast
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,7 +16,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Button
@@ -49,7 +47,6 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Velocity
@@ -67,6 +64,7 @@ import io.github.muntasimulhaque.ninetynine.ui.theme.appTypography
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.ArabicSize
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.ArabicText
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.FitText
+import io.github.muntasimulhaque.ninetynine.ui.theme.components.MarkSeal
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.PageInset
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -284,18 +282,12 @@ internal fun ShareCard(name: Name, modifier: Modifier = Modifier) {
                 // circle repeats the card's own gold hairline, so the mark reads
                 // as the logo rather than as part of the line beside it.
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(
-                        modifier = Modifier
-                            .size(26.dp)
-                            .border(width = 1.dp, color = frameGold, shape = CircleShape),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Image(
-                            painter = painterResource(R.drawable.ic_mark),
-                            contentDescription = null,
-                            modifier = Modifier.size(12.dp),
-                        )
-                    }
+                    MarkSeal(
+                        ringColor = frameGold,
+                        markColor = HeroGold,
+                        size = 26.dp,
+                        markSize = 12.dp,
+                    )
                     Spacer(Modifier.width(9.dp))
                     // The store's name, not the app's own. This image is the
                     // only surface a stranger sees, so it carries the title

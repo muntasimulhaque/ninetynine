@@ -140,7 +140,12 @@ fun BookmarksScreen(
                 listState = listState,
                 modifier = Modifier
                     .align(Alignment.TopEnd)
-                    .padding(top = padding.calculateTopPadding() + 8.dp, bottom = 32.dp, end = 4.dp),
+                    // Track ends above the floating plate — see HomeScreen.
+                    .padding(
+                        top = padding.calculateTopPadding() + 8.dp,
+                        bottom = 16.dp + LocalBottomBarOverlay.current,
+                        end = 4.dp,
+                    ),
             )
         }
     }

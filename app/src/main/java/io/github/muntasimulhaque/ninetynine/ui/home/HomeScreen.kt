@@ -399,7 +399,15 @@ fun HomeScreen(
                 listState = listState,
                 modifier = Modifier
                     .align(Alignment.TopEnd)
-                    .padding(top = padding.calculateTopPadding() + 8.dp, bottom = 32.dp, end = 4.dp),
+                    // Track ends above the floating plate: the bar scrolls
+                    // UNDER the list, so a thumb that ran to the paper's edge
+                    // would walk behind the plate exactly when the reader is
+                    // steering by it (the last stretch of the list).
+                    .padding(
+                        top = padding.calculateTopPadding() + 8.dp,
+                        bottom = 16.dp + LocalBottomBarOverlay.current,
+                        end = 4.dp,
+                    ),
             )
         }
     }
@@ -547,10 +555,13 @@ private fun DailyHeroCard(name: Name, onClick: () -> Unit) {
                 minScale = 0.45f,
             )
             Spacer(Modifier.height(2.dp))
-            // Two lines. On one line this cut the meaning of the day in half —
-            // several of the 99 epithets do not fit a phone at default size,
-            // so roughly one morning in eight the app opened on "The Perfect
-            // Lord And Master Upon Whom Th…". The card has the height to spare.
+            // Three lines: the hero and the notification's plate below both
+            // wrap the epithet to at most three. On one line this cut the
+            // meaning of the day in half — several of the 99 epithets do not
+            // fit a phone at default size, so roughly one morning in eight the
+            // app opened on "The Perfect Lord And Master Upon Whom Th…". The
+            // card has the height to spare, and only the longest handful of
+            // epithets ever reach the third line.
             Text(
                 text = name.title,
                 style = MaterialTheme.typography.titleMedium,

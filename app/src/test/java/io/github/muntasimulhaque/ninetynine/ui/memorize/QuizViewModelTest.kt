@@ -18,7 +18,7 @@ class QuizViewModelTest {
     @Test
     fun ensureQuizBuildsTenQuestions() {
         val vm = vm()
-        vm.ensureQuiz(names, learned = emptySet())
+        vm.ensureQuiz(namesLoaded = true, names, learned = emptySet())
         assertEquals(10, vm.questions.size)
         assertEquals(0, vm.index)
         assertEquals(0, vm.score)
@@ -28,23 +28,23 @@ class QuizViewModelTest {
     @Test
     fun ensureQuizNoOpsWhenAlreadyBuilt() {
         val vm = vm()
-        vm.ensureQuiz(names, learned = emptySet())
+        vm.ensureQuiz(namesLoaded = true, names, learned = emptySet())
         val first = vm.questions
-        vm.ensureQuiz(names, learned = setOf(1))
+        vm.ensureQuiz(namesLoaded = true, names, learned = setOf(1))
         assertEquals(first, vm.questions)
     }
 
     @Test
     fun emptyNamesGiveNoQuiz() {
         val vm = vm()
-        vm.ensureQuiz(emptyList(), learned = emptySet())
+        vm.ensureQuiz(namesLoaded = true, emptyList(), learned = emptySet())
         assertTrue(vm.questions.isEmpty())
     }
 
     @Test
     fun selectCorrectAnswerIncrementsScore() {
         val vm = vm()
-        vm.ensureQuiz(names, learned = emptySet())
+        vm.ensureQuiz(namesLoaded = true, names, learned = emptySet())
         val correct = vm.questions[0].answerIndex
         assertTrue(vm.select(correct))
         assertEquals(1, vm.score)
@@ -53,7 +53,7 @@ class QuizViewModelTest {
     @Test
     fun selectWrongAnswerDoesNotIncrementScore() {
         val vm = vm()
-        vm.ensureQuiz(names, learned = emptySet())
+        vm.ensureQuiz(namesLoaded = true, names, learned = emptySet())
         val wrong = (vm.questions[0].answerIndex + 1) % 4
         assertFalse(vm.select(wrong))
         assertEquals(0, vm.score)
@@ -62,7 +62,7 @@ class QuizViewModelTest {
     @Test
     fun selectRecordsMissedNames() {
         val vm = vm()
-        vm.ensureQuiz(names, learned = emptySet())
+        vm.ensureQuiz(namesLoaded = true, names, learned = emptySet())
         val q = vm.questions[0]
         val wrong = (q.answerIndex + 1) % 4
         vm.select(wrong)
@@ -72,7 +72,7 @@ class QuizViewModelTest {
     @Test
     fun doubleSelectIsIgnored() {
         val vm = vm()
-        vm.ensureQuiz(names, learned = emptySet())
+        vm.ensureQuiz(namesLoaded = true, names, learned = emptySet())
         val correct = vm.questions[0].answerIndex
         vm.select(correct)
         val secondResult = vm.select((correct + 1) % 4)
@@ -83,7 +83,7 @@ class QuizViewModelTest {
     @Test
     fun nextAdvancesAndNewQuestionReadsUnanswered() {
         val vm = vm()
-        vm.ensureQuiz(names, learned = emptySet())
+        vm.ensureQuiz(namesLoaded = true, names, learned = emptySet())
         val firstCorrect = vm.questions[0].answerIndex
         vm.select(firstCorrect)
         assertEquals(firstCorrect, vm.chosenFor(0))
@@ -98,7 +98,7 @@ class QuizViewModelTest {
     @Test
     fun staleSelectionNeverCountsTwiceOrLeaksForward() {
         val vm = vm()
-        vm.ensureQuiz(names, learned = emptySet())
+        vm.ensureQuiz(namesLoaded = true, names, learned = emptySet())
         vm.select(vm.questions[0].answerIndex)
         vm.next()
         // The carried selection is tagged to question 0; answering question 1
@@ -115,7 +115,7 @@ class QuizViewModelTest {
     @Test
     fun nextOnLastQuestionSetsFinished() {
         val vm = vm()
-        vm.ensureQuiz(names, learned = emptySet())
+        vm.ensureQuiz(namesLoaded = true, names, learned = emptySet())
         repeat(vm.questions.lastIndex) {
             vm.select(vm.questions[vm.index].answerIndex)
             vm.next()
@@ -130,7 +130,7 @@ class QuizViewModelTest {
     @Test
     fun perfectRoundHasNoMissed() {
         val vm = vm()
-        vm.ensureQuiz(names, learned = emptySet())
+        vm.ensureQuiz(namesLoaded = true, names, learned = emptySet())
         for (i in vm.questions.indices) {
             vm.select(vm.questions[i].answerIndex)
             vm.next()
@@ -143,7 +143,7 @@ class QuizViewModelTest {
     @Test
     fun restartResetsEverything() {
         val vm = vm()
-        vm.ensureQuiz(names, learned = emptySet())
+        vm.ensureQuiz(namesLoaded = true, names, learned = emptySet())
         vm.select(vm.questions[0].answerIndex)
         vm.next()
         vm.restart(names, learned = emptySet())
@@ -160,7 +160,7 @@ class QuizViewModelTest {
     @Test
     fun bestBeforeIgnoredWhileRoundStillRunning() {
         val vm = vm()
-        vm.ensureQuiz(names, learned = emptySet())
+        vm.ensureQuiz(namesLoaded = true, names, learned = emptySet())
         vm.noteBestBefore(6)
         assertEquals(Int.MIN_VALUE, vm.bestBefore)
     }
@@ -168,7 +168,7 @@ class QuizViewModelTest {
     @Test
     fun bestBeforeCapturedOnceOnFinishedRound() {
         val vm = vm()
-        vm.ensureQuiz(names, learned = emptySet())
+        vm.ensureQuiz(namesLoaded = true, names, learned = emptySet())
         for (i in vm.questions.indices) {
             vm.select(vm.questions[i].answerIndex)
             vm.next()
@@ -185,7 +185,7 @@ class QuizViewModelTest {
     @Test
     fun restartClearsTheBestBeforeCapture() {
         val vm = vm()
-        vm.ensureQuiz(names, learned = emptySet())
+        vm.ensureQuiz(namesLoaded = true, names, learned = emptySet())
         for (i in vm.questions.indices) {
             vm.select(vm.questions[i].answerIndex)
             vm.next()
@@ -200,7 +200,7 @@ class QuizViewModelTest {
         val bad = "[{\"number\":1,\"options\":[\"a\",\"b\"],\"answerIndex\":9}]"
         val restored = QuizViewModel(SavedStateHandle(mapOf("quiz.questions" to bad)))
         assertTrue(restored.questions.isEmpty())
-        restored.ensureQuiz(names, learned = emptySet())
+        restored.ensureQuiz(namesLoaded = true, names, learned = emptySet())
         assertEquals(10, restored.questions.size)
     }
 
@@ -214,9 +214,57 @@ class QuizViewModelTest {
     @Test
     fun selectOutOfRangeOptionIsIgnored() {
         val vm = vm()
-        vm.ensureQuiz(names, learned = emptySet())
+        vm.ensureQuiz(namesLoaded = true, names, learned = emptySet())
         assertFalse(vm.select(99))
         assertEquals(0, vm.score)
         assertEquals(-1, vm.chosenFor(0))
+    }
+
+    /**
+     * The screen renders nothing until [QuizViewModel.ready] turns — that is
+     * what keeps a round that has not been built (empty because the build
+     * runs in an effect, one frame after the first composition) from reading
+     * as a failed asset read, and what keeps the question pager from ever
+     * indexing an empty list.
+     */
+    @Test
+    fun roundIsNotReadyUntilTheAssetReadHasSettled() {
+        val vm = vm()
+        assertFalse(vm.ready)
+        // Still loading: nothing may be decided from an empty list.
+        vm.ensureQuiz(namesLoaded = false, names = emptyList(), learned = emptySet())
+        assertFalse(vm.ready)
+        assertTrue(vm.questions.isEmpty())
+        // Read and empty: now the failure is real, and the screen may say so.
+        vm.ensureQuiz(namesLoaded = true, names = emptyList(), learned = emptySet())
+        assertTrue(vm.ready)
+        assertTrue(vm.questions.isEmpty())
+    }
+
+    @Test
+    fun aBuiltRoundIsReady() {
+        val vm = vm()
+        vm.ensureQuiz(namesLoaded = true, names, learned = emptySet())
+        assertTrue(vm.ready)
+        assertEquals(10, vm.questions.size)
+    }
+
+    @Test
+    fun readinessRidesTheSavedStateAcrossProcessDeath() {
+        // A shared handle stands in for a restored one: the second ViewModel
+        // reads exactly what the first wrote into it, the way a recreated
+        // ViewModel reads the bundle the system kept.
+        val handle = SavedStateHandle()
+        QuizViewModel(handle).ensureQuiz(namesLoaded = true, names, learned = emptySet())
+        assertTrue(QuizViewModel(handle).ready)
+    }
+
+    @Test
+    fun restartMarksTheNewRoundReady() {
+        val vm = QuizViewModel(SavedStateHandle())
+        assertFalse(vm.ready)
+        vm.restart(names, learned = emptySet())
+        assertTrue(vm.ready)
+        assertEquals(10, vm.questions.size)
     }
 }

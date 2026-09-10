@@ -44,14 +44,25 @@ class Prefs(private val context: Context) {
      * a single transient read failure would end every derived flow for the rest
      * of the process. `stateIn` would pin the empty value, and Memorize would
      * read "0 learned" and Bookmarks "nothing kept" — a lie about intact data,
-     * until the app was restarted. This emits the same fallback and then lets
-     * DataStore try again.
+     * until the app was restarted. This lets DataStore try again instead.
+     *
+     * Nothing is emitted on the way into the retry, and that matters as much
+     * as the retry itself. `emptyPreferences()` here — the obvious "give the
+     * consumer something" — would tell every derived flow that the reader has
+     * learned and kept *nothing*, and the `*Loaded` flags would flip true off
+     * that failed read: Memorize would roll its count down to 0, Bookmarks
+     * would say "nothing kept yet", and both would roll back a moment later
+     * when the retry landed. Those flags exist precisely so a read that has not
+     * happened cannot be mistaken for a read that came back empty, and an
+     * emission here defeats them. The screens' own initial values (`emptySet`,
+     * `*Loaded = false`) are the loading state; not emitting is what keeps it
+     * honest.
      *
      * It retries on *any* exception, not just IOException. DataStore's real
      * failure mode is IOException (corruption is already handled by the file's
      * corruptionHandler), but a cold start can surface a transient race while
      * the store initialises; letting a non-IO exception escape would crash the
-     * process on a launch. A fallback value for one read is harmless — the next
+     * process on a launch. No new value for one attempt is harmless — the next
      * retry delivers the stored truth.
      *
      * The retry backs off — 250ms doubling to a 4s ceiling — so a store that
@@ -63,7 +74,6 @@ class Prefs(private val context: Context) {
     private val data: Flow<Preferences> = context.dataStore.data
         .retryWhen { cause, attempt ->
             if (cause is CancellationException) throw cause
-            emit(emptyPreferences())
             delay(250L shl attempt.coerceIn(0L, 4L).toInt())
             true
         }

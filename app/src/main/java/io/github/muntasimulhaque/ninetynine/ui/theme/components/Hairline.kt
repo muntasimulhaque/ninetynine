@@ -12,9 +12,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
@@ -101,34 +99,6 @@ fun HairlineProgress(
 }
 
 /**
- * A quiet scrollbar thumb on the page's right edge — the platform's own shape
- * for "there is more below".
- *
- * Replaces an earlier fill bar (a 2dp sliver that filled downward). The thumb
- * was chosen over it because it is the one scroll signal every Android reader
- * has already learned — Settings lists, WebViews and RecyclerViews all show
- * one while flinging — and because it says more at a glance: its position is
- * where you are, and its size says how much of the page one screen holds, so
- * a short thumb says "several screens to go" without a word.
- *
- * Persistent by decision, not the hide-until-scroll kind: a reader sitting at
- * the top of a long meaning is exactly the person who needs telling. It fades
- * away only when there is nothing to tell — `canScrollForward` is false once
- * the content fits, so it never covers a word.
- *
- * Display-only. Dragging it would make it a fast-scroller, rejected earlier
- * as wrong for a book of short pages.
- *
- * Geometry is computed in the draw phase straight off the [ScrollState], so
- * scrolling redraws the thumb without recomposing anything. The thumb travels
- * the track minus its own height, the way every OS scrollbar behaves. Its
- * length is the honest viewport-to-content fraction, clamped both ways — see
- * [THUMB_MAX_FRACTION] for why the top clamp exists.
- *
- * Decorative: carries no semantics, so TalkBack reads the text and not the
- * chrome.
- */
-/**
  * The same thumb as [ScrollbarThumb], drawn off a [LazyListState] — the
  * lists' rows have no single scroll position to read, so the geometry is
  * estimated from the visible window: average row height × total count.
@@ -194,6 +164,34 @@ fun LazyScrollbarThumb(
     )
 }
 
+/**
+ * A quiet scrollbar thumb on the page's right edge — the platform's own shape
+ * for "there is more below".
+ *
+ * Replaces an earlier fill bar (a 2dp sliver that filled downward). The thumb
+ * was chosen over it because it is the one scroll signal every Android reader
+ * has already learned — Settings lists, WebViews and RecyclerViews all show
+ * one while flinging — and because it says more at a glance: its position is
+ * where you are, and its size says how much of the page one screen holds, so
+ * a short thumb says "several screens to go" without a word.
+ *
+ * Persistent by decision, not the hide-until-scroll kind: a reader sitting at
+ * the top of a long meaning is exactly the person who needs telling. It fades
+ * away only when there is nothing to tell — `canScrollForward` is false once
+ * the content fits, so it never covers a word.
+ *
+ * Display-only. Dragging it would make it a fast-scroller, rejected earlier
+ * as wrong for a book of short pages.
+ *
+ * Geometry is computed in the draw phase straight off the [ScrollState], so
+ * scrolling redraws the thumb without recomposing anything. The thumb travels
+ * the track minus its own height, the way every OS scrollbar behaves. Its
+ * length is the honest viewport-to-content fraction, clamped both ways — see
+ * [THUMB_MAX_FRACTION] for why the top clamp exists.
+ *
+ * Decorative: carries no semantics, so TalkBack reads the text and not the
+ * chrome.
+ */
 @Composable
 fun ScrollbarThumb(
     scrollState: ScrollState,

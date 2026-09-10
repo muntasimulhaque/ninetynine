@@ -14,7 +14,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.isSpecified
-import androidx.compose.ui.unit.times
 import io.github.muntasimulhaque.ninetynine.ui.theme.ArabicFamily
 
 private val ARABIC_RUN = Regex(

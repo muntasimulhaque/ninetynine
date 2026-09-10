@@ -84,9 +84,11 @@
     <string name="not_learned">Not learned</string>
     <string name="mark_learned">Mark as learned</string>
     <!-- The name page's floating plate labels: short chrome in the tab bar's
-         label register (uppercased in code). The full actions stay in the
-         screen-reader names (mark_learned, cd_bookmark); these are for the
-         eye only, so they deliberately say the short word that fits. -->
+         label register — mixed case, never tracked caps (owner decision,
+         1.22: caps are the register of ANNOTATION, and these are words the
+         reader taps). The full actions stay in the screen-reader names
+         (mark_learned, cd_bookmark); these are for the eye only, so they
+         deliberately say the short word that fits. -->
     <string name="plate_learned">Learned</string>
     <string name="plate_bookmark">Bookmark</string>
     <string name="note_label">Note</string>

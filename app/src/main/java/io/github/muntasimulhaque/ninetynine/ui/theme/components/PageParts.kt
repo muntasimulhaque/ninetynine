@@ -3,6 +3,7 @@ package io.github.muntasimulhaque.ninetynine.ui.theme.components
 import androidx.compose.animation.core.animateFloatAsState
 import android.graphics.BlurMaskFilter
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -11,10 +12,12 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
@@ -48,11 +51,13 @@ import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.rememberTextMeasurer
@@ -62,11 +67,9 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.isSpecified
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.unit.times
 import io.github.muntasimulhaque.ninetynine.R
 import io.github.muntasimulhaque.ninetynine.ui.theme.LocalDarkTheme
 import io.github.muntasimulhaque.ninetynine.ui.theme.LocalDeviceFactor
-import io.github.muntasimulhaque.ninetynine.ui.theme.LocalMotionScale
 import io.github.muntasimulhaque.ninetynine.ui.theme.LocalPureBlackTheme
 import io.github.muntasimulhaque.ninetynine.ui.theme.LocalTextScale
 import io.github.muntasimulhaque.ninetynine.ui.theme.Motion
@@ -235,6 +238,29 @@ fun FitText(
     modifier: Modifier = Modifier,
     minScale: Float = 0.55f,
 ) {
+    FitText(
+        text = AnnotatedString(text),
+        style = style,
+        color = color,
+        modifier = modifier,
+        minScale = minScale,
+    )
+}
+
+/**
+ * [FitText] for text that already carries spans — the names list paints the
+ * reader's literal search matches inside the transliteration, and a Divine
+ * Name must still never lose its tail. The fit measures the styled text, so
+ * the highlighted matches are part of the width the line is fitted to.
+ */
+@Composable
+fun FitText(
+    text: AnnotatedString,
+    style: TextStyle,
+    color: Color,
+    modifier: Modifier = Modifier,
+    minScale: Float = 0.55f,
+) {
     val measurer = rememberTextMeasurer()
     BoxWithConstraints(modifier) {
         val available = constraints.maxWidth
@@ -264,6 +290,39 @@ fun FitText(
             maxLines = 1,
             softWrap = false,
             overflow = TextOverflow.Ellipsis,
+        )
+    }
+}
+
+/**
+ * The maker's mark in its hairline ring: the app's own square-Kufic seal.
+ *
+ * Worn by the share card's foot, and earned — never merely worn — on the
+ * quiz's perfect round and the finished flashcard set. One construction, so
+ * the three cannot drift: the ring and the mark are both parameters, because
+ * the share card sets them in its own plate gold on emerald while the two
+ * earned seals wear the theme's `secondary`, the ink of every mark on paper.
+ * Purely visual; the plate or page around it carries the meaning.
+ */
+@Composable
+fun MarkSeal(
+    modifier: Modifier = Modifier,
+    ringColor: Color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.45f),
+    markColor: Color = MaterialTheme.colorScheme.secondary,
+    size: Dp = 52.dp,
+    markSize: Dp = 22.dp,
+) {
+    Box(
+        modifier = modifier
+            .size(size)
+            .border(1.dp, ringColor, CircleShape),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(
+            painter = painterResource(R.drawable.ic_mark),
+            contentDescription = null,
+            tint = markColor,
+            modifier = Modifier.size(markSize),
         )
     }
 }
@@ -421,9 +480,11 @@ fun FloatingBar(modifier: Modifier = Modifier, content: @Composable () -> Unit) 
     // The plate's paper, per theme: the page's own in light; a container rung
     // above it in dark — a shadow is black paint, so on near-black paper the
     // tone is what lifts the plate (Material's own dark-elevation grammar).
-    // BLACK's true-black page takes one rung more to read at the same
-    // perceived height. No theme draws a border: light never had one, and the
-    // dark hairline it once wore was the old stand-in for exactly this lift.
+    // BLACK needs `surfaceContainerHigh` rather than the rung below it: on a
+    // true-black page there is no shadow to read and #100F0C sits so close to
+    // the page that the plate stops reading as a sheet at all. No theme draws
+    // a border: light never had one, and the dark hairline it once wore was
+    // the old stand-in for exactly this lift.
     val plateColor = when {
         pureBlack -> MaterialTheme.colorScheme.surfaceContainerHigh
         dark -> MaterialTheme.colorScheme.surfaceContainer

@@ -10,7 +10,7 @@ so do not add a word or a stray space.
 
 - **Application ID (package name):** `io.github.muntasimulhaque.ninetynine`
 - **Privacy policy URL:** `https://muntasimulhaque.github.io/ninetynine/privacy-policy.html`
-- **Version (this release):** versionName `1.29`, versionCode `39`
+- **Version (this release):** versionName `1.30`, versionCode `40`
 
 ---
 
@@ -57,6 +57,17 @@ Made to be read:
 
 Free and open source. May Allah make us among those who learn, memorize,
 understand and act upon His beautiful Names.
+```
+
+## What's new (version 1.30)
+
+```
+Fixes for rare hiccups on a slow start, plus refinements:
+
+• Opening the Quiz could close the app on a slow start; it now waits for the round to be ready.
+• Quiz and Flashcards no longer flash a "could not be loaded" or "all learned" message on the way in.
+• A long Name in the list keeps its whole spelling on a narrow screen at a large text size.
+• The list scroll thumb now stops above the floating bar instead of running behind it.
 ```
 
 ## What's new (version 1.29)

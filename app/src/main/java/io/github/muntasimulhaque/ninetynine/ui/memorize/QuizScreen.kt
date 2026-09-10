@@ -10,7 +10,6 @@ import androidx.compose.animation.scaleIn
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -23,11 +22,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Cancel
@@ -54,7 +51,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.contentDescription
@@ -80,6 +76,7 @@ import io.github.muntasimulhaque.ninetynine.ui.theme.components.ArabicText
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.BackButton
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.FitText
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.HairlineProgress
+import io.github.muntasimulhaque.ninetynine.ui.theme.components.MarkSeal
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.NavRow
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.PageRule
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.SectionLabel
@@ -120,6 +117,21 @@ class QuizViewModel(private val savedState: SavedStateHandle) : ViewModel() {
      */
     var selectedAt by mutableIntStateOf(savedState.get<Int>(KEY_SELECTED_AT) ?: -1); private set
     var finished by mutableStateOf(savedState.get<Boolean>(KEY_FINISHED) ?: false); private set
+
+    /**
+     * True once this sitting's round has been built from a settled input.
+     *
+     * An empty [questions] list means two very different things before that:
+     * "the build has not happened yet" and "the bundled asset could not be
+     * read". Mapping the first onto the second flashed the failure message on
+     * every entry to this screen — the build runs in a LaunchedEffect, one
+     * frame after the first composition — and it is also what keeps the
+     * question pager from ever indexing an empty round: the screen renders
+     * nothing at all until this turns true (see [QuizScreen]). Rides the
+     * SavedStateHandle with the rest of the round, so a process death on the
+     * result page does not replay the flash.
+     */
+    var ready by mutableStateOf(savedState.get<Boolean>(KEY_READY) ?: false); private set
 
     /**
      * The standing best at the instant this round finished.
@@ -180,6 +192,7 @@ class QuizViewModel(private val savedState: SavedStateHandle) : ViewModel() {
         savedState[KEY_FINISHED] = finished
         savedState[KEY_MISSED] = missed.toIntArray()
         savedState[KEY_BEST_BEFORE] = bestBefore
+        savedState[KEY_READY] = ready
     }
 
     /**
@@ -196,7 +209,18 @@ class QuizViewModel(private val savedState: SavedStateHandle) : ViewModel() {
         }
     }
 
-    fun ensureQuiz(names: List<Name>, learned: Set<Int>) {
+    /**
+     * Builds the round once the input has settled.
+     *
+     * [namesLoaded] is what makes an empty round unambiguous: the build runs
+     * in a LaunchedEffect, a frame after the first composition, and until it
+     * lands an empty list means "not built yet" — never "the asset failed",
+     * and never something the pager may index.
+     */
+    fun ensureQuiz(namesLoaded: Boolean, names: List<Name>, learned: Set<Int>) {
+        // Nothing is decided until the asset read has finished: building from
+        // an empty list would look exactly like a failed read.
+        if (!namesLoaded) return
         if (index !in 0..maxOf(0, questions.lastIndex)) {
             index = 0
             selected = -1
@@ -204,8 +228,11 @@ class QuizViewModel(private val savedState: SavedStateHandle) : ViewModel() {
         }
         if (questions.isEmpty() && names.isNotEmpty()) {
             questions = QuizBuilder.build(names, preferred = learned)
-            saveSession()
         }
+        // Settled either way: with no names to draw from, the screen's own
+        // message takes over; otherwise the round above is now live.
+        ready = true
+        saveSession()
     }
 
     /**
@@ -251,6 +278,7 @@ class QuizViewModel(private val savedState: SavedStateHandle) : ViewModel() {
         finished = false
         missed = emptyList()
         bestBefore = BEST_BEFORE_UNSEEN
+        ready = true
         saveSession()
     }
 
@@ -263,6 +291,7 @@ class QuizViewModel(private val savedState: SavedStateHandle) : ViewModel() {
         savedState.remove<Boolean>(KEY_FINISHED)
         savedState.remove<IntArray>(KEY_MISSED)
         savedState.remove<Int>(KEY_BEST_BEFORE)
+        savedState.remove<Boolean>(KEY_READY)
     }
 
     private companion object {
@@ -277,6 +306,7 @@ class QuizViewModel(private val savedState: SavedStateHandle) : ViewModel() {
         const val KEY_FINISHED = "quiz.finished"
         const val KEY_MISSED = "quiz.missed"
         const val KEY_BEST_BEFORE = "quiz.bestBefore"
+        const val KEY_READY = "quiz.ready"
         val json = Json
     }
 }
@@ -299,9 +329,9 @@ fun QuizScreen(
     // question-turn's own spec further down.
     val motionScale = LocalMotionScale.current
 
-    LaunchedEffect(names, learned, learnedLoaded) {
+    LaunchedEffect(names, learned, learnedLoaded, namesLoaded) {
         if (!learnedLoaded) return@LaunchedEffect
-        quiz.ensureQuiz(names, learned)
+        quiz.ensureQuiz(namesLoaded, names, learned)
     }
     LaunchedEffect(quiz.finished) {
         if (quiz.finished) {
@@ -356,8 +386,15 @@ fun QuizScreen(
             // Loading guards stay outside the animation: no entrance of its
             // own for a first frame, motion only where meaning changes.
             when {
-                !learnedLoaded -> Unit
-                quiz.questions.isEmpty() && namesLoaded ->
+                // Blank paper until the round exists. One guard covers both
+                // hazards: the round is built a frame after this composition
+                // (so an empty list here is "not yet", not "failed"), and
+                // nothing below may index a list that has no questions — the
+                // pager indexes it directly. [QuizViewModel.ready] is only set
+                // once a settled input has been read, so an empty round past
+                // this point really does mean the asset could not be read.
+                !quiz.ready -> Unit
+                quiz.questions.isEmpty() ->
                     PageMessage(stringResource(R.string.names_unavailable))
                 else -> AnimatedContent(
                     targetState = quiz.finished,
@@ -438,7 +475,10 @@ private fun QuizQuestionContent(
                     },
                     label = "quizTurn",
                 ) { index ->
-                    val turnQuestion = quiz.questions[index]
+                    // Read back safely: the outgoing copy of this branch can
+                    // outlive its questions for the length of the turn.
+                    val turnQuestion = quiz.questions.getOrNull(index)
+                        ?: return@AnimatedContent
                     val turnName = names.firstOrNull { it.number == turnQuestion.number }
                     if (turnName != null) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -773,18 +813,6 @@ private fun ScoreCount(score: Int, total: Int) {
 @Composable
 private fun PerfectSeal() {
     SettleOnce(fromScale = 0.6f) {
-        Box(
-            modifier = Modifier
-                .size(52.dp)
-                .border(1.dp, MaterialTheme.colorScheme.secondary.copy(alpha = 0.45f), CircleShape),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                painter = painterResource(R.drawable.ic_mark),
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.secondary,
-                modifier = Modifier.size(22.dp),
-            )
-        }
+        MarkSeal()
     }
 }
