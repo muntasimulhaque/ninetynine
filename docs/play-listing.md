@@ -64,10 +64,11 @@ understand and act upon His beautiful Names.
 ```
 Fixes for rare hiccups on a slow start, plus refinements:
 
-• Opening the Quiz could close the app on a slow start; it now waits for the round to be ready.
-• Quiz and Flashcards no longer flash a "could not be loaded" or "all learned" message on the way in.
-• A long Name in the list keeps its whole spelling on a narrow screen at a large text size.
-• The list scroll thumb now stops above the floating bar instead of running behind it.
+• Opening the Quiz on a slow start could close the app; it now waits for the round.
+• Quiz and Flashcards no longer flash a “not loaded” message on the way in.
+• Numbers in sentences use the app’s Western digits on every phone language.
+• A long Name keeps its whole spelling in the list at a large text size.
+• The list scroll thumb stops above the floating bar, not behind it.
 ```
 
 ## What's new (version 1.29)

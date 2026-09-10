@@ -514,7 +514,7 @@ intro, and #26's meaning).
 
 ## Testing
 
-- **87 unit tests** (JUnit4, `app/src/test`): daily rotation, quiz generation
+- **88 unit tests** (JUnit4, `app/src/test`): daily rotation, quiz generation
   + subsuming-distractor guards, search and the literal highlight ranges,
   deck building (incl. 10-card cap),
   ViewModels (incl. the tagged-selection contract that keeps a turning
