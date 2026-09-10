@@ -20,43 +20,58 @@ so do not add a word or a stray space.
 The Ninety Nine Names of Allah
 ```
 
-## Short description (≤ 80 characters — 75 here)
+## Short description (≤ 80 characters — 69 here)
 
 ```
-Memorize Asma ul Husna — the 99 Names of Allah. Arabic & meanings. Offline.
+Memorize the 99 Names — Asma ul Husna — offline. No ads, no tracking.
 ```
 
 ## Full description
 
 ```
-A calm, book-like companion for reading and memorizing Al-Asma ul-Husna — the
-ninety-nine Names of Allah.
+Meet the ninety-nine Names of Allah, one every morning — in the Arabic of the Madinah Mushaf, with the meaning in plain English.
 
-Each of the 99 Names is set with care:
+Open the app and today's Name is already on the page. Tomorrow it is the next one. In ninety-nine days you have met them all, and you decided almost nothing: the app does the choosing and the counting.
 
-• The Name in clear Arabic, in the Uthmanic HAFS script of the Madinah Mushaf
-• A faithful transliteration
-• Its meaning in English, drawn from the lecture of Sheikh Ibn Uthaymeen (Rahimahullah)
+Nothing here arrives over a network. All ninety-nine Names, both typefaces and every meaning live inside the app, and the app asks Android for no Internet permission at all — so it cannot send anything anywhere, not your progress, not a crash report. Airplane mode changes nothing: every screen still works.
 
-Learn at your own pace:
+WHAT IS IN IT
 
-• A Name of the Day — in the app, in an optional notification at a time you
-  choose, and on your home screen as a widget set in the Mushaf's own script
-• Flashcards to recall the meaning, and a ten-question quiz to test yourself
-• Mark the Names you have learned and watch a quiet count grow — no streaks,
-  no pressure
-• Keep the Names that matter to you in Bookmarks
-• Search by name, meaning, or number
-• Share any Name as a beautiful card — or as plain text
+Each Name is fully vocalized Arabic set in KFGQPC Uthmanic Script HAFS, the typeface of the Madinah Mushaf published by the King Fahd Glorious Quran Printing Complex, with its transliteration and its meaning drawn from the lecture of Sheikh Ibn Uthaymeen (Rahimahullah). Where a distinction needs care, the note is there — three of the 99 carry one, among them the difference between Ar-Rahmaan and Ar-Raheem.
 
-Made to be read:
+READING
 
-• Light, dark and true-black (AMOLED) themes
-• Adjustable text size
-• Offline, private and free — no ads, no tracking, no account
+All ninety-nine, in order, each on its own page. Turn from one page to the next, or arrive from the list or from your bookmarks. Long-press a Name to copy it, or its meaning.
 
-Free and open source. May Allah make us among those who learn, memorize,
-understand and act upon His beautiful Names.
+THE NAME OF THE DAY
+
+One Name, every day: on the app's own page, in a notification at the hour you choose, and as a widget you can resize to sit on your home screen. All three carry the same Name, and none of them comes round again until the ninety-nine are done.
+
+MEMORIZING
+
+Flashcards, ten at a time. See the Name, recall the meaning, tap the card to turn it over. Swipe right for "I know it", left for "Still learning", and take the last card back if your thumb got ahead of you.
+
+Then ten questions: match each Name to its meaning, and at the end see the ones you missed, each one tap away from its page. Your best score is kept for you.
+
+Your progress is a count of the Names you have marked as learned, and nothing else. No streaks, no badges, no message scolding you for staying away. Bookmarks are their own shelf: the Names you keep stay kept, and clearing your progress leaves them exactly where they were.
+
+SEARCHING
+
+A name, a word from a meaning, a note, or a number. Spelling is forgiven — Qayyum finds Al-Qayyoom — and a match is shown in the row that earned it, so you can see why the list answered.
+
+SHARING
+
+Any Name can leave as a card with the Arabic, the name and the meaning on it, or as plain text for a caption or a note of your own.
+
+TYPE AND THEMES
+
+Light, dark and true-black (AMOLED) themes, and a text size you set yourself — the Arabic grows with the English, so both stay comfortable together.
+
+FREE, AND PRIVATE
+
+No ads. No accounts. No in-app purchases. No analytics, no tracking, no third party libraries. Plenty of apps that call themselves private mean they promise not to look; this one cannot look — it has no way to reach the network at all. The code is open source under the MIT license, so anyone can read exactly what it does.
+
+May Allah make us among those who learn, memorize, understand and act upon His beautiful Names.
 ```
 
 ## What's new (version 1.30)

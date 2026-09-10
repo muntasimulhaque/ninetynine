@@ -175,6 +175,13 @@ and the CI-captured screenshot sets in `docs/screenshots/` (`phone/` — the
 README thumbnails — plus `tablet7/` and `tablet10/`; tablet captures are
 uploaded to Play by hand).
 
+The short and full descriptions are written plainly, on the rule that the
+promise comes first and facts do the selling: no adjective may do work a fact
+could do instead, and every claim has to be checkable in the shipped app (how
+many Names carry a note, the widget's resize range, "Qayyum finds
+Al-Qayyoom"). Paragraphs are single unbroken lines so the paste needs no
+rejoining; the length limits are Play's (80 and 4000 characters).
+
 ## Code layout
 
 ```

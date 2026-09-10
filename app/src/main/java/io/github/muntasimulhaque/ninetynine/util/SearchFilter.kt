@@ -40,11 +40,12 @@ object SearchFilter {
      * Matches transliteration, title, meaning, note (case-insensitive),
      * Arabic, or the exact number.
      *
-     * The note is searched because every name carries one, and a reader who
-     * remembers a detail from a name's note — "the one about the difference
-     * between Ar-Rahman and Ar-Raheem" — has no other way to find that name
-     * again. The note is a bound commentary, so it answers to the same
-     * forgiving Latin key as the named fields below it.
+     * The note is searched because a reader who remembers a detail from one
+     * — the distinction between Ar-Rahmaan and Ar-Raheem is the example
+     * everyone reaches for — has no other way to find that name again. Only a
+     * few of the 99 carry a note (see names.json), and a note is a bound
+     * commentary on its own name, so it answers to the same forgiving Latin
+     * key as the named fields below it.
      */
     fun filter(names: List<Name>, query: String): List<Name> {
         val q = query.trim()
