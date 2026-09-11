@@ -10,7 +10,7 @@ so do not add a word or a stray space.
 
 - **Application ID (package name):** `io.github.muntasimulhaque.ninetynine`
 - **Privacy policy URL:** `https://muntasimulhaque.github.io/ninetynine/privacy-policy.html`
-- **Version (this release):** versionName `1.31`, versionCode `41`
+- **Version (this release):** versionName `1.32`, versionCode `42`
 
 ---
 
@@ -72,6 +72,15 @@ FREE, AND PRIVATE
 No ads. No accounts. No in-app purchases. No analytics, no tracking, no third party libraries. Plenty of apps that call themselves private mean they promise not to look; this one cannot look; it has no way to reach the network at all. The code is open source under the MIT license, so anyone can read exactly what it does.
 
 May Allah make us among those who learn, memorize, understand and act upon His beautiful Names.
+```
+
+## What's new (version 1.32)
+
+```
+The text you get from “Share text” on a Name page reads cleaner:
+
+• The name line carries the transliteration alone; the short meaning no longer repeats beside it.
+• The shared text is now left-aligned, so it sits like a caption in the app you paste it into.
 ```
 
 ## What's new (version 1.31)

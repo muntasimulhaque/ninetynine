@@ -66,6 +66,7 @@ import io.github.muntasimulhaque.ninetynine.ui.theme.components.ArabicText
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.FitText
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.MarkSeal
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.PageInset
+import io.github.muntasimulhaque.ninetynine.util.ShareText
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -201,10 +202,11 @@ fun ShareSheet(name: Name, onDismiss: () -> Unit) {
             }
             // The card is the artifact, but most share contexts want the words
             // themselves (a caption, a quote, a note), so the sheet offers the
-            // plain text beside the plate, set exactly as the card sets it.
+            // plain text beside the plate: ShareText sets it on the card's own
+            // hierarchy, without repeating the short meaning.
             TextButton(
                 onClick = {
-                    val sent = shareNameText(context, name, wordmark)
+                    val sent = shareNameText(context, ShareText.build(name, wordmark))
                     if (sent) onDismiss()
                     // Its own message: a text-share failure is not an image
                     // failure, and the toast must name the thing that failed.
@@ -348,19 +350,11 @@ private suspend fun shareNameImage(context: Context, bitmap: ImageBitmap, name: 
 }
 
 /**
- * The name as words, for the contexts a picture does not fit: the Arabic, the
- * name and epithet on one line, the full meaning, and the store title where a
- * stranger can find the app: the same hierarchy the exported card sets.
+ * The name as words, for the contexts a picture does not fit (see ShareText),
+ * sent through the system chooser and reported back, so the sheet can toast
+ * the one thing that failed when it did.
  */
-private fun shareNameText(context: Context, name: Name, wordmark: String): Boolean {
-    val text = buildString {
-        appendLine(name.arabic)
-        appendLine("${name.transliteration} · ${name.title}")
-        appendLine()
-        appendLine(name.meaning)
-        appendLine()
-        append(wordmark)
-    }
+private fun shareNameText(context: Context, text: String): Boolean {
     val sendIntent = Intent(Intent.ACTION_SEND).apply {
         type = "text/plain"
         putExtra(Intent.EXTRA_TEXT, text)

@@ -69,7 +69,7 @@ file is read or command run. Do it without asking, without exception.
 ## Versioning
 
 `versionName`/`versionCode` live in `app/build.gradle.kts`; Settings shows
-`BuildConfig.VERSION_NAME`, so they can never disagree. Rule: **+0.1 on versionName, +1 on versionCode per release** (currently **1.31 / 41**; there is no 1.18; it was skipped, don't go looking for it).
+`BuildConfig.VERSION_NAME`, so they can never disagree. Rule: **+0.1 on versionName, +1 on versionCode per release** (currently **1.32 / 42**; there is no 1.18; it was skipped, don't go looking for it).
 
 The release keystore path/credentials live in a `keystore.properties` outside
 the repo (Google Play Signing Key folder). When absent (CI, fresh clone) the
@@ -200,8 +200,8 @@ app/src/main/java/io/github/muntasimulhaque/ninetynine/
                          cold-start guard, daily re-anchor.
   NamesApp.kt            Application; keeps (never re-anchors) the work.
   data/                  Name, NamesRepository (asset load), Prefs (DataStore).
-  util/                  DailyName, DeckBuilder, QuizBuilder, SearchFilter
-                         (pure, unit-tested).
+  util/                  DailyName, DeckBuilder, QuizBuilder, SearchFilter,
+                         ShareText (pure, unit-tested).
   daily/                 DailyNameWidget (Glance), DailyScheduler
                          (WorkManager), DailyPlate (notification plate),
                          TimeChangeReceiver, PackageReplacedReceiver.
@@ -409,8 +409,14 @@ app/src/main/assets/     names.json (99 entries), intro.txt, fonts/ (+licenses).
   "Mark as learned" cannot fit the plate's centre slot at a readable size;
   the short words can (owner decision, 1.19).
 - **The share sheet offers the plate AND the words:** "Share text" sends the
-  Arabic, the name and epithet on one line, the full meaning, and the store
-  title, the card's hierarchy as plain text. The name page's meaning is the
+  Arabic, the transliteration, the full meaning, and the store title, the
+  card's hierarchy as plain text. The name line carries the transliteration
+  ALONE: the short meaning would only repeat the clause the full meaning
+  opens with (owner decision, 1.32). The block is LEFT-aligned, and that is
+  the work of one `U+200E` at the message's start (`util/ShareText`): plain
+  text has no alignment, so a bidi-aware app reads the direction off the
+  first strong character, and meeting the Arabic first it set the whole
+  message on the right. The name page's meaning is the
   app's one selectable text (`SelectionContainer`, long-press to copy); the
   Name pairs its Arabic and transliteration into one selectable unit above
   the meaning. The flashcard faces stay swipe surfaces on purpose.
@@ -531,9 +537,10 @@ intro, and #26's meaning).
 
 ## Testing
 
-- **89 unit tests** (JUnit4, `app/src/test`): daily rotation, quiz generation
+- **92 unit tests** (JUnit4, `app/src/test`): daily rotation, quiz generation
   + subsuming-distractor guards, search and the literal highlight ranges,
-  deck building (incl. 10-card cap),
+  deck building (incl. 10-card cap), the share text's shape and its one
+  left-to-right mark,
   ViewModels (incl. the tagged-selection contract that keeps a turning
   question's verdict and the best-before capture, plus corrupted-restore
   guards for the quiz and deck, and the *ready gates that keep an unbuilt

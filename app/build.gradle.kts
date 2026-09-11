@@ -10,13 +10,18 @@ plugins {
 // The upload keystore's path and credentials live in keystore.properties in the
 // shared Google Play Signing Key folder (outside any repo), so no credential
 // ever enters the repository. The folder is on a different drive per machine
-// (D: on the LENOVO box, E: here), so both are probed. When the file is
-// absent (CI, a fresh clone) the release build degrades to unsigned rather
-// than failing.
-val keystoreFile = listOf(
-    "D:/GDrive/BSCPLC/DM (Development)/Personal Docs/Pers/Google Play Signing Key/keystore.properties",
-    "E:/GDrive/BSCPLC/DM (Development)/Personal Docs/Pers/Google Play Signing Key/keystore.properties",
-).map { file(it) }.firstOrNull { it.exists() }
+// (D: on the LENOVO box, E: here), so both are probed; it has also moved once
+// already (the Personal Docs tree gained a My Apps level), so each drive is
+// tried against each layout it has worn, rather than against one path that a
+// tidy-up turns into a silent unsigned build. When the file is absent (CI, a
+// fresh clone) the release build degrades to unsigned rather than failing.
+val keystoreLayouts = listOf(
+    "BSCPLC/DM (Development)/Personal Docs/Pers/My Apps/Google Play Signing Key/keystore.properties",
+    "BSCPLC/DM (Development)/Personal Docs/Pers/Google Play Signing Key/keystore.properties",
+)
+val keystoreFile = listOf("D:", "E:")
+    .flatMap { drive -> keystoreLayouts.map { file("$drive/GDrive/$it") } }
+    .firstOrNull { it.exists() }
 
 val releaseKeystore = Properties()
 if (keystoreFile != null) {
@@ -50,8 +55,8 @@ android {
         applicationId = "io.github.muntasimulhaque.ninetynine"
         minSdk = 24
         targetSdk = 37
-        versionCode = 41
-        versionName = "1.31"
+        versionCode = 42
+        versionName = "1.32"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
