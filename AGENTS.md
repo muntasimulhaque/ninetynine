@@ -160,7 +160,15 @@ The Play sets are whatever `screenshots.yml` captured (phone/7"/10" emulators, A
   android-37.1 image): build with
   `JAVA_HOME="C:\Program Files\Android\Android Studio\jbr" ./gradlew …`.
   Dev Pro: JDK 17 at `C:\Users\Dev Pro\.jdks\jdk-17.0.19+10`, SDK under its
-  own AppData, no emulator.
+  own AppData, no emulator. A third box (Windows profile `user`): JDK 17 at
+  `C:\Users\user\jdk\jdk-17.0.20.1+1`, SDK `C:\Users\user\android-sdk`,
+  `local.properties` pointing there, and a WORKING emulator (the AEHD 2.2
+  driver is installed; the `Pixel_4` AVD is a pixel_2 / 1080x1920 / API 35
+  profile). `ScreenshotTest` runs there, and its captures match the committed
+  CI phone set byte for byte on the four date-free scenes (bookmarks,
+  settings, name, share; home differs only by the day's daily Name), so that
+  emulator is good for before/after visual verification of a change. The Play
+  sets still come from CI.
 
 ## CI
 
@@ -197,19 +205,34 @@ rejoining; the length limits are Play's (80 and 4000 characters).
 ```
 app/src/main/java/io/github/muntasimulhaque/ninetynine/
   MainActivity.kt        Host activity; deep links, consumeNameNumber,
-                         cold-start guard, daily re-anchor.
+                         cold-start guard, daily re-anchor, permission ask.
   NamesApp.kt            Application; keeps (never re-anchors) the work.
   data/                  Name, NamesRepository (asset load), Prefs (DataStore).
   util/                  DailyName, DeckBuilder, QuizBuilder, SearchFilter,
                          ShareText (pure, unit-tested).
-  daily/                 DailyNameWidget (Glance), DailyScheduler
-                         (WorkManager), DailyPlate (notification plate),
-                         TimeChangeReceiver, PackageReplacedReceiver.
-  ui/                    NamesViewModel (shared state) + per-screen packages:
-                         home, detail, memorize (Flashcards/Quiz/Learned/
-                         Memorize), bookmarks, share, settings, about.
+  daily/                 DailyNameWidget (Glance, + its receiver),
+                         WidgetArabicBitmap and WidgetPlateBitmap (the two
+                         bitmaps RemoteViews cannot draw), DailyScheduler
+                         (WorkManager + both workers), DailyPlate (the
+                         notification plate), TimeChangeReceiver,
+                         PackageReplacedReceiver.
+  ui/                    NamesViewModel (shared state), App (NavHost, routes,
+                         transitions), BottomBar (the tab capsule), plus one
+                         package per screen: home (HomeScreen, DailyHeroCard,
+                         HomeSearchField), detail (DetailScreen, NamePage,
+                         DetailNavPlate), memorize (MemorizeScreen,
+                         FlashcardsScreen + FlashcardsViewModel + DeckMenu +
+                         DeckEndContent + SwipeFlipCard, QuizScreen +
+                         QuizViewModel + QuizQuestionContent +
+                         QuizResultContent, LearnedScreen), bookmarks, share,
+                         settings (SettingsScreen, SettingsSections,
+                         SettingsDialogs, HairlineSlider), about.
   ui/theme/              Color, Type, Theme, Motion, Haptics, Shapes,
                          SquircleShape, components/.
+  ui/theme/components/   PageParts (the page furniture; see the design notes),
+                         FitText, MarkSeal, EmptyState, FloatingBar, Hairline
+                         (progress hairline + both scroll thumbs), ArabicText,
+                         MixedText, NameListItem.
 app/src/main/assets/     names.json (99 entries), intro.txt, fonts/ (+licenses).
 ```
 
@@ -260,8 +283,8 @@ app/src/main/assets/     names.json (99 entries), intro.txt, fonts/ (+licenses).
 - **`ArabicSize`** (in `ArabicText.kt`) names each Arabic size by the Latin
   slot it pairs with. Arabic must not inherit Latin sizes (HAFS body ~0.35em
   vs Spectral x-height 0.45em).
-- **`FitText`** (PageParts) shrinks text to fit, stepping fontSize AND
-  letterSpacing down together. Guard `TextUnit.Unspecified`. House pattern for
+- **`FitText`** (components/FitText.kt) shrinks text to fit, stepping fontSize
+  AND letterSpacing down together. Guard `TextUnit.Unspecified`. House pattern for
   anything that must never break a Divine Name or truncate a title.
 - **Centering** baked into styles via `.copy(textAlign = Center)`; bare
   FitText doesn't center.
@@ -280,9 +303,12 @@ app/src/main/assets/     names.json (99 entries), intro.txt, fonts/ (+licenses).
 - **Reading rule:** the short meaning (`title`) shows only where the full
   `meaning` does NOT (Detail/Share/flashcard back: meaning only; list rows,
   hero card, widget, notification, quiz keep the title).
-- **Shared components live in `PageParts.kt`** (BackButton, FitText,
-  ScreenLabel, SectionLabel, NavRow, PageRule, FloatingBar, EmptyState,
-  paperTopBarColors, scaledGap, readingMeasure, named insets). Reuse them.
+- **Shared components live in `ui/theme/components/`**: `PageParts.kt`
+  (BackButton, ScreenLabel, SectionLabel, TabTitle, `tabLabelStyle`,
+  paperTopBarColors, NavRow, PageRule, scaledGap, SettleOnce, readingMeasure,
+  pageMeasure, barMeasure, named insets), `FitText.kt`, `MarkSeal.kt`,
+  `EmptyState.kt` (PageMessage + EmptyState), `FloatingBar.kt`, `Hairline.kt`,
+  `ArabicText.kt`, `MixedText.kt`, `NameListItem.kt`. Reuse them.
 - **Empty screens that offer an action use `EmptyState`** (title + optional
   line + optional TextButton); `PageMessage` stays for failure cases with no
   action. Centred via `Modifier.fillParentMaxSize()` inside their `item {}`
@@ -491,8 +517,9 @@ app/src/main/assets/     names.json (99 entries), intro.txt, fonts/ (+licenses).
   writes the pref off and cancels the work, so switch, scheduler and worker
   agree. Below API 33 there is nothing to ask and the reminder just works.
 - **The daily notification expands to the plate:** `DailyPlate` renders the
-  hero-card identity (HAFS Arabic via Canvas, `DailyNameWidget.arabicBitmap`,
-  internal, plus Spectral Latin) into a 16:9 bitmap for BigPictureStyle,
+  hero-card identity (HAFS Arabic via Canvas, `arabicBitmap` in
+  `daily/WidgetArabicBitmap.kt`, internal, plus Spectral Latin) into a 16:9
+  bitmap for BigPictureStyle,
   falling back to the plain BigTextStyle when a render fails. Collapsed, the
   notification is unchanged. With the plate up, the summary is the BARE tap
   hint (`notification_summary_hint`), the short meaning lives in the plate,
@@ -505,8 +532,8 @@ app/src/main/assets/     names.json (99 entries), intro.txt, fonts/ (+licenses).
   `fromScale` on the lively spring plus a QUICK fade, played once per arrival
   (saved-instance-state guarded; snap at animator scale 0). PerfectSeal uses
   it at 0.6; the all-learned ٩٩ at the default 0.85.
-- **One maker's mark:** `MarkSeal` (PageParts) is the ring and the square-Kufic
-  glyph it holds, with the two inks as parameters, the share card's plate gold
+- **One maker's mark:** `MarkSeal` (components/MarkSeal.kt) is the ring and
+  the square-Kufic glyph it holds, with the two inks as parameters, the share card's plate gold
   at 26dp/12dp, the earned seals' `secondary` at 52dp/22dp. The share card's
   foot, the quiz's perfect round and the finished flashcard set all wear it;
   never re-draw the circle + `ic_mark` pair at a call site.

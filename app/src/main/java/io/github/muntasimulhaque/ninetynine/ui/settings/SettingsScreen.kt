@@ -10,49 +10,32 @@ import android.text.format.DateFormat
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.selection.toggleable
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TimePicker
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -62,19 +45,12 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.disabled
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.semantics.stateDescription
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LifecycleResumeEffect
@@ -83,9 +59,6 @@ import io.github.muntasimulhaque.ninetynine.BuildConfig
 import io.github.muntasimulhaque.ninetynine.R
 import io.github.muntasimulhaque.ninetynine.data.ThemeMode
 import io.github.muntasimulhaque.ninetynine.ui.NamesViewModel
-import io.github.muntasimulhaque.ninetynine.ui.theme.BlackColors
-import io.github.muntasimulhaque.ninetynine.ui.theme.DarkColors
-import io.github.muntasimulhaque.ninetynine.ui.theme.LightColors
 import io.github.muntasimulhaque.ninetynine.ui.theme.LocalDeviceFactor
 import io.github.muntasimulhaque.ninetynine.ui.theme.Motion
 import io.github.muntasimulhaque.ninetynine.ui.theme.appTypography
@@ -94,7 +67,6 @@ import io.github.muntasimulhaque.ninetynine.ui.theme.components.ListInset
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.LocalBottomBarOverlay
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.MixedText
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.NavRow
-import io.github.muntasimulhaque.ninetynine.ui.theme.components.PageRule
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.TabTitle
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.pageMeasure
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.barMeasure
@@ -103,10 +75,6 @@ import io.github.muntasimulhaque.ninetynine.ui.theme.components.SectionLabel
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
-import kotlin.math.roundToInt
-
-private const val SCALE_MIN = 0.85f
-private const val SCALE_MAX = 1.4f
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -376,77 +344,34 @@ fun SettingsScreen(
     }
 
     if (showTimePicker) {
-        // Material 3 time picker, themed with the app, not the legacy dialog.
-        // Coerced: TimePicker throws on out-of-range hours from a restored backup.
-        val timeState = rememberTimePickerState(
-            initialHour = dailyTime.first.coerceIn(0, 23),
-            initialMinute = dailyTime.second.coerceIn(0, 59),
-            is24Hour = DateFormat.is24HourFormat(context),
-        )
-        AlertDialog(
-            onDismissRequest = { showTimePicker = false },
-            title = { Text(stringResource(R.string.reminder_time)) },
-            text = {
-                TimePicker(state = timeState)
+        ReminderTimeDialog(
+            hour = dailyTime.first,
+            minute = dailyTime.second,
+            onConfirm = { hour, minute ->
+                viewModel.setDailyTime(hour, minute)
+                showTimePicker = false
             },
-            confirmButton = {
-                TextButton(onClick = {
-                    viewModel.setDailyTime(timeState.hour, timeState.minute)
-                    showTimePicker = false
-                }) {
-                    Text(stringResource(R.string.ok))
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showTimePicker = false }) {
-                    Text(stringResource(R.string.cancel))
-                }
-            },
+            onDismiss = { showTimePicker = false },
         )
     }
 
     if (showResetDialog) {
-        AlertDialog(
-            onDismissRequest = { showResetDialog = false },
-            title = { Text(stringResource(R.string.reset_progress)) },
-            text = { Text(stringResource(R.string.reset_dialog_text)) },
-            confirmButton = {
-                TextButton(onClick = {
-                    viewModel.resetProgress()
-                    showResetDialog = false
-                }) {
-                    Text(
-                        stringResource(R.string.reset),
-                        color = MaterialTheme.colorScheme.error,
-                    )
-                }
+        ResetProgressDialog(
+            onConfirm = {
+                viewModel.resetProgress()
+                showResetDialog = false
             },
-            dismissButton = {
-                TextButton(onClick = { showResetDialog = false }) {
-                    Text(stringResource(R.string.cancel))
-                }
-            },
+            onDismiss = { showResetDialog = false },
         )
     }
 
     if (showBlockedDialog) {
-        AlertDialog(
-            onDismissRequest = { showBlockedDialog = false },
-            title = { Text(stringResource(R.string.notifications_blocked_title)) },
-            text = { Text(stringResource(R.string.notifications_blocked_body)) },
-            confirmButton = {
-                TextButton(onClick = {
-                    showBlockedDialog = false
-                    openNotificationSettings(context)
-                }) {
-                    Text(stringResource(R.string.open_settings))
-                }
+        NotificationsBlockedDialog(
+            onConfirm = {
+                showBlockedDialog = false
+                openNotificationSettings(context)
             },
-            dismissButton = {
-                TextButton(onClick = { showBlockedDialog = false }) {
-                    Text(stringResource(R.string.cancel))
-                }
-            },
+            onDismiss = { showBlockedDialog = false },
         )
     }
 }
@@ -474,187 +399,6 @@ private fun openNotificationSettings(context: android.content.Context) {
         } catch (_: Exception) {
         }
     }
-}
-
-/**
- * The space and rule that separate one group of choices from the next.
- * Controls that carry their own touch padding pass a smaller [top].
- */
-@Composable
-private fun SectionBreak(top: Dp = 30.dp, bottom: Dp = 30.dp) {
-    Spacer(Modifier.height(top))
-    PageRule()
-    Spacer(Modifier.height(bottom))
-}
-
-/**
- * One theme, chosen typographically: the current one steps up in weight and
- * ink and takes a gold check. No radio, no container.
- */
-@Composable
-private fun ThemeOption(
-    mode: ThemeMode,
-    labelRes: Int,
-    current: ThemeMode,
-    onSelect: (ThemeMode) -> Unit,
-) {
-    val selected = current == mode
-    // Fading the check keeps the row from shifting as the choice moves.
-    val checkAlpha by animateFloatAsState(
-        targetValue = if (selected) 1f else 0f,
-        animationSpec = Motion.tween(Motion.QUICK),
-        label = "themeCheck",
-    )
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            // selectable() is a foundation modifier; it applies no M3
-            // minimum-target size, and the row's height is computed from its
-            // text: at the reader slider's 0.85 floor it computes to ~44dp.
-            // No-op at the default scale; a guarantee everywhere below it.
-            .heightIn(min = 48.dp)
-            .selectable(
-                selected = selected,
-                onClick = { onSelect(mode) },
-                role = Role.RadioButton,
-            )
-            .padding(vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        ThemeSwatch(mode)
-        Spacer(Modifier.width(14.dp))
-        Text(
-            text = stringResource(labelRes),
-            style = MaterialTheme.typography.bodyLarge,
-            fontWeight = if (selected) FontWeight.Medium else FontWeight.Normal,
-            color = if (selected) MaterialTheme.colorScheme.onSurface
-            else MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.weight(1f),
-        )
-        Icon(
-            Icons.Filled.Check,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.secondary,
-            modifier = Modifier
-                .size(18.dp)
-                .graphicsLayer { alpha = checkAlpha },
-        )
-    }
-}
-
-/**
- * A theme in miniature: its paper, and its ink as a bead: the eye picks
- * before the mind reads. System wears both papers split, because it is
- * whichever the device is in; its bead follows the theme actually rendering.
- * Purely visual: the row above carries the name and the state for readers.
- */
-@Composable
-private fun ThemeSwatch(mode: ThemeMode) {
-    val ink = when (mode) {
-        ThemeMode.LIGHT -> LightColors.primary
-        ThemeMode.DARK, ThemeMode.BLACK -> DarkColors.primary
-        ThemeMode.SYSTEM -> MaterialTheme.colorScheme.primary
-    }
-    // Dark and Black papers differ by ~8% lightness (#14120D vs #000000),
-    // which a 22dp circle cannot show, side by side the two dark options
-    // read as one choice. The Black swatch takes a firmer ring so the
-    // deeper theme is distinguishable at a glance: true black is the
-    // switched-off display, and the ring marks it.
-    val ringColor = if (mode == ThemeMode.BLACK) MaterialTheme.colorScheme.outline
-    else MaterialTheme.colorScheme.outlineVariant
-    val ringWidth = if (mode == ThemeMode.BLACK) 1.5.dp else 1.dp
-    Box(
-        modifier = Modifier
-            .size(22.dp)
-            .border(ringWidth, ringColor, CircleShape)
-            .clip(CircleShape),
-        contentAlignment = Alignment.Center,
-    ) {
-        when (mode) {
-            ThemeMode.SYSTEM -> Row(Modifier.fillMaxSize()) {
-                Box(Modifier.weight(1f).fillMaxHeight().background(LightColors.background))
-                Box(Modifier.weight(1f).fillMaxHeight().background(DarkColors.background))
-            }
-            ThemeMode.LIGHT -> Box(Modifier.fillMaxSize().background(LightColors.background))
-            ThemeMode.DARK -> Box(Modifier.fillMaxSize().background(DarkColors.background))
-            ThemeMode.BLACK -> Box(Modifier.fillMaxSize().background(BlackColors.background))
-        }
-        // A 1dp mat of the page's own surface around the bead: the ink never
-        // touches either paper directly, so it reads cleanly even on System's
-        // split circle, where the bead straddles light and dark halves at once.
-        Box(
-            modifier = Modifier
-                .size(10.dp)
-                .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.surface),
-            contentAlignment = Alignment.Center,
-        ) {
-            Box(Modifier.size(8.dp).background(ink, CircleShape))
-        }
-    }
-}
-
-/** A gold bead on a hairline, the Material slider stripped to the app's line. */
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun HairlineSlider(
-    value: Float,
-    onValueChange: (Float) -> Unit,
-    onValueChangeFinished: () -> Unit,
-) {
-    val gold = MaterialTheme.colorScheme.secondary
-    // Same ruling as HairlineProgress: a meaningful hairline carries `outline` (3:1), not `outlineVariant` (1.42:1).
-    val track = MaterialTheme.colorScheme.outline
-    val fraction = ((value - SCALE_MIN) / (SCALE_MAX - SCALE_MIN)).coerceIn(0f, 1f)
-    val label = stringResource(R.string.text_size)
-    val percent = stringResource(R.string.percent, (value * 100).roundToInt())
-    // The custom thumb below replaces Material's whole thumb slot, which is
-    // where its focus ring was drawn, so the ring has to be drawn by hand
-    // here, or keyboard users get no indication at all on the one control
-    // in the app that takes keyboard input.
-    var focused by remember { mutableStateOf(false) }
-    Slider(
-        value = value,
-        onValueChange = onValueChange,
-        onValueChangeFinished = onValueChangeFinished,
-        valueRange = SCALE_MIN..SCALE_MAX,
-        // A bare Slider announces "seek control, 27 percent" with no subject
-        // and no unit; the hairline also leaves only a 16dp focus rectangle.
-        modifier = Modifier
-            .heightIn(min = 48.dp)
-            .onFocusChanged { focused = it.isFocused }
-            .semantics {
-                contentDescription = label
-                stateDescription = percent
-            },
-        thumb = {
-            Box(
-                Modifier
-                    .size(14.dp)
-                    .background(gold, CircleShape)
-                    .then(
-                        if (focused) Modifier.border(2.dp, MaterialTheme.colorScheme.primary, CircleShape)
-                        else Modifier
-                    )
-            )
-        },
-        track = { _ ->
-            Box(Modifier.fillMaxWidth().height(1.dp)) {
-                Box(
-                    Modifier
-                        .fillMaxWidth()
-                        .height(1.dp)
-                        .background(track)
-                )
-                Box(
-                    Modifier
-                        .fillMaxWidth(fraction)
-                        .height(1.dp)
-                        .background(gold)
-                )
-            }
-        },
-    )
 }
 
 private fun formatTime(context: android.content.Context, hour: Int, minute: Int): String {

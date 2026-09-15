@@ -10,7 +10,7 @@ so do not add a word or a stray space.
 
 - **Application ID (package name):** `io.github.muntasimulhaque.ninetynine`
 - **Privacy policy URL:** `https://muntasimulhaque.github.io/ninetynine/privacy-policy.html`
-- **Version (this release):** versionName `1.32`, versionCode `42`
+- **Version (this release):** versionName `1.33`, versionCode `43`
 
 ---
 
@@ -72,6 +72,13 @@ FREE, AND PRIVATE
 No ads. No accounts. No in-app purchases. No analytics, no tracking, no third party libraries. Plenty of apps that call themselves private mean they promise not to look; this one cannot look; it has no way to reach the network at all. The code is open source under the MIT license, so anyone can read exactly what it does.
 
 May Allah make us among those who learn, memorize, understand and act upon His beautiful Names.
+```
+
+## What's new (version 1.33)
+
+```
+Nothing in the app itself changed.
+This release only tidies the code underneath: the same 99 Names and the same screens, split into smaller modules that are easier to keep correct. Every screen was captured before and after and renders identically.
 ```
 
 ## What's new (version 1.32)
