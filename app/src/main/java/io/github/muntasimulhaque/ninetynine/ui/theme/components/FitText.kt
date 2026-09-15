@@ -35,6 +35,11 @@ import androidx.compose.ui.unit.isSpecified
  * [minScale] is a floor, never a target; it exists only so a pathological
  * constraint cannot loop forever. Set it low enough that the text always wins:
  * a caller that would rather be small than cut should say so.
+ *
+ * In a Row, a FitText measured before a fixed sibling sees the full row width
+ * and declines to shrink, so the sibling then overflows the slot. Give it
+ * Modifier.weight(1f, fill = false) so the fixed children are measured first;
+ * the share wordmark already orders its seal before the text for this reason.
  */
 @Composable
 fun FitText(

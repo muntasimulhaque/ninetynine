@@ -1,764 +1,221 @@
 # AGENTS.md
 
-Guidance for AI coding agents working in this repository: what the app is,
-the conventions it holds (many hard-won), and the traps that bite. Detailed
-private notes live outside the repo; this file is safe to read and
-deliberately does not reproduce them.
+Ninety Nine Names: a free, offline Android app for reading and memorizing the
+99 names of Allah in Arabic, with transliteration and meaning. Single-module
+Kotlin, Jetpack Compose + Material 3, Navigation Compose, DataStore,
+WorkManager, Glance, kotlinx.serialization. The content is
+`app/src/main/assets/names.json`.
 
-## What this is
+**The code is the source of truth.** Why a thing is the way it is lives in
+the KDoc and comments next to that thing, and settled choices are tagged
+`owner decision, <version>` so `git grep "owner decision"` finds them. This
+file carries only what code cannot say: policy, why-this-not-that, the repo's
+private vocabulary, and the release runbook. If this file and the code
+disagree, the code wins; fix this file in the same change. Do not grow this
+into a second codebase written in prose. Keep in mind this file is public:
+no secrets, no private owner context.
 
-A free, open-source, native Android app for reading and memorizing Al-Asma
-ul-Husna, the ninety-nine names of Allah, with Arabic, transliteration and
-meaning. Content is based on the lecture of Sheikh Ibn Uthaymeen
-(Rahimahullah), presented in *The Ninety Nine Names of Allah: A Memorisation
-Tool with Transliteration and Meanings*, curated at
-muntasimulhaque.bearblog.dev/99-names.
+## Start of every session: pull
 
-Single-module Kotlin app. Jetpack Compose + Material 3 with a small bespoke
-design system, Navigation Compose, DataStore (progress + settings),
-WorkManager (daily schedule), Glance (home-screen widget),
-kotlinx.serialization (bundled content). No DI framework, no database, no
-analytics, no ads, no network.
+The owner works from several machines, so this checkout is one of several.
+`git fetch` and pull `main` before reading any other file or running any
+command, without asking, and work on that head.
 
-This file is guidance, not the last word. If a good idea contradicts it, do
-not reject it silently: bring it to the user, make the case, and if approved,
-implement it and update this file in the same change.
+## Hard rules
 
-## Pull before working
+Things no compiler enforces; violating one is a release blocker.
 
-The owner works from more than one machine (LENOVO and Dev Pro; see Build,
-test, verify), so this checkout is only one of several. At the start of any
-session, `git fetch` and pull whatever is new on `main` from GitHub, and do
-the work on that pulled head, never on a stale local one. This is the first
-action of every session, immediately after reading this file, before any other
-file is read or command run. Do it without asking, without exception.
-
-## Hard invariants (never violate)
-
-- **The app must never use the Internet.** No INTERNET permission (the only
-  self-declared permission is `POST_NOTIFICATIONS`). Fonts are bundled TTFs.
-  The few URLs in the app open an external browser on tap. `INTERNET` must
-  stay 0 in the merged-manifest report.
+- **Never the Internet.** No INTERNET permission, ever: the app must be
+  incapable of opening a connection. `POST_NOTIFICATIONS` is the only
+  self-declared permission (the rest come from WorkManager), and `INTERNET`
+  stays 0 in the merged manifest. Fonts and content are bundled; the few
+  URLs in the app open an external browser.
 - **`applicationId io.github.muntasimulhaque.ninetynine` is final.**
-- **Three names, three strings in `strings.xml`, never merged:**
-  `launcher_name`, `app_title`, `store_title` (exactly 30 chars, Play's
-  limit, kept in step with the Play Console BY HAND). The strings.xml comment
-  explains each.
-- **Content is the app's own, faithful to its source.** `names.json` holds 99
-  entries. NFC-normalized; Arabic must stay drawable by the bundled HAFS
-  typeface. Do not re-extract from the blog markdown or re-add title clauses
-  to meanings.
-- **No AI attribution in the repo, ever.** No Co-Authored-By trailers, no
-  "generated with" footers, nothing named in contributors, commits, or code.
-  Grep commit messages for `claude|co-authored|generated with|ai-attribution`
-  before every push. After a push, `git ls-remote origin` should show only
-  `refs/heads/main`.
-- **No em dashes, anywhere** (owner decision, 1.31). Prose, code comments,
-  user-visible strings, docs and the listing copy all use a comma, a
-  semicolon, a colon or parentheses instead, whichever the sentence wants. A
-  paired aside becomes parentheses; a definition after a bold label or a
-  heading becomes a colon; a second independent clause takes a semicolon; an
-  appositive takes a comma. `NoEmDashTest` scans the app sources and the
-  repo's documents and fails the build on a single one. The only exception is
-  the bundled font-licence notices, which are quoted verbatim: a licence is
-  not ours to re-punctuate. (The middle dot `·` is the app's own pairing mark,
-  Arabic · transliteration, and stays.)
+- **Three name strings, never merged:** `launcher_name`, `app_title`,
+  `store_title` in `res/values/strings.xml`. The comment there explains each;
+  `store_title` is exactly 30 characters (Play's limit) and is kept in step
+  with the Play Console by hand.
+- **Content stays the app's own.** Do not re-extract `names.json` from the
+  blog and do not re-add title clauses to meanings; `NamesAssetTest` guards
+  the rest. Transliteration follows the source except the eight places
+  listed in README.md.
+- **No AI attribution anywhere.** No Co-Authored-By trailers, no "generated
+  with" footers, no name in contributors, commits or code. Before pushing,
+  grep the log for `claude|co-authored|generated with|ai-attribution`; after
+  pushing, `git ls-remote origin` shows only `refs/heads/main`.
+- **No em dashes anywhere** (owner decision, 1.31): use a comma, semicolon,
+  colon or parentheses. `NoEmDashTest` scans the app sources and the repo
+  documents and fails the build; bundled licence notices are the one
+  exception, being quoted verbatim.
 - **Tool calls must be native**, never XML/DSML/card-formatted text
-  (`<invoke>`/`<parameter>` are strictly prohibited).
-
-## Versioning
-
-`versionName`/`versionCode` live in `app/build.gradle.kts`; Settings shows
-`BuildConfig.VERSION_NAME`, so they can never disagree. Rule: **+0.1 on versionName, +1 on versionCode per release** (currently **1.32 / 42**; there is no 1.18; it was skipped, don't go looking for it).
-
-The release keystore path/credentials live in a `keystore.properties` outside
-the repo (Google Play Signing Key folder). When absent (CI, fresh clone) the
-release build degrades to unsigned rather than failing.
-
-## Release hand-off (every push to main is a Play release candidate)
-
-1. **Bump the version**: `app/build.gradle.kts`, the sequence above, and the
-   version field in `docs/play-listing.md`.
-2. **Write the "What's new" notes** (≤500 chars) into `docs/play-listing.md`,
-   the copy/paste source for the Console. No boilerplate beyond what the
-   release actually touches: the closing "All 99 Names and your progress are
-   unchanged" line appears ONLY when content or progress behaviour really
-   was at risk and the note reassures about it, an ordinary UI change
-   carries no such line (owner decision, after 1.21). Set each bullet as
-   one unbroken line, no mid-sentence wraps: the hand-off paste is VERBATIM,
-   and hard breaks from the source force the owner to rejoin every line in
-   the Console's textbox by hand (owner decision, after 1.25).
-3. **Verify locally**: full CI suite (`:app:testDebugUnitTest :app:lintDebug
-   :app:assembleDebug :app:assembleRelease`).
-4. **Commit and push**, verify CI green via the Actions API (full 40-char
-   SHA: see CI).
-5. **Build the signed AAB and verify the signature.** `./gradlew
-   :app:bundleRelease` signs when `keystore.properties` exists (probed in
-   `build.gradle.kts`: D: on LENOVO, E: on Dev Pro). Confirm with
-   `jarsigner -verify app/build/outputs/bundle/release/app-release.aab`
-   ("jar verified"; the PKIX warning on the self-signed upload key is
-   normal). Only if no keystore is available, fall back to the CI artifact
-   and say so explicitly.
-6. **Hand over the AAB and release notes.** Copy the bundle into the
-   repo's `releases/` folder named with the version (e.g.
-   `releases/ninetynine-1.0-vc10.aab`). Hand-off copies live in the repo
-   (never on the Desktop or anywhere outside it), so they travel with the
-   checkout to every machine. Paste the notes VERBATIM as plain flowing
-   text (no code fence, no indentation, no leading spaces, each bullet one
-   unbroken line), never just point at `play-listing.md`. What the owner
-   copies must paste straight into the Console's textbox with no rework. Once the user
-   confirms submission to Play, delete the copy from `releases/` (the App
-   Bundle Explorer retains the artifact).
-7. **Screenshots: decide explicitly, every time.** Visible UI changed →
-   refresh the COMPLETE Play-ready sets (phone, 7-inch, 10-inch) in
-   `docs/screenshots/` (`phone/`, `tablet7/`, `tablet10/`) from the
-   screenshots.yml run; that folder IS the hand-off destination; never
-   copy sets to the Desktop or anywhere else in the repo. If nothing
-   visible changed, say "no new screenshots needed" and why. Captures
-   come from the screenshots.yml run (see Store screenshots from CI
-   below), never a hand-rolled local session.
-
-### Store screenshots come from CI, not from a hand-rolled local session
-
-The Play sets are whatever `screenshots.yml` captured (phone/7"/10" emulators, API 35), never per-machine re-derivations. It triggers on pushes touching UI files, or via workflow_dispatch.
-
-- When visible UI changes (or the canonical scene set itself changes, as
-  in 1.23): wait for the run, download the three
-  `store-screenshots-*` artifacts and refresh `docs/screenshots/` from
-  exactly those PNGs:
-  `gh run download <run-id> -R muntasimulhaque/ninetynine -n
-  store-screenshots-phone -D docs/screenshots/phone` (likewise
-  tablet7/tablet10). `gh` is installed and authenticated on both machines.
-- Never re-capture a listing set by hand. The local adb recipes in Known
-  quirks are for interactive checks and one-off scenes; if a local capture
-  fails twice, stop debugging the emulator and let CI do it.
-- Port proven code by DIFFING against the source, never by re-typing from
-  memory. Verify builds by the real exit code, never by grepping piped output.
+  (`<invoke>` and `<parameter>` are strictly prohibited).
 
 ## Build, test, verify
 
 ```bash
-# Unit tests (canonical suite) + debug APK
+# the canonical suite
 ./gradlew :app:testDebugUnitTest :app:assembleDebug
 
-# Everything CI runs
+# everything CI runs
 ./gradlew :app:testDebugUnitTest :app:lintDebug :app:assembleDebug :app:assembleRelease
 ```
 
-- Wrapper committed (9.5.0). `local.properties` is gitignored and lost on
-  folder renames, recreate with
-  `sdk.dir=C:\\Users\\<user>\\AppData\\Local\\Android\\Sdk` or the first
-  build fails.
-- Toolchain: JDK 17, AGP 9.3.0, Kotlin 2.4.10, Gradle 9.5.0, Compose BOM
-  2026.06.01, compileSdk/targetSdk 37, minSdk 24. AGP auto-installs the
-  android-37.0 platform it wants (android-37.1 does NOT satisfy it).
-- AGP 9 has built-in Kotlin; the `kotlin-android` plugin is deliberately
-  absent. Compiler options live in a top-level
-  `kotlin { compilerOptions { jvmTarget } }` block.
-- **Machines:** LENOVO (has Android Studio's JBR at
-  `C:\Program Files\Android\Android Studio\jbr` + a Pixel 4 AVD running the
-  android-37.1 image): build with
-  `JAVA_HOME="C:\Program Files\Android\Android Studio\jbr" ./gradlew …`.
-  Dev Pro: JDK 17 at `C:\Users\Dev Pro\.jdks\jdk-17.0.19+10`, SDK under its
-  own AppData, no emulator. A third box (Windows profile `user`): JDK 17 at
-  `C:\Users\user\jdk\jdk-17.0.20.1+1`, SDK `C:\Users\user\android-sdk`,
-  `local.properties` pointing there, and a WORKING emulator (the AEHD 2.2
-  driver is installed; the `Pixel_4` AVD is a pixel_2 / 1080x1920 / API 35
-  profile). `ScreenshotTest` runs there, and its captures match the committed
-  CI phone set byte for byte on the four date-free scenes (bookmarks,
-  settings, name, share; home differs only by the day's daily Name), so that
-  emulator is good for before/after visual verification of a change. The Play
-  sets still come from CI.
+- Verify by the process exit code, never by grepping piped output.
+- `local.properties` is gitignored and easy to lose: recreate it with
+  `sdk.dir=C:\\Users\\<user>\\AppData\\Local\\Android\\Sdk` (or the machine's
+  real SDK path) or the first build fails. The Gradle wrapper is committed.
+- Toolchain: JDK 17, AGP 9.3.0, Kotlin 2.4.10, Gradle 9.5.0, compile and
+  target SDK 37, min 24. AGP has built-in Kotlin, so the `kotlin-android`
+  plugin is deliberately absent and compiler options live in the top-level
+  `kotlin { compilerOptions }` block. AGP auto-installs the android-37.0
+  platform it wants; android-37.1 does not satisfy it.
+- Machine notes: on LENOVO, build with
+  `JAVA_HOME="C:\Program Files\Android\Android Studio\jbr"`; on Dev Pro, JDK
+  17 is at `C:\Users\Dev Pro\.jdks\jdk-17.0.19+10` and there is no emulator;
+  on this checkout's box (Windows profile `user`), JDK 17 is at
+  `C:\Users\user\jdk\jdk-17.0.20.1+1`, the SDK at
+  `C:\Users\user\android-sdk`, and a working API 35 `Pixel_4` AVD runs
+  `ScreenshotTest` locally. It cannot run on android-37.1 images; listing
+  captures come from CI regardless.
+
+## Release hand-off
+
+Every push to `main` is a Play release candidate.
+
+1. **Version**: raise `versionName` by 0.1 and `versionCode` by 1 in
+   `app/build.gradle.kts`, then update the version line in
+   `docs/play-listing.md`. Read the current values from the file, never from
+   this document.
+2. **What's new notes** go in `docs/play-listing.md`, following the house
+   rules in that file's header.
+3. **Verify locally** with the full CI suite above.
+4. **Commit and push**, then confirm CI is green:
+   `gh run view <run-id> -R muntasimulhaque/ninetynine`. With the raw Actions
+   API, `head_sha` matches only the full 40-character SHA; a short SHA reads
+   as "running".
+5. **Build the signed AAB and verify it**: `./gradlew :app:bundleRelease`
+   (signing is probed for in `app/build.gradle.kts`; an absent keystore means
+   an unsigned build, so check), then
+   `jarsigner -verify app/build/outputs/bundle/release/app-release.aab`
+   ("jar verified"; the PKIX warning on the self-signed upload key is
+   normal). Only if no keystore is available, use the CI artifact and say so.
+6. **Hand over**: copy the bundle to
+   `releases/ninetynine-<version>-vc<code>.aab` (hand-off copies live in the
+   repo, never on the Desktop), and paste the notes verbatim as plain flowing
+   text: no code fence, no indentation, each bullet one unbroken line. Delete
+   the copy from `releases/` once the owner confirms the Play submission;
+   the App Bundle Explorer retains it.
+7. **Screenshots, decide explicitly every time.** If visible UI changed,
+   refresh the complete phone, 7-inch and 10-inch sets in `docs/screenshots/`
+   from the `screenshots.yml` run:
+   `gh run download <run-id> -R muntasimulhaque/ninetynine -n store-screenshots-phone -D docs/screenshots/phone`
+   (likewise `tablet7`, `tablet10`). Delete the stale set first: download
+   overwrites files but never removes them. The tablet sets are uploaded to
+   Play by hand. If nothing visible changed, say
+   "no new screenshots needed" and why. Never capture a listing set by hand;
+   local adb capture is for interactive checks only.
 
 ## CI
 
-- **build.yml** (push to main, PRs): unit tests, `lintDebug` (fails on new
-  issues), `assembleDebug`, `assembleRelease` (minified, unsigned, R8 on
-  every change), uploads the debug APK (7-day retention). Actions SHA-pinned;
-  `permissions: contents: read`.
-- **screenshots.yml** (pushes touching UI files, plus manual dispatch):
-  captures the eight ScreenshotTest scenes on phone/7"/10" emulators (API 35)
-  and uploads the three `store-screenshots-*` artifacts.
-- Verify green runs with `gh`: installed and authenticated on both machines
-  (e.g. `gh run view <run-id> -R muntasimulhaque/ninetynine`). The raw
-  Actions API with a token from `git credential fill` remains the fallback;
-  there, `?head_sha=` matches only the FULL 40-char SHA; short SHAs return
-  an empty list that reads as "running".
+- `build.yml` (push to `main`, PRs): unit tests, `lintDebug` (fails on new
+  issues), debug APK, minified unsigned release so R8 runs on every change;
+  uploads the debug APK for 7 days.
+- `screenshots.yml` (pushes touching UI files, manual dispatch): the
+  canonical eight-scene `ScreenshotTest` set on phone, 7-inch and 10-inch
+  API 35 emulators; artifacts named `store-screenshots-*`.
+- Workflows are SHA-pinned and read-only (`permissions: contents: read`);
+  keep both.
 
-## Docs & Play listing assets
+## Map
 
-`docs/` holds `play-listing.md` (copy/paste listing doc), `play-icon-512.png`,
-`play-feature-1024x500.png`, `privacy-policy.html` (hosted on GitHub Pages),
-and the CI-captured screenshot sets in `docs/screenshots/` (`phone/`, the
-README thumbnails, plus `tablet7/` and `tablet10/`; tablet captures are
-uploaded to Play by hand).
+Navigate with this, then read the file's own KDoc before changing it.
 
-The short and full descriptions are written plainly, on the rule that the
-promise comes first and facts do the selling: no adjective may do work a fact
-could do instead, and every claim has to be checkable in the shipped app (how
-many Names carry a note, the widget's resize range, "Qayyum finds
-Al-Qayyoom"). Paragraphs are single unbroken lines so the paste needs no
-rejoining; the length limits are Play's (80 and 4000 characters).
+| Path | What is there |
+| --- | --- |
+| `app/build.gradle.kts` | version, R8 rules, keystore probing (all commented) |
+| `app/src/androidTest/java/.../ScreenshotTest.kt` | the canonical Play scene set; its KDoc lists the scenes |
+| `app/src/main/assets/` | `names.json` (the content), `intro.txt`, bundled fonts and licences |
+| `MainActivity.kt`, `NamesApp.kt` | entry points: deep links, shortcuts, splash gate, daily re-anchor, notification ask |
+| `data/` | `Name`, `NamesRepository`, `Prefs` (DataStore; read before touching) |
+| `util/` | pure logic, unit-tested: DailyName, DeckBuilder, QuizBuilder, SearchFilter, Highlight, ShareText |
+| `daily/` | Glance widget, notification plate, WorkManager schedule |
+| `ui/` | `App` (routes, transitions), `NamesViewModel`, `BottomBar`, one package per screen |
+| `ui/theme/` | colors, type ramp, motion, haptics, shapes |
+| `ui/theme/components/` | the shared furniture; `PageParts.kt` first; reuse, never re-draw |
+| `app/src/test/` | JUnit guards: asset invariants, the em dash ban, pure logic, ViewModels |
+| `docs/` | `play-listing.md`, icons, privacy policy, the CI screenshot sets (the phone set is also README's thumbnails) |
+| `.github/workflows/` | `build.yml`, `screenshots.yml` |
 
-## Code layout
+## Glossary
 
-```
-app/src/main/java/io/github/muntasimulhaque/ninetynine/
-  MainActivity.kt        Host activity; deep links, consumeNameNumber,
-                         cold-start guard, daily re-anchor, permission ask.
-  NamesApp.kt            Application; keeps (never re-anchors) the work.
-  data/                  Name, NamesRepository (asset load), Prefs (DataStore).
-  util/                  DailyName, DeckBuilder, QuizBuilder, SearchFilter,
-                         ShareText (pure, unit-tested).
-  daily/                 DailyNameWidget (Glance, + its receiver),
-                         WidgetArabicBitmap and WidgetPlateBitmap (the two
-                         bitmaps RemoteViews cannot draw), DailyScheduler
-                         (WorkManager + both workers), DailyPlate (the
-                         notification plate), TimeChangeReceiver,
-                         PackageReplacedReceiver.
-  ui/                    NamesViewModel (shared state), App (NavHost, routes,
-                         transitions), BottomBar (the tab capsule), plus one
-                         package per screen: home (HomeScreen, DailyHeroCard,
-                         HomeSearchField), detail (DetailScreen, NamePage,
-                         DetailNavPlate), memorize (MemorizeScreen,
-                         FlashcardsScreen + FlashcardsViewModel + DeckMenu +
-                         DeckEndContent + SwipeFlipCard, QuizScreen +
-                         QuizViewModel + QuizQuestionContent +
-                         QuizResultContent, LearnedScreen), bookmarks, share,
-                         settings (SettingsScreen, SettingsSections,
-                         SettingsDialogs, HairlineSlider), about.
-  ui/theme/              Color, Type, Theme, Motion, Haptics, Shapes,
-                         SquircleShape, components/.
-  ui/theme/components/   PageParts (the page furniture; see the design notes),
-                         FitText, MarkSeal, EmptyState, FloatingBar, Hairline
-                         (progress hairline + both scroll thumbs), ArabicText,
-                         MixedText, NameListItem.
-app/src/main/assets/     names.json (99 entries), intro.txt, fonts/ (+licenses).
-```
+Terms the code comments use as private vocabulary.
 
-## State & crash-proofing rules
+- **the book**: the whole content, `names.json` plus `intro.txt`.
+- **title / meaning**: the short line and the full text. The reading rule
+  (guarded by `NamesAssetTest`) is that the title shows only where the full
+  meaning does not, and the meaning always opens with the title clause.
+- **plate**: a raised surface wearing the emerald-and-gold identity (hero
+  card, flashcard front, quiz card, share card, notification plate), and by
+  extension the floating capsules.
+- **folio**: a list row's number, the list's coordinate system for
+  memorization ("I've memorized up to 19").
+- **the column**: the centred width cap on wide screens, in three sizes:
+  `readingMeasure` (prose), `pageMeasure` (pages), `barMeasure` (chrome).
+- **device factor**: the 1.0 / 1.125 / 1.25 multiplier by smallest width,
+  folded into the reading scale so a tablet prints the same book larger.
+- **keep-acts**: Learned and Bookmark, the two acts on the detail plate.
+- **the two voices**: tracked wide caps for annotation (overlines, counters,
+  running heads), mixed case at `tabLabelStyle()` for chrome the reader taps.
+  Prose is `bodySmall` or larger; never set a sentence in
+  `labelMedium`/`labelSmall`.
+- **ready gate**: the ViewModel flag separating "nothing decided yet" from
+  "no round exists"; never index a round before it reads ready.
+- **the house push**: the standard pushed-screen transition (fade GENTLE plus
+  a gentle rise); content turns use it, tab switches crossfade.
+- **seal**: the `MarkSeal` ring holding the square-Kufic mark, worn by the
+  three earned moments.
 
-- **A list that is still being built is not an empty list.** Both practice
-  screens build their round a frame after the first composition, inside a
-  `LaunchedEffect`, so on the frame the screen first draws, the list is empty
-  and *nothing has been decided yet*. Reading that as "there is no round"
-  flashed the failure message over the first card of every sitting, and in
-  the quiz it was worse: the screen indexed its question list directly, so an
-  empty round met an out-of-bounds read and killed the app (fixed 1.30).
-  `QuizViewModel.ready` and `FlashcardsViewModel.ready` are the fix: set only
-  once an input that has SETTLED has been read (`namesLoaded`), never on the
-  empty-list case that precedes it, and carried in the SavedStateHandle with
-  the rest of the round.
-- **Never index a list a screen composes straight.** Even with the gate above,
-  `AnimatedContent` keeps an outgoing copy of a branch alive through its turn:
-  read with `getOrNull` and return early, so a state change mid-animation can
-  never index past the end (the flashcard deck already did this; the quiz
-  question turn does now too).
-- **DataStore emits a frame or two late.** Gate `stateIn(…)` flows on a
-  `*Loaded` flag before building UI, or you flash
-  "0 learned"/"nothing kept"/a spinner over real data. **And never emit a
-  fallback into the read stream on failure**: `emptyPreferences()` inside
-  `retryWhen` turns a failed read into "the reader has learned nothing", and
-  the `*Loaded` flags then flip true off it, so the flash the flags exist to
-  prevent comes back through the side door. `Prefs` lets the retry pass
-  without emitting; the screens' own initial values are the loading state.
-- **ViewModel flags must be declared BEFORE their eager flow.**
-  `stateIn(Eagerly)` collects immediately; an `.onEach` touching a
-  later-declared flag crashes cold start with an init-order NPE.
-- **Content reads are crash-proof.** `NamesRepository.load` catches
-  `Exception` (`CancellationException` rethrown; empty list → screens say
-  so). `Prefs` reads through `retryWhen` (a bare `catch` COMPLETES the
-  flow, killing every derived flow for the process) and sanitizes what it
-  returns; `Prefs.write` swallows `Exception` (cancellation rethrown) and
-  validates what it stores, a failed save must never kill the process
-  over a toggle.
-- `intro.txt` parse normalizes `\r\n` → `\n`.
+## Decisions: do not reopen without approval
 
-## Design system (read before touching any size/color/spacing)
+Appealable; bring a genuinely better idea to the owner and, if approved,
+implement it and update this list.
 
-- **Arabic is set in KFGQPC Uthmanic Script HAFS**, Latin in Spectral; both
-  bundled. HAFS is single-weight (W400), **never let it synthesize a
-  weight**; pin Normal in `ArabicText`/`MixedText`. KFGQPC's license forbids
-  modification and derivative artwork; the font stays byte-identical.
-- **`ArabicSize`** (in `ArabicText.kt`) names each Arabic size by the Latin
-  slot it pairs with. Arabic must not inherit Latin sizes (HAFS body ~0.35em
-  vs Spectral x-height 0.45em).
-- **`FitText`** (components/FitText.kt) shrinks text to fit, stepping fontSize
-  AND letterSpacing down together. Guard `TextUnit.Unspecified`. House pattern for
-  anything that must never break a Divine Name or truncate a title.
-- **Centering** baked into styles via `.copy(textAlign = Center)`; bare
-  FitText doesn't center.
-- **Never set a sentence in `labelMedium`/`labelSmall`** (they carry wide
-  tracking, overlines only; prose is `bodySmall`+).
-- **Two voices for small type (owner decision, 1.22):** tracked wide caps are
-  the register of ANNOTATION, `SectionLabel`, `ScreenLabel`, the overlines
-  ("NAME OF THE DAY", "I KNOW IT / STILL LEARNING", "NEW BEST"), the counters
-  ("QUESTION 1 OF 10") and the share wordmark. Mixed case at `tabLabelStyle()`
-  (9sp × device factor, 0.5sp tracking) is the register of CHROME THE READER
-  TAPS, the four tab labels and the detail plate's Learned / Bookmark. Don't
-  set a tappable label in caps, and don't lowercase an overline. Any
-  `.uppercase()`/`.lowercase()` on user-visible text or matching logic must be
-  locale-insensitive (`Locale.ROOT`), the default-locale form renders
-  "MEMORİZE" on Turkish devices.
-- **Reading rule:** the short meaning (`title`) shows only where the full
-  `meaning` does NOT (Detail/Share/flashcard back: meaning only; list rows,
-  hero card, widget, notification, quiz keep the title).
-- **Shared components live in `ui/theme/components/`**: `PageParts.kt`
-  (BackButton, ScreenLabel, SectionLabel, TabTitle, `tabLabelStyle`,
-  paperTopBarColors, NavRow, PageRule, scaledGap, SettleOnce, readingMeasure,
-  pageMeasure, barMeasure, named insets), `FitText.kt`, `MarkSeal.kt`,
-  `EmptyState.kt` (PageMessage + EmptyState), `FloatingBar.kt`, `Hairline.kt`,
-  `ArabicText.kt`, `MixedText.kt`, `NameListItem.kt`. Reuse them.
-- **Empty screens that offer an action use `EmptyState`** (title + optional
-  line + optional TextButton); `PageMessage` stays for failure cases with no
-  action. Centred via `Modifier.fillParentMaxSize()` inside their `item {}`
-  (a LazyItemScope member, no import). An empty screen that can act should
-  act, the bookmarks and learned empties offer "Browse the names".
-- **Search shows its work:** literal query matches in a row's transliteration
-  and title render gold + SemiBold. `util/Highlight` computes the ranges
-  (≥2-char trimmed query, case-insensitive, non-overlapping); fuzzy-only
-  matches stay uncoloured, never invent a span that corresponds to nothing.
-  Only Home passes a `query` to `NameListItem`; other lists stay pristine.
-- **Search lives in the bar, one entry point, everywhere:** the home bar
-  carries a magnifier at its end; tapping it swaps the running head for a
-  BasicTextField (Crossfade, QUICK) and the keyboard rises. Typing filters
-  live through the shared ViewModel query; openness is `rememberSaveable`
-  AND re-derived from a live query (a filtered list must never appear
-  without its field). **Back unwinds search one layer per press**: typed
-  text → empty field → out of search, and only past all three does Back
-  exit on a top-level tab; never eject a reader who can still see evidence
-  of their search. The ✕ clears AND closes in one tap. The query persists
-  until cleared (✕, Back, or the no-results empty's "Clear search"), and it
-  survives process death too, riding the ViewModel's SavedStateHandle
-  (openness is rememberSaveable; the query must be, or an open field would
-  restore empty).
-- **Settings is the fourth tab; About lives at its foot:** Settings joined
-  the bar rightmost and quietest (owner decision, 1.18); top bars carry
-  content only. About sits as the gold-chevron `NavRow` at the foot of the
-  Settings page, above the version line; Settings wears the quiet running
-  head and no back button (it is a tab, not a pushed screen), and Back from
-  About still lands on Settings. Worst case (2.0 system font scale on a
-  320dp phone) the longest label still fits above the FitText floor,
-  nothing clipping.
-- **Tab heads differ by register:** Home passes `sizeScale = 1f` to
-  `TabTitle`, the book's title page, at the full `headlineSmall` where the
-  measured width allows (FitText shrinks it back for the second bar icon or
-  a large font scale), while Bookmarks and Memorize keep the default 0.85
-  quiet running head.
-- **The list rows carry their folio numbers** (owner decision): not lookup
-  scaffolding but the list's coordinate system, the way memorization
-  speaks ("I've memorized up to 19"). A book's folio, not a badge:
-  `onSurfaceVariant` `labelLarge`, right-aligned in a measured widest-number
-  column (`folioWidth()`) so the units digits line up down the page.
-  Dividers start where the names do (`nameRowTextInset()`), never under the
-  numbers; `NameRowInset` stays the row's outer margin.
-- **The flashcards carry no instruction lines:** "Tap the card…" and the
-  swipe hint are gone, the whole front face is one plate holding one Name
-  (nothing else to tap), and the drag answers the hand through the I KNOW IT
-  / STILL LEARNING overline. The fixed-height box under the card remains so
-  the undo control never resizes the deck.
-- **The text-size slider previews live:** the specimen answers the bead
-  mid-drag, set at the slider's CURRENT absolute value × the device factor,
-  not the theme's committed scale, so the preview matches the page on
-  the device it is standing on. Commit-on-release guards DataStore, never the
-  preview.
-- **Flashcard drags answer the hand:** the card wears an overline label
-  (I KNOW IT / STILL LEARNING) that fades in toward the commit threshold, and
-  a tick haptic fires exactly once as the drag crosses it. The label composes
-  only while a drag is live (an invisible merged child still reaches
-  TalkBack), and its graded alpha reads in the draw phase, a moving finger
-  redraws without recomposing the faces.
-- **The quiz celebrates a new best:** `QuizViewModel.bestBefore` captures the
-  standing best once, when a round finishes (a rotation re-runs the capturing
-  effect after the round's own write, capture-once, or the moment never
-  fires). The gold NEW BEST overline shows only when an existing best fell;
-  first rounds stay silent.
-- **Pushed-screen TITLES sit left (`ScreenLabel` in `TopAppBar`); sequence
-  COUNTERS sit centre** (`CenterAlignedTopAppBar`: detail "3 of 99",
-  flashcards "3 of 12", quiz "3 of 10"). Don't mix.
-- **Contrast:** keep WCAG 2.1 AA (4.5:1 text, 3:1 UI). `outline` vs
-  `outlineVariant` carry real meaning in places; comments in `Color.kt` are
-  mostly right but re-verify claims.
-- **Motion/haptics:** `Motion.kt` (QUICK/GENTLE/CALM), `Haptics.kt`. The
-  `@Composable` variants collapse to `snap()` when animator scale is 0; use
-  non-composable `spec()` variants inside coroutines/gesture callbacks, AND
-  inside `AnimatedContent.transitionSpec`, which is not composable either:
-  hoist `LocalMotionScale.current` above and build specs from it. Content
-  turns use the house push (fade GENTLE/Settle + rise it/12); nothing user-
-  facing hard-cuts between states.
-- **Counters roll, never teleport:** the Memorize count seeds from
-  `rememberSaveable lastSeen` (first composition starts ON target, never
-  from zero); the quiz score counts up once per result (`rememberSaveable
-  played` guard).
-- **Scroll thumbs:** reading pages use `ScrollbarThumb` (ScrollState), About
-  included, and it runs to several screens, while lazy lists use
-  `LazyScrollbarThumb` (position cue only, THUMB_MAX_FRACTION/24dp floor).
-  Both display-only; dragging would make them a fast-scroller (rejected
-  decision).
-- **Bottom bar:** the SELECTED tab's glyph fills; resting tabs wear outlined
-  variants (`TopLevelRoute.iconResting`), a third selection channel beside
-  tint and label weight. Don't collapse back to one filled icon. A tap's press
-  highlight clips to the bar's own capsule register
-  (`RoundedCornerShape(50)` before `selectable`), never a hard-cornered
-  rectangle inside the pill plate.
-- **Splash is held until first frame AND the theme is known:**
-  `setKeepOnScreenCondition { !contentReady || !themeSettled }`, released by a
-  `SideEffect` after the first composition commits AND once the stored
-  theme/text-scale have been read from DataStore (bounded, 400 ms timeout,
-  MainActivity). Without it a slow device flashes bare window background
-  between splash and app, and without the theme gate the first committed
-  frame is the flows' defaults: a DARK/BLACK reader on a light system saw the
-  app flash light before its real theme landed.
-- **Motion only where meaning changes:** pages turn, counters roll, drags
-  answer the hand, and pushed screens arrive through the house push,
-  everything else stands still. First frames get no entrance (the hero,
-  detail and About fades were removed); the daily card still turns at
-  midnight, because THAT is a change of meaning.
-- **Landing at the top means ALL of the top:** re-tapping NAMES animates
-  item 0 back into view AND reveals the tucked-away home bar, HomeScreen
-  snaps `scrollBehavior.state.heightOffset` to 0 on ARRIVAL at item 0, an
-  edge, not a state, so a continuous watch can't fight the tuck. The RE-TAP
-  itself is one contract every tab answers (owner decision, 1.19): Names and
-  Bookmarks hoist their `LazyListState` (scroll to item 0), Memorize and
-  Settings hoist a `ScrollState` (scroll to offset 0); their screens take a
-  defaulted `scrollState` parameter so test call sites keep their own state.
-- **The detail plate's keep-acts wear the quiet ink and a short label:**
-  resting, the check-circle and bookmark render `onSurfaceVariant` (the
-  same grey as the top bar's share icon, not the page's near-black) and
-  each carries a short chrome label (Learned / Bookmark, mixed case, the
-  chrome-you-tap voice of the two-voice register) at the tab bar's
-  `tabLabelStyle()` register (9sp × device factor, FitText-fitted,
-  `clearAndSetSemantics` so TalkBack keeps hearing the full action + state
-  once). They are explicit stadium-clipped clickable Columns with a 48dp
-  touch floor, NOT IconButtons (see pitfalls): an IconButton's circle clip
-  cuts labels mid-glyph. Active, they fill gold as always. The full phrase
-  "Mark as learned" cannot fit the plate's centre slot at a readable size;
-  the short words can (owner decision, 1.19).
-- **The share sheet offers the plate AND the words:** "Share text" sends the
-  Arabic, the transliteration, the full meaning, and the store title, the
-  card's hierarchy as plain text. The name line carries the transliteration
-  ALONE: the short meaning would only repeat the clause the full meaning
-  opens with (owner decision, 1.32). The block is LEFT-aligned, and that is
-  the work of one `U+200E` at the message's start (`util/ShareText`): plain
-  text has no alignment, so a bidi-aware app reads the direction off the
-  first strong character, and meeting the Arabic first it set the whole
-  message on the right. The name page's meaning is the
-  app's one selectable text (`SelectionContainer`, long-press to copy); the
-  Name pairs its Arabic and transliteration into one selectable unit above
-  the meaning. The flashcard faces stay swipe surfaces on purpose.
-- **The share sheet must always settle:** its card scroller wears the
-  `quenchUpward` nested-scroll connection (ShareSheet.kt), which eats upward
-  drag/fling leftover between content and sheet, without it the
-  near-full-height sheet oscillates against its own bounds (m3 1.4.0,
-  `skipPartiallyExpanded`). It must chain BEFORE `.verticalScroll`: after
-  it, the connection is a DESCENDANT the leftover never passes through.
-  Do not remove it as redundant, and keep any future sheet content behind
-  the same guard.
-- **Theme rows wear a swatch:** a 22dp circle of the theme's own paper with
-  its ink as an 8dp bead, System split across both papers. The eye picks
-  before the mind reads; the row still carries all the semantics.
-- **Themed launcher icons already ship:** the adaptive icon's monochrome layer
-  is the Kufic mark: do not re-add it.
-- **The two axes need no manual, by design:** the name page carries one
-  floating capsule (`DetailNavPlate`, the same `FloatingBar` plate the tab
-  bar wears) holding everything a reader does to a name, previous and next
-  wearing the neighbour's transliteration (FitText-fitted at `titleSmall`,
-  20dp chevrons, the longest transliteration shrinks a little instead of
-  ellipsizing), and the two acts of keeping side by side: an unfilled
-  check-circle that fills gold when learned (`LearnedAction`), and the
-  bookmark. Share alone stays in the top bar (a send-away act reads at the
-  page's edge; five slots would crowd a 320dp phone). The capsule is FIXED
-  and an OVERLAY on the pager, not a Scaffold bottom bar, a reserved slot
-  clips the meaning at the plate's top edge and the floating read dies
-  (1.21): its measured height (onSizeChanged) becomes the clearance the
-  page's tail scrolls above, inside the min-height column so a short page
-  never scrolls and a long one gains exactly the extent it needs. The
-  weighted end slots keep the keep-acts centred on first/last pages; labels
-  change as the pager settles, the same moment the counter does. If the
-  controls ever need an explainer line again, fix the controls, not the prose.
-- **The notification's one line is set, not joined:** Arabic · transliteration,
-  the same middle dot the feature graphic's tagline wears.
-- **Widget corners follow the device:** render-time read of the framework
-  dimen `system_app_widget_background_radius` (24dp on Pixel images), falling
-  back to 20dp when an OEM omits it; still API 31+-only and still applied
-  before `clickable` (see pitfalls below).
-- **Arabic is tagged `ar` for readers:** `ArabicText` and `MixedText`'s Arabic
-  runs carry an `ar` locale span (`ArabicLocale` in ArabicText.kt), so
-  TalkBack picks an Arabic voice for the Name instead of attempting it with
-  the default English one. Keep the span on any new Arabic surface.
-- **Wide screens keep the book's column:** full-screen content sits inside a
-  centred `pageMeasure()` cap (560dp × the reading scale; the name page at
-  `readingMeasure()`), so a tablet gets page proportions, not rows stretched
-  edge to edge, and the list thumbs hug the column. The pattern is
-  `fillMaxSize().wrapContentWidth(CenterHorizontally).widthIn(max = …)`,
-  wrapContentWidth BEFORE widthIn, the same order rule as the heightIn
-  pitfall. Phones never reach the cap.
-- **Chrome joins the column:** every top bar (all eight call-sites) and the
-  bottom bar's divider + tabs wear `Modifier.barMeasure()` (PageParts), the
-  same fillMaxWidth · wrapContentWidth · widthIn(max = pageMeasure()) chain,
-  so on wide screens the running head, the page and the footer share one set
-  of margins. Same cap, same order rule; on phones (and 7" portrait,
-  600dp < the cap) it never binds and nothing changes.
-- **Wide devices set larger type: the device factor:** sp type is
-  physically identical on every screen, which reads small at the distance a
-  7"/10" tablet is held. `Names99Theme` folds a factor (1.0 phone / 1.125 at
-  ≥600sw / 1.25 at ≥840sw, smallest-width, so rotation cannot change it)
-  into the reading scale, so typography, Arabic, column caps and gaps all
-  grow together, the same book in a larger format, proportions unchanged.
-  The bottom bar's labels take the device factor but NEVER the reader's
-  slider; the widget and the notification plate keep their own fixed sizing.
-- **The reminder is on by default:** `dailyEnabled` defaults to true, so a
-  fresh install gets the Name each morning without finding a switch. The
-  reader's consent lives in the system dialog, not in prose: MainActivity
-  asks for POST_NOTIFICATIONS once at first launch (API 33+ only, guarded by
-  the `notifications_asked` pref, written before the dialog opens so a
-  process death mid-dialog never nags), and ONLY when the reminder is
-  actually wanted, a reader whose pref says off is never asked. A denial
-  writes the pref off and cancels the work, so switch, scheduler and worker
-  agree. Below API 33 there is nothing to ask and the reminder just works.
-- **The daily notification expands to the plate:** `DailyPlate` renders the
-  hero-card identity (HAFS Arabic via Canvas, `arabicBitmap` in
-  `daily/WidgetArabicBitmap.kt`, internal, plus Spectral Latin) into a 16:9
-  bitmap for BigPictureStyle,
-  falling back to the plain BigTextStyle when a render fails. Collapsed, the
-  notification is unchanged. With the plate up, the summary is the BARE tap
-  hint (`notification_summary_hint`), the short meaning lives in the plate,
-  and repeating it made the expanded shade read as the old text notification
-  duplicated beneath a card of itself; the BigText fallback keeps the full
-  `{title}. Tap to read the full meaning.` line, where the meaning has
-  nowhere else to be. `MainActivity.onResume` nudges the widget only
-  when the local day has changed (`widgetNudgeDay`), not on every resume.
-- **`SettleOnce`** (PageParts) is the shared one-time settle: scale from
-  `fromScale` on the lively spring plus a QUICK fade, played once per arrival
-  (saved-instance-state guarded; snap at animator scale 0). PerfectSeal uses
-  it at 0.6; the all-learned ٩٩ at the default 0.85.
-- **One maker's mark:** `MarkSeal` (components/MarkSeal.kt) is the ring and
-  the square-Kufic glyph it holds, with the two inks as parameters, the share card's plate gold
-  at 26dp/12dp, the earned seals' `secondary` at 52dp/22dp. The share card's
-  foot, the quiz's perfect round and the finished flashcard set all wear it;
-  never re-draw the circle + `ic_mark` pair at a call site.
-- **A Divine Name is never truncated in a list row either:** `NameListItem`
-  sets the transliteration through `FitText`, because the longest three
-  (Al-Muta'aalee, Al-Mutakabbir, Al-Mu'akhkhir, 13 characters each) do not
-  fit beside the folio, the tick and the Arabic on a narrow phone at a large
-  system font scale. The epithet beneath keeps its ellipsis: it is a sentence,
-  not a Name. `FitText` has an `AnnotatedString` overload so the search-
-  highlight spans are measured with the text.
-- **Scroll thumbs stop above the floating bar:** the lists scroll UNDER the
-  plate, so `LazyScrollbarThumb` in Home and Bookmarks ends its track at
-  `16.dp + LocalBottomBarOverlay.current` rather than at the paper's edge,
-  otherwise the thumb walks behind the bar in exactly the last stretch of the
-  list, where the reader is steering by it.
+- No DI framework, no database: the content is a static asset.
+- The app is a book that asks almost no decisions. Rejected on that rule: a
+  spaced-repetition queue, a review screen, reverse flashcards, a sticky
+  learned control, a first-run explainer, a first-run epigraph page. It opens
+  on the list.
+- No grid view (built, removed).
+- No navigation rail and no list-detail on tablets: the column.
+- Settings is the fourth tab, quietest and rightmost; About is a nav row at
+  its foot.
+- Search lives in the home bar only, and Back unwinds search one layer per
+  press before it can leave a top-level tab.
+- The daily reminder is on by default; consent is the system permission
+  dialog, never prose.
+- No SnackbarHost: reset has no Undo, some failures surface as a Toast.
+- Scroll thumbs are position cues, not draggable fast-scrollers.
+- `displayMedium` is deliberately unused in `Type.kt`; ask before deleting.
+- Store screenshots are the canonical CI scenes; never re-derive them.
 
-## Content invariants (guarded by NamesAssetTest)
+## Traps with no code home
 
-`assets/names.json`: 99 sequential entries; no blank/duplicate fields;
-NFC-normalized Arabic; every Arabic character drawable by the bundled HAFS TTF
-(only U+0622 آ allowed, `forArabicFont()` decomposes it at render time);
-every `meaning` begins with its `title` clause (Detail/Share/flashcard-back
-render the title only inside the meaning, dropping the clause silently loses
-it). Transliteration follows the source's convention, regularised in exactly
-eight places (#28, #32, #44, #48, #80, #87, #94, #95). The honorific is
-spelled "Rahimahullah" (regularised from the source's "Rahimuallah": the
-intro, and #26's meaning).
-
-## Testing
-
-- **92 unit tests** (JUnit4, `app/src/test`): daily rotation, quiz generation
-  + subsuming-distractor guards, search and the literal highlight ranges,
-  deck building (incl. 10-card cap), the share text's shape and its one
-  left-to-right mark,
-  ViewModels (incl. the tagged-selection contract that keeps a turning
-  question's verdict and the best-before capture, plus corrupted-restore
-  guards for the quiz and deck, and the *ready gates that keep an unbuilt
-  round from reading as a failed asset read), NamesAssetTest over the
-  real asset, CounterFormatTest.
-  Count grows as guards are added, sum the XMLs in
-  `app/build/test-results/testDebugUnitTest/`.
-- Instrumentation (`ScreenshotTest`) renders the CANONICAL PLAY SCENE SET
-  (owner decision, 1.23; trimmed to eight scenes in 1.27, the Memorize page
-  left the set, so a refresh is 8 × 3 sizes = 24 captures, and the phone set
-  now fits Play's 8-per-form-factor cap exactly; no scene targets a
-  particular name, any name will do):
-
-    1. `home`: the Names page
-    2. `flashcards-front` and `flashcards-back`: BOTH faces of the card
-       (the back is reached by flipping the deck ViewModel directly, never
-       by injecting a tap; the test stays a pure render)
-    3. `quiz`: the Quiz page
-    4. `bookmarks`: the Bookmarks page, POPULATED (the first three loaded
-       names are bookmarked through the ViewModel and the capture waits for
-       the rows; an empty shelf says nothing)
-    5. `settings`: the Settings page, with the reminder seeded ON first
-       (the app's real default; a reused CI device's DataStore once showed
-       the advertised toggle off, and the capture must not lie)
-    6. `name`: a name page (the first in the book; "any name")
-    7. `share`: a name's share screen (the first loaded name; the plate
-       renders outside the sheet, which the compose root cannot capture)
-
-  rendered to the run's additional test output directory (AGP copies them
-  off-device for the workflow; local runs fall back to the app's files dir);
-  pure render, no input injection, so it runs on API ≤ 35 images. The rule is
-  `createAndroidComposeRule<ComponentActivity>()`, the plain rule exposes no
-  `.activity`, which the flashcard scenes need. A stale set in
-  `docs/screenshots/` must be DELETED before re-downloading (`gh run download`
-  overwrites but never removes).
-- Pure logic lives in `util/` precisely so it is unit-testable.
-
-## Editing pitfalls that bite
-
-- **Files are CRLF** (`.gitattributes text=auto`). The patch tool fails to
-  match old_text ending in a trailing newline, include the FOLLOWING line.
-- **IconButton clips its content to a 48dp circle.** Anything taller than
-  an icon (an icon+label column, a two-line stack) is measured fine but
-  CUT mid-glyph, worst just off-centre where the inscribed chord narrows to
-  ~44dp; FitText cannot save it, because the text fits the constraints and
-  the clip eats it. Multi-element buttons are explicit Columns with
-  `clip(RoundedCornerShape(50))` before `clickable` and
-  `minimumInteractiveComponentSize()` for the touch floor (as the detail
-  plate's keep-acts do).
-- **Repo-wide greps: use `git grep`** when the cwd path contains spaces, and
-  it only searches tracked files so build output can't pollute a sweep.
-- **After removing a Text/composable block, re-grep unused imports**: the
-  project holds a zero-warning standard.
-- **Changing a screen's signature breaks `ScreenshotTest`**: the
-  instrumentation source renders HomeScreen, DetailScreen, SettingsScreen et
-  al. DIRECTLY, so an argument removed from a screen is a compile error CI
-  only reaches at `:app:compileDebugAndroidTestKotlin` (inside
-  screenshots.yml, all three legs red). The canonical suite does not compile
-  it: after any screen-signature change, run that task locally before
-  pushing. (MemorizeScreen left the set in 1.27, so its signature is no
-  longer compiled by the instrumentation source, signature changes there
-  now surface only through CI's build legs, not the capture legs.)
-- **`ScrollState.animateScrollTo` kills the app when the animation actually runs.** Declared `Unit`, it passes its `$completion` straight through to `animateScrollBy` (declared `Float`): when the scroll suspends ≥1 frame, the resumption receives a Float where a Unit was promised: `ClassCastException`. Call the Float-typed pair instead: `scrollTo` (jump) / `animateScrollBy` (animated). The lazy/pager equivalents (`scrollToItem`, `animateScrollToItem`, `scrollToPage`, `animateScrollToPage`) are proper state machines and safe.
-- **`FitText` beside a fixed sibling in a `Row` must be measured LAST.** Row measures children left to right against the width that remains: a `FitText` placed BEFORE the sibling sees the full row width, declines to shrink, and the sibling then overflows the slot. Give such a `FitText` `Modifier.weight(1f, fill = false)` so the fixed children are measured first. The same pattern appears in the share wordmark (seal + spacer before it): already correct, keep it that way.
-- **Modifier order matters:** `heightIn(max=X)` BEFORE `fillMaxHeight()`, or
-  the cap is ignored; never pair `heightIn` on a Column child with
-  `fillMaxHeight` on its children (expands to full screen, blanks the app).
-  The same is true in nested scroll: a `NestedScrollConnection` must chain
-  BEFORE (outside of) the `.verticalScroll` it guards, after it, the
-  connection is a descendant and the scroller's own leftover never passes
-  through it (this shipped the share-sheet shake for one release).
-- **Arabic widths from hmtx are nominal (isolated advances)**: no shaping in
-  stdlib; shaped runs ~0.6–0.7× narrower. Never assert Arabic overflow from
-  nominal widths alone ("upper bound, needs device check").
-- **KFGQPC HAFS has no U+0622 آ and no en/em dash** (MixedText keeps dashes
-  in Spectral). New Arabic avoids آ or relies on `forArabicFont()`.
-- **Deep links:** activity is `singleTop` with an exported intent; consume the
-  `nameNumber` extra and guard cold-start replay with
-  `savedInstanceState == null`.
-- **Launcher shortcuts** (long-press the icon → Flashcards, Quiz; API 25+,
-  ignored below) ride a `startRoute` extra consumed exactly like
-  `nameNumber`. `App()` pushes the memorize tab first, then the screen, so
-  Back lands where a reader who walked there would be. Keep
-  `res/xml/shortcuts.xml` in step with the ROUTE_* constants in
-  MainActivity, and the two glyph drawables tinted by `shortcut_glyph`
-  (values/ day emerald, values-night/ mint).
-- **Scheduler anchoring:** `Application.onCreate` KEEPs the schedule
-  (re-anchoring there cancels the work that woke the process);
-  `MainActivity.onCreate` re-anchors, guarded by an is-running check.
-- **`DailyName.numberFor` uses `Math.floorDiv`/`floorMod`, never `/` and
-  `%`**: plain division breaks pre-epoch instants; a test guards it.
-- **Widget/notification workers fold failures to `Result.retry()`**, not
-  success, a swallowed throw used to skip the daily widget refresh until the
-  next day.
-- **Glance `cornerRadius` breaks `clickable` on API < 31** (its no-op path
-  swallows the following clickable). Apply conditionally
-  (`if (SDK_INT >= S)`), BEFORE `clickable`.
-- **`appwidget-provider` MUST set `android:initialLayout`** (point it at
-  `@layout/widget_preview`) or stricter launchers throw
-  Resources$NotFoundException on bind.
-- **A widget's tap PendingIntent dies on app update on Android 8.0–8.1.**
-  Three layers of defense: `PackageReplacedReceiver` → WorkManager worker;
-  `NamesApp.onCreate` calls updateAll every process start; `DailyNameWidget`
-  always calls provideContent (fresh PendingIntent even on lookup failure).
-  Not reproducible on Android 12+.
-- **Pre-API 26 launcher icons need real bitmaps.** `mipmap-anydpi/` without
-  `-v26` resolves below 26 where `<adaptive-icon>` can't inflate, devices
-  got a default icon (fixed in 1.0). Keep the `mipmap-{mdpi…xxxhdpi}` PNGs
-  while minSdk is 24.
-- **`previewLayout` renders only on API 31+.** Pickers on 26–30 use
-  `android:previewImage` (`drawable-nodpi/widget_preview_image.png`).
-- **Generating image assets with Arabic locally:** Python/PIL has FreeType
-  but NO raqm, raw text draws unshaped. Working recipe (1.0 widget preview):
-  uharfbuzz shaping → `font.draw_glyph_with_pen` outlines → flatten curves →
-  even-odd fill (XOR contours within a glyph, OR across glyphs); positions
-  y-up, flip once at raster. Fonts in `res/font/`. Verify against the basmala.
-
-## Decisions already settled: do not reopen
-
-(Apppealable: bring a genuinely better idea to the user; approval reopens it.)
-
-- The three name strings are never merged.
-- No first-run epigraph/"opening" page (implemented, reverted: app opens on
-  the list).
-- No spaced-repetition queue, no separate review screen, no reverse
-  flashcards, no sticky learned button, no first-run explainer line, all
-  designed or built during the 1.2 review and rejected on the simplicity
-  rule: the app stays a book that asks for almost no decisions, and its
-  controls explain themselves. Re-propose only with a genuinely better idea.
-- No grid view (implemented, removed).
-- No `applicationId` change.
-- No re-extracting `names.json`; no title clause re-added to meanings.
-- Transliteration faithfully reproduced except those eight regularisations.
-- `displayMedium` (30sp) deliberately sits unused in `Type.kt`: ask before
-  deleting.
-- No INTERNET / network / analytics / ads / billing: ever.
-- Scrollbar thumb capped at 40% of track (`THUMB_MAX_FRACTION`), floor 24dp:
-  exact position, clamped length cue. Don't "fix" back to raw proportions.
-- No navigation rail or list-detail on tablets: both were built, compared,
-  and set aside for the column.
-
-## Known quirks & accepted limitations
-
-- The widget's Arabic renders in the bundled HAFS: drawn into a bitmap
-  by Canvas (which shapes vocalized text correctly), stepped down until the
-  whole line box fits, since Glance Text can't wear bundled fonts.
-  Latin falls back to the system serif; the notification still draws with
-  system fonts and keeps `systemFontSafeArabic()` sanitization for الله.
-- Counters always render Western digits via `%1$s` on purpose (`%d` follows
-  device locale; ar/ur bidi reversed the pairs). Guarded by CounterFormatTest.
-- WorkManager notification timing drifts a few minutes (system batching).
-- At a 2.0 system font scale the detail plate's neighbour labels degrade to
-  ellipsis ("Al…"), the keep-act labels crowd the end slots below even the
-  0.4 floor. Reader-range scales always render the name whole; the truncation
-  is FitText's pathological-scale insurance (accepted 1.20).
-- A local debug APK won't install over a CI artifact and vice versa
-  (different signers, INSTALL_FAILED_UPDATE_INCOMPATIBLE), and uninstalling
-  wipes DataStore progress. Device-test from the CI artifact.
-- The app deliberately has no SnackbarHost (reset has no Undo; some failures
-  surface as Toast). Don't assume one exists.
-- ScreenshotTest cannot run on local android-37.1 images (Espresso
-  InputManager reflection error), listing captures come from CI. Local
-  fallback for one-off scenes: driving the real app over adb (`uiautomator dump` → match
-  text or content-desc → `input tap` → `exec-out screencap`) with the debug
-  APK installed, or ScreenshotTest on API ≤ 35 images (the test now saves to
-  the AGP additional-test-output dir, not files/screenshots).
-Local adb gotchas:
-- **Three capture nondeterminisms (proven 1.22, 1.30):** the scenes render the
-  SCREENS directly, so MainActivity's bottom bar never appears, tab-label
-  changes are invisible to the sets. Flashcards/quiz show SHUFFLED
-  content (unseeded `Random`), so those two PNGs legitimately differ on
-  every run. And the Settings swatches' hairline rings antialias a hair
-  differently on each render: the scene can differ from the committed PNG by a
-  handful of pixels in the left edge of the four circles, each by 1/255 in one
-  channel. Diff old/new PNGs before assuming a regression, and check the
-  magnitude of the difference, a real scene change moves ink across a whole
-  plate, not nine sub-pixel edges.
-  - Search lives in the home bar: stop an upward scroll to reveal it (or
-    re-tap NAMES), tap the magnifier; a live query
-    persists until cleared, tap the bar's ✕ ("Close search") or Back before tapping rows you expected from the full list.
-  - Match text EXACTLY, not by substring ("NAMES" also occurs inside
-    "99 names still to learn").
-  - uiautomator dumps go stale during animations/IME: retry until the node
-    appears; dismiss the keyboard (BACK) before tapping rows; Gboard's toolbar
-    panel swallows taps aimed through it.
-  - The swiftshader SystemUI ANR appears seconds after launch: loop checks,
-    else cold-boot (`-no-window -no-snapshot`; poll for page content, never
-    background colour). Better: `adb shell settings put global
-    hide_error_dialogs 1` up front, while the dialog is up, dumps fail and
-    `Wait` can never be found by text.
-  - The list starts 1 Allah, 2 Al-Ahad, 3 Al-A'laa … (source order):
-    Ar-Rahmaan is NOT near the top. For detail/share scenes use search
-    ("Aleem" → Al-Aleem, longest meaning, scrollbar thumb visible) or the row
-    "Allah".
+- Files are CRLF. When patching, include the following line so an old_text
+  ending in a newline still matches.
+- For repo-wide sweeps use `git grep`: the checkout path contains spaces, and
+  it sees tracked files only.
+- After changing a screen's signature, run
+  `./gradlew :app:compileDebugAndroidTestKotlin` locally: `ScreenshotTest`
+  renders screens directly, and the canonical suite does not compile it.
+- After deleting UI code, re-grep unused imports; the project holds a
+  zero-warning standard and lint fails on new issues.
+- Screenshot diffs are noisy in three known ways: flashcards and quiz render
+  shuffled content, and the Settings swatch rings can differ by a hair in a
+  few pixels. A real change moves ink across a plate, not a few sub-pixel
+  edges.
+- A local debug APK will not install over a CI artifact (different signers),
+  and uninstalling wipes DataStore progress: device-test from the CI artifact.
+- Pre-API 26 devices need the real bitmap mipmaps; `mipmap-anydpi-v26` alone
+  does not resolve below 26.
+- When porting proven code, diff against the source; never retype from
+  memory.

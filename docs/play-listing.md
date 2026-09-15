@@ -1,8 +1,23 @@
 # Play Store listing: copy these in
 
-Updated each release (version field and What's-new notes included). Everything
-below is ready to paste into the Play Console. The **app name is exactly 30 characters** (Play's limit),
-so do not add a word or a stray space.
+Updated each release: bump the version line below, write the new What's new
+block, and leave everything else alone. Everything below is ready to paste
+into the Play Console. The **app name is exactly 30 characters** (Play's
+limit), so do not add a word or a stray space.
+
+House rules for the What's new block: at most 500 characters; no boilerplate
+beyond what the release actually touches, so the closing "All 99 Names and
+your progress are unchanged" line appears ONLY when content or progress
+behaviour really was at risk and the note reassures about it; each bullet one
+unbroken line, no mid-sentence wraps, because the paste into the Console is
+verbatim and hard breaks force the owner to rejoin every line by hand.
+
+The short and full descriptions are written plainly on the rule that the
+promise comes first and facts do the selling: no adjective may do work a fact
+could do instead, and every claim has to be checkable in the shipped app (how
+many Names carry a note, the widget's resize range, "Qayyum finds
+Al-Qayyoom"). Paragraphs are single unbroken lines so the paste needs no
+rejoining; the length limits are Play's (80 and 4000 characters).
 
 ---
 
