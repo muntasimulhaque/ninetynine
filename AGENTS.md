@@ -69,14 +69,15 @@ Things no compiler enforces; violating one is a release blocker.
   plugin is deliberately absent and compiler options live in the top-level
   `kotlin { compilerOptions }` block. AGP auto-installs the android-37.0
   platform it wants; android-37.1 does not satisfy it.
-- Machine notes: on LENOVO, build with
-  `JAVA_HOME="C:\Program Files\Android\Android Studio\jbr"`; on Dev Pro, JDK
-  17 is at `C:\Users\Dev Pro\.jdks\jdk-17.0.19+10` and there is no emulator;
-  on this checkout's box (Windows profile `user`), JDK 17 is at
+- Machine notes: on Dev Pro, JDK 17 is at
+  `C:\Users\Dev Pro\.jdks\jdk-17.0.19+10`, the SDK at
+  `C:\Users\Dev Pro\AppData\Local\Android\Sdk`, and three API 35 AVDs are
+  installed (`Pixel_4_35`, `Nexus_7_35`, `Pixel_C_35`, all `google_apis`
+  x86_64); a third box (Windows profile `user`) has JDK 17 at
   `C:\Users\user\jdk\jdk-17.0.20.1+1`, the SDK at
-  `C:\Users\user\android-sdk`, and a working API 35 `Pixel_4` AVD runs
-  `ScreenshotTest` locally. It cannot run on android-37.1 images; listing
-  captures come from CI regardless.
+  `C:\Users\user\android-sdk`, and a working API 35 `Pixel_4` AVD on which
+  `ScreenshotTest` runs locally. `ScreenshotTest` cannot run on android-37.1
+  images; listing captures come from CI regardless.
 
 ## Release hand-off
 
