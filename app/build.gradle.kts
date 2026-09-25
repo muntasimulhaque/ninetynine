@@ -9,17 +9,21 @@ plugins {
 
 // The upload keystore's path and credentials live in keystore.properties in the
 // shared Google Play Signing Key folder (outside any repo), so no credential
-// ever enters the repository. The folder sits on drive E: and its path has
-// moved once already (the Personal Docs tree gained a My Apps level), so each
-// layout it has worn is tried, rather than one path that a tidy-up turns into
-// a silent unsigned build. When the file is absent (CI, a fresh clone) the
-// release build degrades to unsigned rather than failing.
+// ever enters the repository. The folder has moved twice over the project's
+// life: the Personal Docs tree gained a My Apps level, and the Google Drive
+// sync mounts under a different drive letter per machine (D: and E: have both
+// been seen, and keystore.properties' own storeFile carries whichever letter
+// its author's machine used). Every combination of mount and layout is tried,
+// rather than one path that a tidy-up or another machine turns into a silent
+// unsigned build. When none exists (CI, a fresh clone) the release build
+// degrades to unsigned rather than failing.
+val keystoreRoots = listOf("D:/GDrive", "E:/GDrive")
 val keystoreLayouts = listOf(
     "BSCPLC/DM (Development)/Personal Docs/Pers/My Apps/Google Play Signing Key/keystore.properties",
     "BSCPLC/DM (Development)/Personal Docs/Pers/Google Play Signing Key/keystore.properties",
 )
-val keystoreFile = keystoreLayouts
-    .map { file("E:/GDrive/$it") }
+val keystoreFile = keystoreRoots
+    .flatMap { root -> keystoreLayouts.map { layout -> file("$root/$layout") } }
     .firstOrNull { it.exists() }
 
 val releaseKeystore = Properties()
