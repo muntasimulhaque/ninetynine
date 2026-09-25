@@ -300,8 +300,8 @@ class NotificationWorker(context: Context, params: WorkerParameters) :
             // A daily invitation to read, not an alarm or a calendar event.
             .setCategory(NotificationCompat.CATEGORY_REMINDER)
             // System-font surface: use the Noto-safe form of الله (see DailyNameWidget).
-            // The middle dot is the same separator the feature graphic's tagline
-            // wears, the shade's one line of typography, set rather than joined.
+            // The middle dot separates the Arabic from the transliteration, set
+            // rather than joined, the shade's one line of typography.
             .setContentTitle("${DailyNameWidget.systemFontSafeArabic(name.arabic)} · ${name.transliteration}")
             .setContentText(name.title)
             .setStyle(dailyStyle(context, name))

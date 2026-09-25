@@ -12,17 +12,25 @@
          box, and the baseline joins heh to both lams.
 
          v2 presentation (1.3): the geometry is untouched; the group below
-         scales it 1.166× about the centre (37.98 → 44.28 units wide,
-         35.2% → 41% of the canvas), so the mark holds its own on the
-         launcher grid while its corners (±22.14 from centre, 31.3 on the
-         diagonal) stay inside the 33-unit adaptive safe zone. The fill is
-         top-lit gold, a quiet vertical step that suggests foil stamping
-         without pretending at 3D; the monochrome layer shares this
-         drawable and tints by alpha, which the gradient holds at 100%
-         everywhere. -->
+         scales it about the centre, so the mark stays clear of the plate's
+         edge while its ink mass stays centred. The fill is top-lit gold, a
+         quiet vertical step that suggests foil stamping without pretending
+         at 3D; the monochrome layer shares this drawable and tints by
+         alpha, which the gradient holds at 100% everywhere.
+
+         v3 presentation (1.34, owner decision): the scale steps back from
+         1.166 to 1.0, the mark at its drawn 37.98 units (35.2% of the
+         canvas). The 1.166 launch size was judged against the raw vector's
+         mask, but a launcher draws the 108-unit canvas inside 72 units of
+         its own, and on the S23's grid 41% read as crowding its plate: in
+         the app drawer and in the notification, which wears the same plate
+         behind the same mark. The scale stays an explicit group, so the
+         size remains one number to turn. The legacy mipmaps take the same
+         step; the store icon is unmasked, carries its mark larger under its
+         own convention, and was left at that size. -->
     <group
-        android:scaleX="1.166"
-        android:scaleY="1.166"
+        android:scaleX="1.0"
+        android:scaleY="1.0"
         android:pivotX="54"
         android:pivotY="54">
     <path

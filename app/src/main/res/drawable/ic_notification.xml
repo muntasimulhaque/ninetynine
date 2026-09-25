@@ -8,8 +8,19 @@
          is involved and no font licence applies. The initial alif is laid
          horizontally over the word, the standard squaring liberty of the
          script; lam and lam are the verticals, the final heh is the closed
-         box, and the baseline joins heh to both lams. -->
+         box, and the baseline joins heh to both lams.
+
+         The same drawing as the launcher mark, stepped back by the same
+         0.8576 ratio it stepped back on the launcher (1.34, owner decision),
+         so the status bar and the launcher agree on how large the mark sits.
+         This viewport is Material's 24-unit icon box, not the launcher's
+         plate, so the two files carry different numbers for the same intent:
+         here the ink is 0.715 of the box, where the launcher's is 0.352 of
+         its canvas, and each platform frames it in its own plate. The path
+         is the 108-unit geometry scaled into this viewport, not a redrawn
+         copy, and the ink is centred on the box rather than the box's own
+         centre, which a symmetric glyph hides but this one does not. -->
     <path
         android:fillColor="#FFFFFFFF"
-        android:pathData="M2,2h20v2.857h-20zM2,7.714h8.571v2.857h-8.571zM13.429,7.714h2.857v14.286h-2.857zM19.143,7.714h2.857v14.286h-2.857zM2,10.571h2.857v11.429h-2.857zM7.714,10.571h2.857v11.429h-2.857zM4.857,19.143h2.857v2.857h-2.857zM10.571,19.143h2.857v2.857h-2.857zM16.286,19.143h2.857v2.857h-2.857z" />
+        android:pathData="M3.424,3.424h17.151v2.45h-17.151zM3.424,8.325h7.351v2.45h-7.351zM13.225,8.325h2.45v12.251h-2.45zM18.125,8.325h2.45v12.251h-2.45zM3.424,10.775h2.45v9.801h-2.45zM8.325,10.775h2.45v9.801h-2.45zM5.875,18.125h2.45v2.45h-2.45zM10.775,18.125h2.45v2.45h-2.45zM15.675,18.125h2.45v2.45h-2.45z" />
 </vector>
