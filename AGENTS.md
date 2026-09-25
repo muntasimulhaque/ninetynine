@@ -102,10 +102,13 @@ Every push to `main` is a Play release candidate.
    normal). Only if no keystore is available, use the CI artifact and say so.
 6. **Hand over**: copy the bundle to
    `releases/ninetynine-<version>-vc<code>.aab` (hand-off copies live in the
-   repo, never on the Desktop), and paste the notes verbatim as plain flowing
-   text: no code fence, no indentation, each bullet one unbroken line. Delete
-   the copy from `releases/` once the owner confirms the Play submission;
-   the App Bundle Explorer retains it.
+   repo, never on the Desktop), and give the notes **in the chat**, verbatim
+   as plain flowing text: no code fence, no indentation, each bullet one
+   unbroken line. The owner pastes straight from the terminal and never
+   opens the file, so the copy in the chat IS the hand-off and a "see
+   docs/play-listing.md" answer fails this step. Delete the bundle copy from
+   `releases/` once the owner confirms the Play submission; the App Bundle
+   Explorer retains it.
 7. **Screenshots, decide explicitly every time.** If visible UI changed,
    refresh the complete phone, 7-inch and 10-inch sets in `docs/screenshots/`
    from the `screenshots.yml` run:
