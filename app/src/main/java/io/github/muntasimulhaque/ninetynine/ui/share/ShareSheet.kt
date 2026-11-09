@@ -177,6 +177,18 @@ fun ShareSheet(name: Name, onDismiss: () -> Unit) {
                 }
             }
             Spacer(Modifier.height(20.dp))
+            // Stacked, never a row (owner decision, 1.36). The plate is the
+            // artifact and the words are the fallback for contexts that
+            // cannot take a picture, so the sheet leads with one full-width
+            // action and sets the other beneath it as a text button: a row
+            // would make a hierarchy look like two equal choices. The stack
+            // also holds at every text size. Both labels are labelLarge,
+            // which follows the reader's slider (0.85-1.4) and the device
+            // factor (up to 1.25), with the system font scale multiplying
+            // again: "Share image" is about 68dp of text plus 48dp of button
+            // padding at 1.0, and half of a 320dp phone's 272dp column is
+            // 130dp, so the reader's 1.4 alone wraps a row's labels before
+            // the system scale has said anything.
             Button(
                 enabled = !sharing,
                 onClick = {

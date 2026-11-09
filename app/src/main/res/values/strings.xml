@@ -119,7 +119,7 @@
     <string name="empty_bookmarks_title">Nothing kept yet</string>
     <string name="empty_bookmarks_body">Open any name and tap the bookmark to keep it here.</string>
     <string name="empty_learned_title">None marked yet</string>
-    <string name="empty_learned_body">Open any name and tap the check to mark it learned.</string>
+    <string name="empty_learned_body">Open any name and tap Learned at the foot of the page.</string>
     <!-- The way out an empty shelf offers: the lists are one tap apart, and
          an empty screen that can act should act. -->
     <string name="action_browse_names">Browse the names</string>

@@ -207,7 +207,13 @@ implement it and update this list.
 - The detail page's keep acts stay apart: Bookmark in the top bar, Learned
   at the foot of the entry, pinned just above the page-turner on a short
   page. The floating capsule is the page-turner only, with one fitted size
-  for both neighbour names (owner decision, 1.35).
+  for both neighbour names (owner decision, 1.35). The Learned act is one
+  48dp stadium, bare until pressed, its empty ring meaning not yet and its
+  gold check meaning learned, the list's own grammar.
+- The share sheet stacks its two actions: the image button full width, the
+  text button beneath it, never a row (owner decision, 1.36). A row would
+  flatten a hierarchy into a choice and wraps at the reader's largest
+  text scale.
 
 ## Traps with no code home
 

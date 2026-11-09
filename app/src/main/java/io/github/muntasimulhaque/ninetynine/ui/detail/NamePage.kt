@@ -21,7 +21,7 @@ import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.outlined.CheckCircle
+import androidx.compose.material.icons.outlined.RadioButtonUnchecked
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -238,13 +238,26 @@ internal fun NamePage(
  * whole entry. The list already carries the learned tick, so the page does
  * not need a fixed readout for it.
  *
- * The unfilled check-circle rests in the page's emerald; learned, it fills
- * and wears the app's gold, the same filled-and-gold treatment the bookmark
- * has.
+ * The glyph carries the state beside the word: an empty ring at rest, the
+ * filled gold check once learned. That is the names list's own grammar (the
+ * gold tick appears, and nothing else does), and the page must say the same
+ * thing: a check reads "done", so an unlearned page that wore one would
+ * contradict the list one tap away. The word never changes, a label for the
+ * eye rather than a verdict that rewrites itself.
+ *
+ * The capsule under the finger is the target as well as the feedback: 48dp
+ * tall, the waist the bar's tabs and the page-turner plate already wear. It
+ * appears only while pressed (the page stays bare until touched), so its
+ * geometry has to be honest: clip, clickable and padding share one box, and
+ * the padding sits inside the click. The 20dp pill this replaces was a
+ * smudge, and its 48dp reservation was dead air outside the click.
+ *
  * TalkBack hears the button once ("Mark as learned") and the state after it
  * ("Learned" / "Not learned"), never a label that changes under it. The
- * visible word is a label, not an unlabeled glyph, so a first-time reader
- * does not have to infer the check.
+ * role is the switch role, the action is the contentDescription and the
+ * state is the stateDescription; a toggle action comes from toggleable, not
+ * from the role. The visible word is a label, not an unlabeled glyph, so a
+ * first-time reader does not have to infer the mark.
  */
 @Composable
 private fun LearnedAction(
@@ -271,11 +284,16 @@ private fun LearnedAction(
     }
 
     val state = stringResource(if (learned) R.string.learned else R.string.not_learned)
-    // A toggle, not a button that happens to carry state text: Role.Switch
-    // gives TalkBack a toggle action and a checked/unchecked reading. The
-    // full action lives in the contentDescription and the state in
-    // stateDescription; the visible label is silent to TalkBack.
+    // A toggle, not a button that happens to carry state text: the switch
+    // role marks it as one, the action lives in the contentDescription and
+    // the state in stateDescription, and the bookmark wears the same pair so
+    // the two keep acts speak alike. The toggle action itself comes from
+    // toggleable, not from the role.
     val cd = stringResource(R.string.mark_learned)
+    // clip before clickable, padding inside it: the capsule, the ripple and
+    // the hit area are one box. 14dp of vertical padding lifts the 20dp of
+    // content to the 48dp control waist; 20dp horizontal keeps the word
+    // clear of the semicircular ends.
     Row(
         modifier = Modifier
             .minimumInteractiveComponentSize()
@@ -284,7 +302,7 @@ private fun LearnedAction(
                 haptics.confirm()
                 onToggle()
             }
-            .padding(horizontal = 14.dp)
+            .padding(horizontal = 20.dp, vertical = 14.dp)
             .semantics {
                 contentDescription = cd
                 stateDescription = state
@@ -293,7 +311,10 @@ private fun LearnedAction(
         horizontalArrangement = Arrangement.Center,
     ) {
         Icon(
-            imageVector = if (learned) Icons.Filled.CheckCircle else Icons.Outlined.CheckCircle,
+            // The empty ring, not a check: the check belongs to the learned
+            // state, the same filled gold tick the list wears.
+            imageVector = if (learned) Icons.Filled.CheckCircle
+            else Icons.Outlined.RadioButtonUnchecked,
             contentDescription = null,
             // Resting, it wears the page's emerald like the page's other
             // tappable words; learned, it fills with the app's gold.
