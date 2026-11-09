@@ -1,34 +1,58 @@
 package io.github.muntasimulhaque.ninetynine.ui.detail
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentWidth
-import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.outlined.CheckCircle
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import io.github.muntasimulhaque.ninetynine.R
 import io.github.muntasimulhaque.ninetynine.data.Name
 import io.github.muntasimulhaque.ninetynine.ui.theme.LocalDarkTheme
+import io.github.muntasimulhaque.ninetynine.ui.theme.LocalMotionScale
+import io.github.muntasimulhaque.ninetynine.ui.theme.Motion
 import io.github.muntasimulhaque.ninetynine.ui.theme.NameGoldDark
 import io.github.muntasimulhaque.ninetynine.ui.theme.NameGoldLight
 import io.github.muntasimulhaque.ninetynine.ui.theme.TransliterationTealDark
 import io.github.muntasimulhaque.ninetynine.ui.theme.TransliterationTealLight
+import io.github.muntasimulhaque.ninetynine.ui.theme.rememberHaptics
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.ArabicSize
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.ArabicText
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.FitText
@@ -42,8 +66,8 @@ import io.github.muntasimulhaque.ninetynine.ui.theme.components.ScrollbarThumb
 @Composable
 internal fun NamePage(
     name: Name,
-    pagerState: PagerState,
-    page: Int,
+    learned: Boolean,
+    onToggleLearned: () -> Unit,
     // The floating capsule overlays this page, so the scroll extent grows by
     // the plate's measured height: on a long meaning the tail can lift fully
     // above the plate, while a page shorter than the screen still does not
@@ -51,12 +75,13 @@ internal fun NamePage(
     bottomClearance: Dp,
     modifier: Modifier = Modifier,
 ) {
-    // Single scrollable page: the keep-acts live in the floating capsule
-    // below (DetailNavPlate), and the page grows its scroll extent by that
-    // plate's measured clearance so its tail can lift above it. A page
-    // shorter than the screen does not scroll at all.
+    // Single scrollable page: the floating capsule below is the page-turner,
+    // and the page grows its scroll extent by that plate's measured clearance
+    // so its tail can lift above it. The learned act closes the entry at the
+    // foot; the bookmark lives in the top bar. A page shorter than the screen
+    // does not scroll at all.
     // The page keeps the book's measure on wide screens, the Name, the
-    // meaning, the note and the footer all hold `readingMeasure`'s column,
+    // meaning, the note and the learned act all hold `readingMeasure`'s column,
     // and the thumb hugs that column's edge. Phones never reach the cap.
     BoxWithConstraints(
         modifier
@@ -164,7 +189,21 @@ internal fun NamePage(
                         )
                     }
                 }
+                // The entry's closing act. The weight above pushes it to the
+                // foot of a short page, just above the page-turner, instead of
+                // leaving it stranded in the middle of the air; on a long page
+                // the weight collapses and the act follows the text. The
+                // bookmark can be set at any moment and stays in the top bar;
+                // learning is a verdict on the whole entry, so it sits where
+                // the reading ends, with its word visible and its 48dp target
+                // in the thumb zone.
                 Spacer(Modifier.weight(1f))
+                Spacer(Modifier.height(scaledGap(28.dp)))
+                LearnedAction(
+                    learned = learned,
+                    number = name.number,
+                    onToggle = onToggleLearned,
+                )
                 // The scroll-under room: this is inside the min-height
                 // column, so short pages absorb it in the weighted spacer
                 // (no phantom scroll) while long pages gain exactly the
@@ -183,6 +222,96 @@ internal fun NamePage(
             modifier = Modifier
                 .align(Alignment.TopEnd)
                 .padding(top = 16.dp, bottom = 16.dp + bottomClearance, end = 8.dp),
+        )
+    }
+}
+
+/**
+ * Learning a name, closing the entry.
+ *
+ * The page is one scroll container, so this control travels with the meaning;
+ * it sits after the text because the judgment is made when the reading ends.
+ * When the text ends early, the page's weighted space holds the act just
+ * above the page-turner: still at the foot of the entry, not stranded in the
+ * middle of the air. The bookmark, the other keep act, stays in the top bar:
+ * keeping a page can happen at any moment, while learning is a verdict on the
+ * whole entry. The list already carries the learned tick, so the page does
+ * not need a fixed readout for it.
+ *
+ * The unfilled check-circle rests in the page's emerald; learned, it fills
+ * and wears the app's gold, the same filled-and-gold treatment the bookmark
+ * has.
+ * TalkBack hears the button once ("Mark as learned") and the state after it
+ * ("Learned" / "Not learned"), never a label that changes under it. The
+ * visible word is a label, not an unlabeled glyph, so a first-time reader
+ * does not have to infer the check.
+ */
+@Composable
+private fun LearnedAction(
+    learned: Boolean,
+    number: Int,
+    onToggle: () -> Unit,
+) {
+    val haptics = rememberHaptics()
+
+    // The pop means "you just changed this", so it must not fire when the
+    // reader swipes to a page that is already learned. Each page composes its
+    // own row, so the latch is local: arriving at a page seeds its state
+    // silently, and only a toggle pops.
+    val scale = remember { Animatable(1f) }
+    val seededFor = remember { mutableStateOf<Int?>(null) }
+    val motionScale = LocalMotionScale.current
+    LaunchedEffect(number, learned) {
+        if (seededFor.value != number) {
+            seededFor.value = number
+        } else {
+            scale.snapTo(0.94f)
+            scale.animateTo(1f, Motion.livelySpec(motionScale))
+        }
+    }
+
+    val state = stringResource(if (learned) R.string.learned else R.string.not_learned)
+    // A toggle, not a button that happens to carry state text: Role.Switch
+    // gives TalkBack a toggle action and a checked/unchecked reading. The
+    // full action lives in the contentDescription and the state in
+    // stateDescription; the visible label is silent to TalkBack.
+    val cd = stringResource(R.string.mark_learned)
+    Row(
+        modifier = Modifier
+            .minimumInteractiveComponentSize()
+            .clip(RoundedCornerShape(50))
+            .clickable(role = Role.Switch) {
+                haptics.confirm()
+                onToggle()
+            }
+            .padding(horizontal = 14.dp)
+            .semantics {
+                contentDescription = cd
+                stateDescription = state
+            },
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Center,
+    ) {
+        Icon(
+            imageVector = if (learned) Icons.Filled.CheckCircle else Icons.Outlined.CheckCircle,
+            contentDescription = null,
+            // Resting, it wears the page's emerald like the page's other
+            // tappable words; learned, it fills with the app's gold.
+            tint = if (learned) MaterialTheme.colorScheme.secondary
+            else MaterialTheme.colorScheme.primary,
+            modifier = Modifier
+                .size(20.dp)
+                .graphicsLayer {
+                    scaleX = scale.value
+                    scaleY = scale.value
+                },
+        )
+        Spacer(Modifier.width(8.dp))
+        Text(
+            text = stringResource(R.string.plate_learned),
+            style = MaterialTheme.typography.titleSmall,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.clearAndSetSemantics {},
         )
     }
 }

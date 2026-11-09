@@ -25,7 +25,7 @@ rejoining; the length limits are Play's (80 and 4000 characters).
 
 - **Application ID (package name):** `io.github.muntasimulhaque.ninetynine`
 - **Privacy policy URL:** `https://muntasimulhaque.github.io/ninetynine/privacy-policy.html`
-- **Version (this release):** versionName `1.34`, versionCode `44`
+- **Version (this release):** versionName `1.35`, versionCode `45`
 
 ---
 
@@ -87,6 +87,16 @@ FREE, AND PRIVATE
 No ads. No accounts. No in-app purchases. No analytics, no tracking, no third party libraries. Plenty of apps that call themselves private mean they promise not to look; this one cannot look; it has no way to reach the network at all. The code is open source under the MIT license, so anyone can read exactly what it does.
 
 May Allah make us among those who learn, memorize, understand and act upon His beautiful Names.
+```
+
+## What's new (version 1.35)
+
+```
+The controls on a Name page have been rearranged:
+
+• The bar under a Name now turns pages only. Each half is tappable, and both neighboring Names share one size.
+• Bookmark now sits in the top bar, beside Share.
+• Learned now sits at the foot of the page, held just above the bar on a short page.
 ```
 
 ## What's new (version 1.34)

@@ -1,374 +1,290 @@
 package io.github.muntasimulhaque.ninetynine.ui.detail
 
-import androidx.compose.animation.core.Animatable
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.Bookmark
-import androidx.compose.material.icons.filled.BookmarkBorder
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.minimumInteractiveComponentSize
-import androidx.compose.material3.TextButton
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.text.TextMeasurer
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import io.github.muntasimulhaque.ninetynine.R
-import io.github.muntasimulhaque.ninetynine.data.Name
-import io.github.muntasimulhaque.ninetynine.ui.theme.LocalMotionScale
-import io.github.muntasimulhaque.ninetynine.ui.theme.Motion
-import io.github.muntasimulhaque.ninetynine.ui.theme.components.barMeasure
-import io.github.muntasimulhaque.ninetynine.ui.theme.components.FitText
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.FloatingBar
-import io.github.muntasimulhaque.ninetynine.ui.theme.components.tabLabelStyle
-import io.github.muntasimulhaque.ninetynine.ui.theme.rememberHaptics
+
+private val PlateHeight = 54.dp
+private val PlateRadius = PlateHeight / 2
+private val LabelPadding = 8.dp
+private val ChevronGap = 6.dp
+private val ChevronSize = 20.dp
+private val DividerWidth = 0.5.dp
+private val DividerHeight = 16.dp
+
+// The two halves meet at a straight edge in the middle and keep the plate's
+// own semicircle at the outer end. Start/end, not physical left/right: in RTL
+// the previous button is on the right and must keep the rounded cap there.
+// The caller's Surface already clips to the capsule, but clipping each half
+// here makes the ripple follow the same silhouette instead of a bare
+// rectangle.
+private val StartHalfShape = RoundedCornerShape(
+    topStart = PlateRadius,
+    bottomStart = PlateRadius,
+)
+private val EndHalfShape = RoundedCornerShape(
+    topEnd = PlateRadius,
+    bottomEnd = PlateRadius,
+)
+private val WholePlateShape = RoundedCornerShape(50)
 
 /**
- * Learning a name, in the bar.
+ * The name page's floating capsule: the page-turner, and only the page-turner.
  *
- * The page is one scroll container, so a footer control travels with the text:
- * on a long meaning it is well below the fold at exactly the moment a name
- * strikes you. The bar does not move, and the learned axis now sits beside the
- * bookmark: two acts of keeping, one place, the same feel.
+ * Two half-buttons span the plate, each with its whole half as the tap target,
+ * so there is no dead air around the label and no second pill inside the pill.
+ * The neighbour's transliteration and an outward chevron say what turning the
+ * page brings. The two labels share one fitted size, measured from the book's
+ * widest transliteration and the space one half owns, so neither name looks
+ * more important and the size does not change from page to page. A 0.5dp
+ * hairline divides the halves only when both exist; at the first and last
+ * pages the one available direction takes the whole plate. A Divine Name is
+ * never ellipsized.
  *
- * The unfilled check-circle rests in the page's ink; learned, it fills and
- * wears the app's gold: the same filled-and-gold treatment the bookmark has.
- * TalkBack hears the button once ("Mark as learned") and the state after it
- * ("Learned" / "Not learned"), never a label that changes under it.
- */
-@Composable
-private fun LearnedAction(learned: Boolean, number: Int, onToggle: () -> Unit) {
-    val haptics = rememberHaptics()
-
-    // The pop means "you just changed this", so it must not fire when the
-    // reader swipes from an unlearned name to a learned one. The button lives
-    // in the bar and survives page changes, so the latch is per-name: arriving
-    // at a new number adopts its state silently, and only a toggle pops.
-    val scale = remember { Animatable(1f) }
-    val seededFor = remember { mutableStateOf<Int?>(null) }
-    val motionScale = LocalMotionScale.current
-    LaunchedEffect(number, learned) {
-        if (seededFor.value != number) {
-            seededFor.value = number
-        } else {
-            scale.snapTo(0.94f)
-            scale.animateTo(1f, Motion.livelySpec(motionScale))
-        }
-    }
-
-    val state = stringResource(if (learned) R.string.learned else R.string.not_learned)
-    // A toggle, not a button that happens to carry state text: Role.Switch
-    // gives TalkBack a toggle action and a checked/unchecked reading, matching
-    // how the deck menu's checkbox row already behaves.
-    //
-    // An explicit column, NOT an IconButton: the icon+label pair sits below
-    // the centre line, where a 48dp circle's inscribed width is ~44dp, and
-    // the IconButton CLIPS to that circle, so the first capture cut LEARNED
-    // mid-glyph. Here the press highlight clips to the bar's own stadium
-    // register (the same RoundedCornerShape(50) the tab bar clips to, set
-    // before clickable), and minimumInteractiveComponentSize keeps the 48dp
-    // touch floor. The full action lives in the contentDescription and the
-    // state in stateDescription, exactly what the merged IconButton node
-    // read before; the visible label is silent to TalkBack.
-    val cd = stringResource(R.string.mark_learned)
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
-        modifier = Modifier
-            .minimumInteractiveComponentSize()
-            .clip(RoundedCornerShape(50))
-            .clickable(role = Role.Switch) {
-                haptics.confirm()
-                onToggle()
-            }
-            .padding(horizontal = 10.dp)
-            .semantics {
-                contentDescription = cd
-                stateDescription = state
-            },
-    ) {
-        Icon(
-            imageVector = if (learned) Icons.Filled.CheckCircle else Icons.Outlined.CheckCircle,
-            contentDescription = null,
-            // Resting, it wears the top bar's grey, the same ink the
-            // share icon carries, not the page's near-black. Learned, it
-            // fills with the app's gold, as before.
-            tint = if (learned) MaterialTheme.colorScheme.secondary
-            else MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier
-                .size(20.dp)
-                .graphicsLayer {
-                    scaleX = scale.value
-                    scaleY = scale.value
-                },
-        )
-        Spacer(Modifier.height(2.dp))
-        // The eye gets the tab bar's short chrome label, same register,
-        // and the same mixed-case voice: chrome you tap reads as words;
-        // tracked caps stay with the overlines (owner decision, 1.22).
-        // 9sp x the device factor, never the reader's slider. The ear
-        // keeps the full action from the button's description, so TalkBack
-        // never hears the state word twice.
-        FitText(
-            text = stringResource(R.string.plate_learned),
-            style = tabLabelStyle(),
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.clearAndSetSemantics {},
-        )
-    }
-}
-
-/**
- * Keeping a name, in the bar.
- *
- * The page is one scroll container, so a footer control travels with the text:
- * on a long meaning it is well below the fold at exactly the moment a name
- * strikes you. The bar does not move.
- *
- * The pop and the haptic are shared with [LearnedAction] deliberately: the app
- * has two per-name toggles on two different axes, and they should at least feel
- * like they were made by the same hand.
- */
-@Composable
-private fun BookmarkAction(bookmarked: Boolean, number: Int, onToggle: () -> Unit) {
-    val haptics = rememberHaptics()
-
-    // The pop means "you just changed this", so it must not fire when the
-    // reader swipes from an unkept name to a kept one. The button lives in the
-    // bar and survives page changes, so the latch is per-name: arriving at a
-    // new number adopts its state silently, and only a toggle pops.
-    val scale = remember { Animatable(1f) }
-    val seededFor = remember { mutableStateOf<Int?>(null) }
-    val motionScale = LocalMotionScale.current
-    // `bookmarked` is THIS page's membership, so the keys are (page, its
-    // state): a DataStore write for a previous page (after a swipe) cannot
-    // change the current page's key, and only a toggle on this page pops.
-    LaunchedEffect(number, bookmarked) {
-        if (seededFor.value != number) {
-            seededFor.value = number
-        } else {
-            scale.snapTo(0.94f)
-            scale.animateTo(1f, Motion.livelySpec(motionScale))
-        }
-    }
-
-    // The button is named once and never changes; what changes is the state
-    // announced after it. Set on the button, which is the node TalkBack focuses.
-    // Same explicit column as the learned act: the IconButton's 48dp circle
-    // clip cut BOOKMARK mid-glyph on the first capture.
-    val state = stringResource(if (bookmarked) R.string.bookmarked else R.string.not_bookmarked)
-    val cd = stringResource(R.string.cd_bookmark)
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
-        modifier = Modifier
-            .minimumInteractiveComponentSize()
-            .clip(RoundedCornerShape(50))
-            .clickable(role = Role.Switch) {
-                haptics.confirm()
-                onToggle()
-            }
-            .padding(horizontal = 10.dp)
-            .semantics {
-                contentDescription = cd
-                stateDescription = state
-            },
-    ) {
-        Icon(
-            imageVector = if (bookmarked) Icons.Filled.Bookmark else Icons.Filled.BookmarkBorder,
-            contentDescription = null,
-            // Same resting grey as the learned act and the share icon;
-            // kept, it fills with the app's gold.
-            tint = if (bookmarked) MaterialTheme.colorScheme.secondary
-            else MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier
-                .size(20.dp)
-                .graphicsLayer {
-                    scaleX = scale.value
-                    scaleY = scale.value
-                },
-        )
-        Spacer(Modifier.height(2.dp))
-        FitText(
-            text = stringResource(R.string.plate_bookmark),
-            style = tabLabelStyle(),
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.clearAndSetSemantics {},
-        )
-    }
-}
-
-/**
- * The name page's floating capsule: the same [FloatingBar] plate the tab
- * screens float, carrying everything a reader does to a name: previous and
- * next (wearing the neighbour's transliteration, so the bar says what turning
- * the page brings), and the two acts of keeping, learned and bookmarked,
- * adjacent in the centre. Share stays in the top bar: a send-away act reads
- * at the page's edge, and five slots would crowd a 320dp phone.
- *
- * It replaces the footer that used to scroll with the text: on a long
- * meaning the chevrons sat below the fold at exactly the moment a name
- * strikes you. The bar does not move, so turning is always one tap away; its
- * labels change as the pager settles, the same moment the counter above does.
- * The weighted end slots keep the two keep-acts centred whether the
- * neighbours exist (page 0 has no previous; the last page no next).
+ * The keep acts left this plate. Bookmark lives in the top bar, Learned at the
+ * foot of the entry: the two acts have different timing, and page turning is a
+ * reading act. The plate is simpler, the page is calmer, and the capsule no
+ * longer crowds four actions into one row on a 320dp phone.
  *
  * It is an OVERLAY on the pager, not a Scaffold bottom bar: a reserved slot
- * clips the page's text at the plate's top edge, and a floating sheet with
- * nothing passing beneath it is just a panel. The caller measures this
+ * clips the page's text at the plate's top edge. The caller measures this
  * composable's height and hands it to [NamePage] as the clearance its tail
- * scrolls above: the same trick the tab bar uses in MainActivity.
+ * scrolls above. When the current page has no neighbour at all, the caller
+ * omits the plate rather than showing an empty capsule.
  */
 @Composable
 internal fun DetailNavPlate(
     modifier: Modifier = Modifier,
-    current: Name,
     previousLabel: String?,
     nextLabel: String?,
-    learned: Boolean,
-    bookmarked: Boolean,
-    onToggleLearned: () -> Unit,
-    onToggleBookmarked: () -> Unit,
+    widestLabel: String,
     onPrevious: () -> Unit,
     onNext: () -> Unit,
 ) {
     FloatingBar(modifier = modifier) {
-        Row(
-            // The row takes its height from its children with the same 54dp
-            // floor the tab bar's slots wear, so the two capsules read as one
-            // register. Each weighted slot caps its label at the space it
-            // owns, so two long transliterations can never overlap at any
-            // font scale, the labels shrink through FitText instead of
-            // wrapping mid-word, and the 20dp chevron survives every name.
-            modifier = Modifier
-                .barMeasure()
-                .heightIn(min = 54.dp)
-                .padding(horizontal = 4.dp),
-            verticalAlignment = Alignment.CenterVertically,
+        BoxWithConstraints(
+            Modifier
+                .fillMaxWidth()
+                .height(PlateHeight)
         ) {
-            Box(Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
-                if (previousLabel != null) {
-                    // The chevron carries the direction visually; the name
-                    // alone would leave a screen-reader user unable to tell
-                    // previous from next. (Computed here: a semantics block
-                    // is not a composable context.)
-                    val previousCd = stringResource(R.string.previous_name, previousLabel)
-                    TextButton(
-                        onClick = onPrevious,
-                        // TextButton's default 16dp horizontal padding ate a
-                        // quarter of the weighted slot; the slot's own weight
-                        // keeps the tap honest with far less.
-                        contentPadding = PaddingValues(horizontal = 4.dp),
-                        modifier = Modifier.semantics {
-                            contentDescription = previousCd
-                        },
-                    ) {
-                        Icon(
-                            Icons.AutoMirrored.Filled.KeyboardArrowLeft,
-                            contentDescription = null,
-                            // The tab bar's icon register; the arrow survives
-                            // every name and every font scale.
-                            modifier = Modifier.size(20.dp),
-                        )
-                        // Roman, not italic. Italic means epithet, gloss or
-                        // quote everywhere else in the app (the page above
-                        // has just taught the reader that), so setting a
-                        // Name in it says the wrong thing. titleSmall also
-                        // rescues these from TextButton's labelLarge, which
-                        // made the app's main keep-reading affordance the
-                        // smallest Latin on the page. FitText, not Ellipsis:
-                        // a Divine Name must never cut off, so the longest
-                        // transliterations (Al-Muta'aalee, Al-Mutakabbir,
-                        // Al-Mu'akhkhir) shrink a little instead of losing
-                        // their tail. TextButton's own primary carries the
-                        // colour, as the bare Text did before.
-                        // weight(1f, fill = false) on each FitText keeps the
-                        // pair symmetric about the Row's measurement order: a
-                        // weighted child is measured after the fixed ones, so
-                        // the text is fitted to the space LEFT AFTER its own
-                        // chevron. Without it the NEXT button's FitText was
-                        // measured first, saw the whole slot, declined to
-                        // shrink, and the chevron then overflowed the slot and
-                        // was cut off at any decent font scale, while the
-                        // PREVIOUS button (icon first) always fitted.
-                        FitText(
-                            text = previousLabel,
-                            style = MaterialTheme.typography.titleSmall,
-                            color = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.weight(1f, fill = false),
-                            // The centre keep-acts crowd the end slots at large
-                            // system font scales, so the longest transliteration
-                            // needs more headroom than the 0.55 default: 0.4
-                            // keeps the worst case at the same effective size
-                            // the bottom bar's labels guarantee (~9sp at a
-                            // 2.0 scale). A Divine Name never loses its tail.
-                            minScale = 0.4f,
-                        )
-                    }
-                }
+            val density = LocalDensity.current
+            val dividerPx = with(density) { DividerWidth.toPx() }
+            val halfWidthPx = ((constraints.maxWidth - dividerPx) / 2f).coerceAtLeast(0f)
+            // One half owns this much text: the half's width less its two
+            // inner paddings, the chevron, and the gap before the label. The
+            // single-button state deliberately keeps fitting to this same
+            // width, so the surviving name does not grow when its neighbour
+            // disappears.
+            val textAreaPx = with(density) {
+                (halfWidthPx -
+                    LabelPadding.toPx() * 2f -
+                    ChevronSize.toPx() -
+                    ChevronGap.toPx()).coerceAtLeast(0f)
+            }.toInt()
+            val base = MaterialTheme.typography.titleSmall
+            val measurer = rememberTextMeasurer()
+            val fitted = remember(
+                base,
+                textAreaPx,
+                previousLabel,
+                nextLabel,
+                widestLabel,
+                measurer,
+            ) {
+                fittedLabelStyle(
+                    measurer = measurer,
+                    base = base,
+                    labels = listOfNotNull(
+                        previousLabel,
+                        nextLabel,
+                        widestLabel.takeIf { it.isNotBlank() },
+                    ),
+                    maxWidthPx = textAreaPx,
+                )
             }
-            LearnedAction(
-                learned = learned,
-                number = current.number,
-                onToggle = onToggleLearned,
-            )
-            BookmarkAction(
-                bookmarked = bookmarked,
-                number = current.number,
-                onToggle = onToggleBookmarked,
-            )
-            Box(Modifier.weight(1f), contentAlignment = Alignment.CenterEnd) {
-                if (nextLabel != null) {
-                    val nextCd = stringResource(R.string.next_name, nextLabel)
-                    TextButton(
-                        onClick = onNext,
-                        contentPadding = PaddingValues(horizontal = 4.dp),
-                        modifier = Modifier.semantics {
-                            contentDescription = nextCd
-                        },
-                    ) {
-                        FitText(
-                            text = nextLabel,
-                            style = MaterialTheme.typography.titleSmall,
-                            color = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.weight(1f, fill = false),
-                            minScale = 0.4f,
+            Row(
+                modifier = Modifier.fillMaxSize(),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                when {
+                    previousLabel != null && nextLabel != null -> {
+                        NeighbourButton(
+                            label = previousLabel,
+                            previous = true,
+                            shape = StartHalfShape,
+                            textStyle = fitted,
+                            onClick = onPrevious,
+                            modifier = Modifier.weight(1f),
                         )
-                        Icon(
-                            Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                            contentDescription = null,
-                            modifier = Modifier.size(20.dp),
+                        Box(
+                            Modifier
+                                .width(DividerWidth)
+                                .height(DividerHeight)
+                                .background(MaterialTheme.colorScheme.outlineVariant)
+                        )
+                        NeighbourButton(
+                            label = nextLabel,
+                            previous = false,
+                            shape = EndHalfShape,
+                            textStyle = fitted,
+                            onClick = onNext,
+                            modifier = Modifier.weight(1f),
                         )
                     }
+                    previousLabel != null -> NeighbourButton(
+                        label = previousLabel,
+                        previous = true,
+                        shape = WholePlateShape,
+                        textStyle = fitted,
+                        onClick = onPrevious,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    nextLabel != null -> NeighbourButton(
+                        label = nextLabel,
+                        previous = false,
+                        shape = WholePlateShape,
+                        textStyle = fitted,
+                        onClick = onNext,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
                 }
             }
         }
     }
+}
+
+/**
+ * One half of the page-turner. The whole half is the button: its ripple is
+ * clipped to the half's own end of the capsule, the outer corners follow the
+ * plate, and the inner edge meets the hairline. The direction is carried by
+ * the chevron, the position, and the spoken description; the visible word is
+ * cleared from semantics so TalkBack hears the action once.
+ */
+@Composable
+private fun NeighbourButton(
+    label: String,
+    previous: Boolean,
+    shape: Shape,
+    textStyle: TextStyle,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val cd = stringResource(
+        if (previous) R.string.previous_name else R.string.next_name,
+        label,
+    )
+    Box(
+        modifier = modifier
+            .fillMaxHeight()
+            .clip(shape)
+            .clickable(role = Role.Button, onClick = onClick)
+            .semantics { contentDescription = cd },
+        contentAlignment = Alignment.Center,
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = LabelPadding),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center,
+        ) {
+            if (previous) {
+                Chevron(left = true)
+                Spacer(Modifier.width(ChevronGap))
+            }
+            Text(
+                text = label,
+                style = textStyle,
+                color = MaterialTheme.colorScheme.primary,
+                maxLines = 1,
+                softWrap = false,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.clearAndSetSemantics {},
+            )
+            if (!previous) {
+                Spacer(Modifier.width(ChevronGap))
+                Chevron(left = false)
+            }
+        }
+    }
+}
+
+@Composable
+private fun Chevron(left: Boolean) {
+    Icon(
+        imageVector = if (left) {
+            Icons.AutoMirrored.Filled.KeyboardArrowLeft
+        } else {
+            Icons.AutoMirrored.Filled.KeyboardArrowRight
+        },
+        contentDescription = null,
+        tint = MaterialTheme.colorScheme.primary,
+        modifier = Modifier.size(ChevronSize),
+    )
+}
+
+/**
+ * The one size both neighbour names wear.
+ *
+ * The reference is the widest label in the book, not the longer of the two
+ * currently shown: fitting the current pair would keep them equal within a
+ * page but let the size jump as the reader pages. The titleSmall base is the
+ * register; at ordinary widths this returns it unchanged, and only a large
+ * font scale or a narrow phone steps it down. The line height follows the
+ * fitted size so the label cannot grow the 54dp row at large scales.
+ *
+ * The 0.25 floor is low enough that a 320dp phone at the maximum combined
+ * scale can still hold the longest name; the emergency ellipsis is insurance,
+ * not a plan.
+ */
+private fun fittedLabelStyle(
+    measurer: TextMeasurer,
+    base: TextStyle,
+    labels: List<String>,
+    maxWidthPx: Int,
+): TextStyle {
+    val floor = base.fontSize * 0.25f
+    var candidate = base
+    fun widest(style: TextStyle): Int = labels.maxOfOrNull {
+        measurer.measure(it, style, softWrap = false).size.width
+    } ?: 0
+    while (candidate.fontSize > floor && widest(candidate) > maxWidthPx) {
+        candidate = candidate.copy(fontSize = candidate.fontSize * 0.95f)
+    }
+    return candidate.copy(lineHeight = candidate.fontSize * 1.4f)
 }

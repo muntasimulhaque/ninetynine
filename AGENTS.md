@@ -167,7 +167,10 @@ Terms the code comments use as private vocabulary.
   `readingMeasure` (prose), `pageMeasure` (pages), `barMeasure` (chrome).
 - **device factor**: the 1.0 / 1.125 / 1.25 multiplier by smallest width,
   folded into the reading scale so a tablet prints the same book larger.
-- **keep-acts**: Learned and Bookmark, the two acts on the detail plate.
+- **keep-acts**: Learned and Bookmark, the two acts of keeping a name. They
+  live apart (owner decision, 1.35): Bookmark in the detail top bar, Learned
+  at the foot of the entry, held just above the page-turner when the text
+  ends early. The floating capsule is the page-turner only.
 - **the two voices**: tracked wide caps for annotation (overlines, counters,
   running heads), mixed case at `tabLabelStyle()` for chrome the reader taps.
   Prose is `bodySmall` or larger; never set a sentence in
@@ -201,6 +204,10 @@ implement it and update this list.
 - Scroll thumbs are position cues, not draggable fast-scrollers.
 - `displayMedium` is deliberately unused in `Type.kt`; ask before deleting.
 - Store screenshots are the canonical CI scenes; never re-derive them.
+- The detail page's keep acts stay apart: Bookmark in the top bar, Learned
+  at the foot of the entry, pinned just above the page-turner on a short
+  page. The floating capsule is the page-turner only, with one fitted size
+  for both neighbour names (owner decision, 1.35).
 
 ## Traps with no code home
 

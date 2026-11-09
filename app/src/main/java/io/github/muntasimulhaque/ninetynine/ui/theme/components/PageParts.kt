@@ -158,11 +158,12 @@ fun TabTitle(
 
 private const val RunningHeadScale = 0.85f
 
-/** The chrome-you-tap voice: the bottom bar's tab labels and the detail
- *  plate's Learned / Bookmark, in mixed case with only a whisper of tracking
- *  (owner decision, 1.22: tracked wide caps stay with the overlines). The
- *  ramp's labelSmall at the device factor only: chrome never follows the
- *  reader's text-size slider (the clipping guarantee). */
+/** The chrome-you-tap voice: the bottom bar's tab labels, in mixed case with
+ *  only a whisper of tracking (owner decision, 1.22: tracked wide caps stay
+ *  with the overlines). The ramp's labelSmall at the device factor only:
+ *  chrome never follows the reader's text-size slider (the clipping
+ *  guarantee). The detail page's learned act is content, not chrome, so it
+ *  wears titleSmall instead. */
 @Composable
 fun tabLabelStyle(): TextStyle =
     MaterialTheme.typography.labelSmall.copy(

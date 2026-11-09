@@ -83,14 +83,13 @@
     <string name="learned">Learned</string>
     <string name="not_learned">Not learned</string>
     <string name="mark_learned">Mark as learned</string>
-    <!-- The name page's floating plate labels: short chrome in the tab bar's
-         label register, mixed case, never tracked caps (owner decision,
-         1.22: caps are the register of ANNOTATION, and these are words the
-         reader taps). The full actions stay in the screen-reader names
-         (mark_learned, cd_bookmark); these are for the eye only, so they
-         deliberately say the short word that fits. -->
+    <!-- The learned act's visible label at the foot of the entry. Mixed case,
+         never tracked caps (owner decision, 1.22: caps are the register of
+         ANNOTATION, and this is a word the reader taps). The full action stays
+         in the screen-reader name (mark_learned); the word is for the eye
+         only. The bookmark is icon-only in the top bar now, so it has no
+         visible label. -->
     <string name="plate_learned">Learned</string>
-    <string name="plate_bookmark">Bookmark</string>
     <string name="note_label">Note</string>
 
     <!-- Bookmarks -->
