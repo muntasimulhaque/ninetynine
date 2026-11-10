@@ -39,8 +39,8 @@ val LightColors = lightColorScheme(
     onSurface = Color(0xFF211C12),
     surfaceVariant = Color(0xFFEFE7D6),
     onSurfaceVariant = Color(0xFF6B6353),
-    // Component boundaries, not hairlines: this draws the unmarked "Mark as
-    // learned" pill and the unanswered quiz options. At the old #B5AB97 it was
+    // Component boundaries, not hairlines: this draws the resting edge of the
+    // Learned act and the unanswered quiz options. At the old #B5AB97 it was
     // 2.09:1 and failed WCAG 1.4.11's 3:1; now 3.54:1 on the page and 3.21:1
     // in a dialog. outlineVariant below is decorative rules only, so it stays.
     outline = Color(0xFF8A8170),

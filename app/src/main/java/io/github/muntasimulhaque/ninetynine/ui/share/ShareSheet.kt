@@ -5,28 +5,25 @@ import android.content.Intent
 import android.graphics.Bitmap
 import android.widget.Toast
 import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -38,18 +35,17 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.asAndroidBitmap
-import androidx.compose.ui.graphics.rememberGraphicsLayer
+import androidx.compose.ui.graphics.layer.GraphicsLayer
 import androidx.compose.ui.graphics.layer.drawLayer
-import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
-import androidx.compose.ui.input.nestedscroll.NestedScrollSource
-import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.graphics.rememberGraphicsLayer
+import androidx.compose.ui.layout.SubcomposeLayout
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.Velocity
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
 import io.github.muntasimulhaque.ninetynine.R
@@ -67,14 +63,24 @@ import io.github.muntasimulhaque.ninetynine.ui.theme.components.FitText
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.MarkSeal
 import io.github.muntasimulhaque.ninetynine.ui.theme.components.PageInset
 import io.github.muntasimulhaque.ninetynine.util.ShareText
+import java.io.File
+import java.io.FileOutputStream
+import java.util.Locale
+import kotlin.math.roundToInt
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.io.File
-import java.io.FileOutputStream
-import java.util.Locale
 
+/**
+ * Sending a name: the plate it was read on, whole, and the words it carried.
+ *
+ * The sheet shows the card complete at every meaning length (see [CardPreview])
+ * and offers the two ways out side by side, the plate filled and the words
+ * outlined. Owner decision, 1.37, on both counts: a preview that has to be
+ * scrolled does not preview, and a row of two actions is a choice of artifact
+ * rather than a hierarchy with a footnote under it.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ShareSheet(name: Name, onDismiss: () -> Unit) {
@@ -83,51 +89,6 @@ fun ShareSheet(name: Name, onDismiss: () -> Unit) {
     val graphicsLayer = rememberGraphicsLayer()
     val wordmark = stringResource(R.string.store_title)
     var sharing by remember { mutableStateOf(false) }
-
-    // The vibrancy fix, and the reason it initially failed.
-    //
-    // With skipPartiallyExpanded the sheet's only resting place is Expanded,
-    // pressed hard against the status bar: an upward drag or fling on the
-    // card pushes the sheet into its own bounds' rubber band while the inner
-    // scroller still holds velocity, so the two fight, content scrolls up,
-    // the sheet bounces back down, forever (material3 1.4.0; matches the
-    // known upstream reports). A nested-scroll connection is the dam that
-    // stops it, but a connection must be an ANCESTOR of the scroller it
-    // guards to sit between that scroller and its parent (the sheet), and
-    // this one was first chained AFTER verticalScroll on the same modifier,
-    // which makes it a descendant. Leftover from the card's own scroller
-    // never passed through it at all, so the fight survived every guard and
-    // shipped shaking anyway.
-    //
-    // Chained BEFORE verticalScroll it is truly BETWEEN the card's scroller
-    // and the sheet, where it takes each leftover exactly once: upward is
-    // simply eaten, downward passes through untouched so swipe-to-dismiss
-    // keeps its reach and feel. One rule for both drag and fling, no special
-    // cases.
-    val quenchUpward = remember {
-        object : NestedScrollConnection {
-            // Mixed upstream signatures: onPostScroll is non-suspend now,
-            // onPostFling remains suspend.
-            override fun onPostScroll(
-                consumed: Offset,
-                available: Offset,
-                source: NestedScrollSource,
-            ): Offset = if (available.y < 0f) {
-                Offset(0f, available.y)
-            } else {
-                Offset.Zero
-            }
-
-            override suspend fun onPostFling(
-                consumed: Velocity,
-                available: Velocity,
-            ): Velocity = if (available.y < 0f) {
-                Velocity(0f, available.y)
-            } else {
-                Velocity.Zero
-            }
-        }
-    }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -145,91 +106,188 @@ fun ShareSheet(name: Name, onDismiss: () -> Unit) {
                 style = MaterialTheme.typography.titleLarge,
             )
             Spacer(Modifier.height(16.dp))
-            // The card grows to hold the complete meaning, never an ellipsis.
-            // Long cards scroll in this preview; the export is the full card.
-            Column(
+            CardPreview(
+                name = name,
+                graphicsLayer = graphicsLayer,
                 modifier = Modifier
-                    .weight(1f, fill = false)
-                    // Order here is the whole fix: see quenchUpward: the
-                    // connection must wrap the scroller (be its ancestor) to
-                    // catch what the scroller leaves over before the sheet
-                    // ever sees it.
-                    .nestedScroll(quenchUpward)
-                    .verticalScroll(rememberScrollState()),
-            ) {
-                // The exported image is a public artifact, render at the
-                // design-intended scale regardless of the reader's slider.
-                // The theme wraps the recording Box (not the other way round)
-                // so the composition settles before the draw phase records it.
-                CompositionLocalProvider(LocalTextScale provides 1f) {
-                    MaterialTheme(typography = appTypography(1f)) {
-                        Box(
-                            modifier = Modifier.drawWithContent {
-                                graphicsLayer.record {
-                                    this@drawWithContent.drawContent()
-                                }
-                                drawLayer(graphicsLayer)
-                            }
-                        ) {
-                            ShareCard(name = name, modifier = Modifier.fillMaxWidth())
-                        }
-                    }
-                }
-            }
+                    .fillMaxWidth()
+                    // fill = false: a plate shorter than the room keeps its
+                    // own height and the sheet closes up around it, instead
+                    // of the sheet holding empty paper under the card.
+                    .weight(1f, fill = false),
+            )
             Spacer(Modifier.height(20.dp))
-            // Stacked, never a row (owner decision, 1.36). The plate is the
-            // artifact and the words are the fallback for contexts that
-            // cannot take a picture, so the sheet leads with one full-width
-            // action and sets the other beneath it as a text button: a row
-            // would make a hierarchy look like two equal choices. The stack
-            // also holds at every text size. Both labels are labelLarge,
-            // which follows the reader's slider (0.85-1.4) and the device
-            // factor (up to 1.25), with the system font scale multiplying
-            // again: "Share image" is about 68dp of text plus 48dp of button
-            // padding at 1.0, and half of a 320dp phone's 272dp column is
-            // 130dp, so the reader's 1.4 alone wraps a row's labels before
-            // the system scale has said anything.
-            Button(
-                enabled = !sharing,
-                onClick = {
-                    scope.launch {
-                        sharing = true
-                        try {
-                            val bitmap = graphicsLayer.toImageBitmap()
-                            shareNameImage(context, bitmap, name)
-                            onDismiss()
-                        } catch (e: CancellationException) {
-                            throw e
-                        } catch (_: Exception) {
-                            Toast.makeText(context, R.string.share_failed, Toast.LENGTH_SHORT).show()
-                        } finally {
-                            sharing = false
+            // The two ways out, side by side (owner decision, 1.37). The
+            // plate is the artifact, the words are what most contexts can
+            // take, so the row keeps the hierarchy while showing them as
+            // siblings: image filled, text outlined, equal widths, both on
+            // the 52dp waist the app's other action rows wear.
+            //
+            // Neither carries a glyph. Every other button in the app is
+            // words only (a deck's end, the quiz's next, the flashcards'
+            // verdicts), and the share mark is already the top bar's way into
+            // this sheet, so repeating it here added width and no meaning.
+            //
+            // Fitted, not wrapped: half of a 320dp phone's 272dp column is
+            // ~130dp, and labelLarge is 13sp, so "Share image" is ~120dp of
+            // text and padding at the design scale and outgrows that slot at
+            // the reader's 1.4, with the system font scale multiplying on
+            // top. FitText caps that growth instead of wrapping one label
+            // onto a second line, which would leave two buttons of two
+            // heights in a row that is meant to read as a pair.
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 52.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Button(
+                    enabled = !sharing,
+                    onClick = {
+                        scope.launch {
+                            sharing = true
+                            try {
+                                val bitmap = graphicsLayer.toImageBitmap()
+                                shareNameImage(context, bitmap, name)
+                                onDismiss()
+                            } catch (e: CancellationException) {
+                                throw e
+                            } catch (_: Exception) {
+                                Toast.makeText(
+                                    context,
+                                    R.string.share_failed,
+                                    Toast.LENGTH_SHORT,
+                                ).show()
+                            } finally {
+                                sharing = false
+                            }
                         }
-                    }
-                },
-            ) {
-                Icon(Icons.Filled.Share, contentDescription = null)
-                Spacer(Modifier.padding(start = 8.dp))
-                Text(stringResource(R.string.share_image))
-            }
-            // The card is the artifact, but most share contexts want the words
-            // themselves (a caption, a quote, a note), so the sheet offers the
-            // plain text beside the plate: ShareText sets it on the card's own
-            // hierarchy, without repeating the short meaning.
-            TextButton(
-                onClick = {
-                    val sent = shareNameText(context, ShareText.build(name, wordmark))
-                    if (sent) onDismiss()
-                    // Its own message: a text-share failure is not an image
-                    // failure, and the toast must name the thing that failed.
-                    else Toast.makeText(context, R.string.share_text_failed, Toast.LENGTH_SHORT).show()
-                },
-            ) {
-                Text(stringResource(R.string.share_text))
+                    },
+                    modifier = Modifier
+                        .weight(1f)
+                        .heightIn(min = 52.dp),
+                ) {
+                    FitText(
+                        text = stringResource(R.string.share_image),
+                        style = MaterialTheme.typography.labelLarge,
+                        color = LocalContentColor.current,
+                        modifier = Modifier.weight(1f, fill = false),
+                    )
+                }
+                // The card is the artifact, but most share contexts want the
+                // words themselves (a caption, a quote, a note), so the sheet
+                // offers the plain text beside the plate.
+                OutlinedButton(
+                    onClick = {
+                        val sent = shareNameText(context, ShareText.build(name, wordmark))
+                        if (sent) onDismiss()
+                        // Its own message: a text-share failure is not an
+                        // image failure, and the toast must name the thing
+                        // that failed.
+                        else Toast.makeText(
+                            context,
+                            R.string.share_text_failed,
+                            Toast.LENGTH_SHORT,
+                        ).show()
+                    },
+                    modifier = Modifier
+                        .weight(1f)
+                        .heightIn(min = 52.dp),
+                ) {
+                    FitText(
+                        text = stringResource(R.string.share_text),
+                        style = MaterialTheme.typography.labelLarge,
+                        color = LocalContentColor.current,
+                        modifier = Modifier.weight(1f, fill = false),
+                    )
+                }
             }
         }
     }
 }
+
+/**
+ * The plate, whole, at whatever size the sheet can hold.
+ *
+ * The card is composed at its natural size (the sheet's own column width, the
+ * reader's text scale pinned to the design scale) and the drawn result is
+ * scaled into the room left over: never clipped, never scrolled. Long meanings
+ * therefore arrive small, which is the trade this rule buys: the reader sees
+ * the whole card they are about to send, seals and frame included. The old
+ * preview grew past the sheet and had to be dragged, which told the reader
+ * less and, because the sheet's only resting place is Expanded, fought the
+ * sheet's own drag hard enough to need a nested-scroll dam.
+ *
+ * The scale is applied to the PLACEMENT, deliberately not to the recording:
+ * `graphicsLayer` records the card's own draw at its natural size, so
+ * `toImageBitmap` still exports the plate at 1:1 whatever the preview had to
+ * shrink to. Folding the scale into the recording chain would quietly ship
+ * squashed images.
+ *
+ * One measurement pass, no first-frame flash: the natural height is measured
+ * unconstrained before the layout reports the scaled height, so the slot and
+ * the drawing agree on their very first frame.
+ */
+@Composable
+private fun CardPreview(
+    name: Name,
+    graphicsLayer: GraphicsLayer,
+    modifier: Modifier = Modifier,
+) {
+    SubcomposeLayout(modifier) { constraints ->
+        val width = constraints.maxWidth
+        val room = constraints.maxHeight
+        val card = subcompose(PreviewCard) {
+            // The exported image is a public artifact, render at the
+            // design-intended scale regardless of the reader's slider.
+            // The theme wraps the recording Box (not the other way round)
+            // so the composition settles before the draw phase records it.
+            CompositionLocalProvider(LocalTextScale provides 1f) {
+                MaterialTheme(typography = appTypography(1f)) {
+                    Box(
+                        modifier = Modifier.drawWithContent {
+                            graphicsLayer.record {
+                                this@drawWithContent.drawContent()
+                            }
+                            drawLayer(graphicsLayer)
+                        },
+                    ) {
+                        ShareCard(name = name, modifier = Modifier.fillMaxWidth())
+                    }
+                }
+            }
+        }.first().measure(
+            Constraints(
+                minWidth = width,
+                maxWidth = width,
+                // The height is the thing being fitted, so it is measured
+                // against nothing: the card is laid out as tall as it reads.
+                maxHeight = Constraints.Infinity,
+            )
+        )
+        // Never enlarged: this is a preview of an artifact, not a zoomed
+        // picture, and a card that already fits keeps its own size.
+        val scale = if (room == Constraints.Infinity) {
+            1f
+        } else {
+            (room.toFloat() / card.height.coerceAtLeast(1)).coerceAtMost(1f)
+        }
+        layout(width, (card.height * scale).roundToInt()) {
+            card.placeWithLayer(0, 0) {
+                scaleX = scale
+                scaleY = scale
+                // About the top centre: the card's own top stays where the
+                // layout put it, so the title above and the card do not drift
+                // apart as the scale changes from name to name.
+                transformOrigin = TransformOrigin(0.5f, 0f)
+            }
+        }
+    }
+}
+
+/** One slot: the card is the only thing this layout composes. */
+private const val PreviewCard = "share-card"
 
 /**
  * The exported card: deep emerald + gold, identical to the widget/hero

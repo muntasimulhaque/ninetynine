@@ -58,8 +58,8 @@ android {
         applicationId = "io.github.muntasimulhaque.ninetynine"
         minSdk = 24
         targetSdk = 37
-        versionCode = 46
-        versionName = "1.36"
+        versionCode = 47
+        versionName = "1.37"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 

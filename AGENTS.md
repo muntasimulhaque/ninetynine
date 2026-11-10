@@ -208,12 +208,20 @@ implement it and update this list.
   at the foot of the entry, pinned just above the page-turner on a short
   page. The floating capsule is the page-turner only, with one fitted size
   for both neighbour names (owner decision, 1.35). The Learned act is one
-  48dp stadium, bare until pressed, its empty ring meaning not yet and its
-  gold check meaning learned, the list's own grammar.
-- The share sheet stacks its two actions: the image button full width, the
-  text button beneath it, never a row (owner decision, 1.36). A row would
-  flatten a hierarchy into a choice and wraps at the reader's largest
-  text scale.
+  48dp stadium in two states (owner decision, 1.37): an outlined capsule at
+  rest, filled with `primaryContainer` behind a `primary` hairline once
+  learned, the empty ring meaning not yet and the gold check meaning
+  learned, the list's own grammar. Never a bare word (at this size it read
+  as a status line, not a control) and never a gold plate (the tick would
+  stop popping against its own hue).
+- The share sheet shows the whole card, scaled into the room left, never
+  scrolled (owner decision, 1.37): a preview that has to be scrolled does
+  not preview. The scale is a transform on the placement, never part of the
+  recording, so the exported PNG stays 1:1. Its two actions sit side by side
+  in one row, image filled and text outlined, equal width, 52dp waist, no
+  icons: every other button in the app is words only, and the glyph is
+  already the top bar's way into the sheet. Labels are fitted, not wrapped,
+  so one label never drops to a second line and leaves two button heights.
 
 ## Traps with no code home
 

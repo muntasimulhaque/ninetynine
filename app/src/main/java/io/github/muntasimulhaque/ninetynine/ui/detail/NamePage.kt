@@ -1,6 +1,9 @@
 package io.github.muntasimulhaque.ninetynine.ui.detail
 
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Animatable
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -28,11 +31,13 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -226,6 +231,10 @@ internal fun NamePage(
     }
 }
 
+// One capsule for both states: at 50% the corner resolves to a semicircle on
+// the 48dp waist, the same stadium the bar's tabs and the page-turner wear.
+private val LearnedShape = RoundedCornerShape(50)
+
 /**
  * Learning a name, closing the entry.
  *
@@ -238,6 +247,30 @@ internal fun NamePage(
  * whole entry. The list already carries the learned tick, so the page does
  * not need a fixed readout for it.
  *
+ * Two states, one shape (owner decision, 1.37). At rest it is an outlined
+ * stadium: a 1dp `outline` hairline, nothing filled. Learned, it fills with
+ * `primaryContainer` and the hairline turns `primary`, the same "selected"
+ * treatment the quiz's answered option wears. Only ink changes; the capsule
+ * never moves, so the page does not jump when the verdict lands.
+ *
+ * Why a container at all: the act used to be a bare word and ring, and a
+ * bare word at the foot of a page reads as a status line ("Learned"), not as
+ * something to tap. Nothing static on this page wears a boundary, so a
+ * hairline is exactly the signal that says "this is a control", and it gives
+ * the press layer a box to land in instead of a wash appearing out of the
+ * paper. The act also carries the weight: it is the one control on the page
+ * that records progress, while every bare word button in the app is a
+ * tertiary way out (a deck's end, an empty state).
+ *
+ * The fill is emerald, never gold. Gold is the page's ink for keeping (the
+ * bookmark, the list's tick, the Name itself), so a gold plate would set the
+ * tick on its own hue and the tick would stop popping; on the pale emerald
+ * the gold check is the one warm thing in the control. `outline` is a real
+ * boundary on paper (3.54:1, and WCAG 1.4.11 asks 3:1 for the edge that
+ * identifies a control), `primary` on `primaryContainer` is 5.78:1, and the
+ * learned word in `onPrimaryContainer` is 11.65:1. The tick is a graphic, so
+ * the 4.45:1 it holds on `primaryContainer` clears 1.4.11's 3:1 as well.
+ *
  * The glyph carries the state beside the word: an empty ring at rest, the
  * filled gold check once learned. That is the names list's own grammar (the
  * gold tick appears, and nothing else does), and the page must say the same
@@ -245,12 +278,12 @@ internal fun NamePage(
  * contradict the list one tap away. The word never changes, a label for the
  * eye rather than a verdict that rewrites itself.
  *
- * The capsule under the finger is the target as well as the feedback: 48dp
- * tall, the waist the bar's tabs and the page-turner plate already wear. It
- * appears only while pressed (the page stays bare until touched), so its
- * geometry has to be honest: clip, clickable and padding share one box, and
- * the padding sits inside the click. The 20dp pill this replaces was a
- * smudge, and its 48dp reservation was dead air outside the click.
+ * The capsule is the target as well as the feedback: 48dp tall, the waist
+ * the bar's tabs and the page-turner plate already wear. Clip, fill,
+ * hairline, click and padding share one box, and the padding sits inside the
+ * click, so the 48dp is all target and no dead air. The hairline is drawn on
+ * the clip's own edge, so the edge the reader sees and the edge the press
+ * layer is cropped to are the same capsule.
  *
  * TalkBack hears the button once ("Mark as learned") and the state after it
  * ("Learned" / "Not learned"), never a label that changes under it. The
@@ -290,14 +323,36 @@ private fun LearnedAction(
     // the two keep acts speak alike. The toggle action itself comes from
     // toggleable, not from the role.
     val cd = stringResource(R.string.mark_learned)
-    // clip before clickable, padding inside it: the capsule, the ripple and
-    // the hit area are one box. 14dp of vertical padding lifts the 20dp of
-    // content to the 48dp control waist; 20dp horizontal keeps the word
-    // clear of the semicircular ends.
+    val colors = MaterialTheme.colorScheme
+    // The two states are one shape with two inks, so they crossfade instead
+    // of swapping: the reader watches the verdict land rather than being
+    // handed a different control. QUICK is the app's own duration for a tint
+    // change, and it collapses to a snap when animations are off.
+    val container by animateColorAsState(
+        targetValue = if (learned) colors.primaryContainer else Color.Transparent,
+        animationSpec = Motion.tween(Motion.QUICK),
+        label = "learnedContainer",
+    )
+    val hairline by animateColorAsState(
+        targetValue = if (learned) colors.primary else colors.outline,
+        animationSpec = Motion.tween(Motion.QUICK),
+        label = "learnedHairline",
+    )
+    val ink by animateColorAsState(
+        targetValue = if (learned) colors.onPrimaryContainer else colors.primary,
+        animationSpec = Motion.tween(Motion.QUICK),
+        label = "learnedInk",
+    )
+    // clip first, then the fill, the hairline and the click: the capsule, the
+    // ripple, the stroke and the hit area are one 48dp box. 14dp of vertical
+    // padding lifts the 20dp of content to the control waist; 20dp
+    // horizontal keeps the word clear of the semicircular ends.
     Row(
         modifier = Modifier
             .minimumInteractiveComponentSize()
-            .clip(RoundedCornerShape(50))
+            .clip(LearnedShape)
+            .background(container, LearnedShape)
+            .border(1.dp, hairline, LearnedShape)
             .clickable(role = Role.Switch) {
                 haptics.confirm()
                 onToggle()
@@ -316,10 +371,9 @@ private fun LearnedAction(
             imageVector = if (learned) Icons.Filled.CheckCircle
             else Icons.Outlined.RadioButtonUnchecked,
             contentDescription = null,
-            // Resting, it wears the page's emerald like the page's other
-            // tappable words; learned, it fills with the app's gold.
-            tint = if (learned) MaterialTheme.colorScheme.secondary
-            else MaterialTheme.colorScheme.primary,
+            // Resting, it wears the control's ink; learned, it is the app's
+            // gold, the one warm thing inside the pale emerald.
+            tint = if (learned) colors.secondary else ink,
             modifier = Modifier
                 .size(20.dp)
                 .graphicsLayer {
@@ -331,7 +385,7 @@ private fun LearnedAction(
         Text(
             text = stringResource(R.string.plate_learned),
             style = MaterialTheme.typography.titleSmall,
-            color = MaterialTheme.colorScheme.primary,
+            color = ink,
             modifier = Modifier.clearAndSetSemantics {},
         )
     }
