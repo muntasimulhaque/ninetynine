@@ -12,9 +12,7 @@ import androidx.compose.material.icons.outlined.Search
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.imeNestedScroll
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
@@ -71,7 +69,7 @@ import io.github.muntasimulhaque.ninetynine.util.SearchFilter
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     viewModel: NamesViewModel,
@@ -280,11 +278,13 @@ fun HomeScreen(
                 // The keyboard rises for the bar's search field; without this
                 // the last result rows sit behind the IME. Edge-to-edge is
                 // enabled app-wide, so the inset must be consumed here.
+                //
+                // Padding only (owner decision, 1.38): imeNestedScroll() sent
+                // the leftover scroll at the list's end into the IME, which
+                // dragged the keyboard up with no field focused. Focus is the
+                // only thing that should open it, so this screen does not
+                // attach the gesture.
                 .imePadding()
-                // Scrolling away from the top retracts the keyboard with the
-                // drag, and scrolling back re-shows it, the IME becomes part
-                // of the scroll instead of a wall above the results.
-                .imeNestedScroll()
                 .wrapContentWidth(Alignment.CenterHorizontally)
                 .widthIn(max = pageMeasure())
         ) {
