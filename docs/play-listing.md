@@ -25,7 +25,7 @@ rejoining; the length limits are Play's (80 and 4000 characters).
 
 - **Application ID (package name):** `io.github.muntasimulhaque.ninetynine`
 - **Privacy policy URL:** `https://muntasimulhaque.github.io/ninetynine/privacy-policy.html`
-- **Version (this release):** versionName `1.38`, versionCode `48`
+- **Version (this release):** versionName `1.39`, versionCode `49`
 
 ---
 
@@ -87,6 +87,14 @@ FREE, AND PRIVATE
 No ads. No accounts. No in-app purchases. No analytics, no tracking, no third party libraries. Plenty of apps that call themselves private mean they promise not to look; this one cannot look; it has no way to reach the network at all. The code is open source under the MIT license, so anyone can read exactly what it does.
 
 May Allah make us among those who learn, memorize, understand and act upon His beautiful Names.
+```
+
+## What's new (version 1.39)
+
+```
+The share sheet's two buttons have changed order:
+
+• Share text now sits on the left and Share image on the right, so the recommended button always sits on the right, the same side as I know it on a flashcard and OK in the app's dialogs.
 ```
 
 ## What's new (version 1.38)

@@ -218,10 +218,17 @@ implement it and update this list.
   scrolled (owner decision, 1.37): a preview that has to be scrolled does
   not preview. The scale is a transform on the placement, never part of the
   recording, so the exported PNG stays 1:1. Its two actions sit side by side
-  in one row, image filled and text outlined, equal width, 52dp waist, no
+  in one row, text outlined then image filled, equal width, 52dp waist, no
   icons: every other button in the app is words only, and the glyph is
   already the top bar's way into the sheet. Labels are fitted, not wrapped,
   so one label never drops to a second line and leaves two button heights.
+- In a horizontal row of two actions the secondary sits left and the
+  default right (owner decision, 1.39): the order the dialogs already keep
+  (Cancel left, OK right) and the order the flashcards' two verdicts wear,
+  where "I know it" also matches the swipe that throws the card that way.
+  Trailing, not "right": an RTL device mirrors the row. A single action is
+  full width, and a pair that is not a choice (the page-turner's previous
+  and next) follows the page instead.
 
 ## Traps with no code home
 

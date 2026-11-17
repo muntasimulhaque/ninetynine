@@ -123,6 +123,13 @@ fun ShareSheet(name: Name, onDismiss: () -> Unit) {
             // siblings: image filled, text outlined, equal widths, both on
             // the 52dp waist the app's other action rows wear.
             //
+            // The default takes the trailing end (owner decision, 1.39): in
+            // a row of two actions the secondary sits left and the default
+            // right, the order the dialogs already keep (Cancel left, OK
+            // right) and the order the flashcards' verdicts already wear,
+            // where "I know it" also matches the swipe that throws the card
+            // that way. Trailing, not "right": an RTL device mirrors the row.
+            //
             // Neither carries a glyph. Every other button in the app is
             // words only (a deck's end, the quiz's next, the flashcards'
             // verdicts), and the share mark is already the top bar's way into
@@ -142,6 +149,34 @@ fun ShareSheet(name: Name, onDismiss: () -> Unit) {
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
+                // The card is the artifact, but most share contexts want the
+                // words themselves (a caption, a quote, a note), so the plain
+                // text rides beside the plate, on the secondary side of the
+                // pair.
+                OutlinedButton(
+                    onClick = {
+                        val sent = shareNameText(context, ShareText.build(name, wordmark))
+                        if (sent) onDismiss()
+                        // Its own message: a text-share failure is not an
+                        // image failure, and the toast must name the thing
+                        // that failed.
+                        else Toast.makeText(
+                            context,
+                            R.string.share_text_failed,
+                            Toast.LENGTH_SHORT,
+                        ).show()
+                    },
+                    modifier = Modifier
+                        .weight(1f)
+                        .heightIn(min = 52.dp),
+                ) {
+                    FitText(
+                        text = stringResource(R.string.share_text),
+                        style = MaterialTheme.typography.labelLarge,
+                        color = LocalContentColor.current,
+                        modifier = Modifier.weight(1f, fill = false),
+                    )
+                }
                 Button(
                     enabled = !sharing,
                     onClick = {
@@ -170,33 +205,6 @@ fun ShareSheet(name: Name, onDismiss: () -> Unit) {
                 ) {
                     FitText(
                         text = stringResource(R.string.share_image),
-                        style = MaterialTheme.typography.labelLarge,
-                        color = LocalContentColor.current,
-                        modifier = Modifier.weight(1f, fill = false),
-                    )
-                }
-                // The card is the artifact, but most share contexts want the
-                // words themselves (a caption, a quote, a note), so the sheet
-                // offers the plain text beside the plate.
-                OutlinedButton(
-                    onClick = {
-                        val sent = shareNameText(context, ShareText.build(name, wordmark))
-                        if (sent) onDismiss()
-                        // Its own message: a text-share failure is not an
-                        // image failure, and the toast must name the thing
-                        // that failed.
-                        else Toast.makeText(
-                            context,
-                            R.string.share_text_failed,
-                            Toast.LENGTH_SHORT,
-                        ).show()
-                    },
-                    modifier = Modifier
-                        .weight(1f)
-                        .heightIn(min = 52.dp),
-                ) {
-                    FitText(
-                        text = stringResource(R.string.share_text),
                         style = MaterialTheme.typography.labelLarge,
                         color = LocalContentColor.current,
                         modifier = Modifier.weight(1f, fill = false),
